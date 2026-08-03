@@ -1,2 +1,5 @@
 streamlit
 groq
+fastapi
+uvicorn
+
