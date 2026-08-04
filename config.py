@@ -1,6 +1,9 @@
 # config.py - System Configuration
+import streamlit as st
 
-GROQ_API_KEY = "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"  # এখানে তোমার আসল gsk_... কী-টি বসাও
+# সরাসরি Key উঠিয়ে দিয়ে Streamlit Secrets থেকে লিংক করে দাও
+GROQ_API_KEY = st.secrets["GROQ_API_KEY"]
+
 
 SYSTEM_PROMPT = """
 You are Tuto, a friendly, highly empathetic, world-class AI Educational Tutor from the GlobalTutor platform.
