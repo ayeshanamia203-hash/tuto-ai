@@ -1,5 +1,8 @@
 streamlit
 groq
+pypdf
+pillow
 fastapi
 uvicorn
+
 
