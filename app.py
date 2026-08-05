@@ -1,34 +1,64 @@
+# app.py - Streamlit Frontend Interface
 import streamlit as st
-from ai_brain import ask_ai_tutor
+from ai_brain import ask_ai_tutor, extract_text_from_pdf
 
-# পেজ সেটিংস ও সুন্দর টাইটেল
-st.set_page_config(page_title="Tuto - AI Tutor", page_icon="🤖", layout="centered")
+st.set_page_config(page_title="Tuto - AI Tutor", page_icon="🤖", layout="wide")
 
+# App Header
 st.title("🤖 Tuto - AI Tutor")
-st.write("Welcome! Ask me anything about your studies.")
+st.caption("Your Personal AI Study Companion | Built by Imran Hossen")
 
-# চ্যাট হিস্ট্রি ধরে রাখার জন্য Session State
+# Sidebar Configuration
+st.sidebar.header("🎓 Learning Context")
+
+grade = st.sidebar.selectbox(
+    "Select Grade / Level:",
+    ["General / Self-Learner", "Class 6-8", "Class 9-10 / SSC", "HSC / College", "University / Undergraduate"]
+)
+
+subject = st.sidebar.selectbox(
+    "Select Subject:",
+    ["General Studies", "Mathematics", "Physics", "Chemistry", "Biology", "English", "ICT / Computer Science"]
+)
+
+st.sidebar.markdown("---")
+st.sidebar.header("📄 Upload Study Material")
+uploaded_file = st.sidebar.file_uploader("Upload PDF Notes or Textbook Page", type=["pdf"])
+
+extracted_pdf_text = ""
+if uploaded_file is not None:
+    with st.spinner("Extracting text from PDF..."):
+        extracted_pdf_text = extract_text_from_pdf(uploaded_file)
+        st.sidebar.success("PDF Loaded Successfully! ✅")
+
+if st.sidebar.button("🧹 Clear Chat"):
+    st.session_state.messages = []
+    st.rerun()
+
+# Initialize Chat History
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
-# আগের চ্যাট হিস্ট্রি স্ক্রিনে দেখানো
+# Display Prior Messages
 for message in st.session_state.messages:
     with st.chat_message(message["role"]):
         st.markdown(message["content"])
 
-# ইউজার মেসেজ ইনপুট বক্স (Gemini/ChatGPT এর মতো)
-if prompt := st.chat_input("Type your question here..."):
-    # ইউজারের মেসেজ চ্যাটে দেখানো ও সেভ করা
+# User Input Box
+if prompt := st.chat_input("Ask Tuto anything about your studies..."):
     st.session_state.messages.append({"role": "user", "content": prompt})
     with st.chat_message("user"):
         st.markdown(prompt)
 
-    # AI এর উত্তরের জন্য অপেক্ষা ও রেসপন্স আনা
     with st.chat_message("assistant"):
-        with st.spinner("Thinking..."):
-            history_for_ai = [{"role": m["role"], "content": m["content"]} for m in st.session_state.messages[:-1]]
-            response = ask_ai_tutor(prompt, history_for_ai)
+        with st.spinner("Tuto is thinking..."):
+            response = ask_ai_tutor(
+                user_question=prompt,
+                chat_history=st.session_state.messages[:-1],
+                grade=grade,
+                subject=subject,
+                context_text=extracted_pdf_text
+            )
             st.markdown(response)
-    
-    # AI এর উত্তর চ্যাট হিস্ট্রিতে সেভ করা
+
     st.session_state.messages.append({"role": "assistant", "content": response})
