@@ -23,13 +23,25 @@ subject = st.sidebar.selectbox(
 
 st.sidebar.markdown("---")
 st.sidebar.header("📄 Upload Study Material")
-uploaded_file = st.sidebar.file_uploader("Upload PDF Notes or Textbook Page", type=["pdf"])
+uploaded_file = st.sidebar.file_uploader(
+    "Upload PDF or Photo (Book/Notes):", 
+    type=["pdf", "png", "jpg", "jpeg"]
+)
 
 extracted_pdf_text = ""
+image_data = None
+
 if uploaded_file is not None:
-    with st.spinner("Extracting text from PDF..."):
-        extracted_pdf_text = extract_text_from_pdf(uploaded_file)
-        st.sidebar.success("PDF Loaded Successfully! ✅")
+    file_type = uploaded_file.name.split(".")[-1].lower()
+    
+    if file_type == "pdf":
+        with st.spinner("Extracting text from PDF..."):
+            extracted_pdf_text = extract_text_from_pdf(uploaded_file)
+            st.sidebar.success("PDF Loaded Successfully! ✅")
+    elif file_type in ["png", "jpg", "jpeg"]:
+        image_data = uploaded_file
+        st.sidebar.image(uploaded_file, caption="Uploaded Image", use_container_width=True)
+        st.sidebar.success("Image Loaded Successfully! 📸")
 
 if st.sidebar.button("🧹 Clear Chat"):
     st.session_state.messages = []
@@ -57,7 +69,8 @@ if prompt := st.chat_input("Ask Tuto anything about your studies..."):
                 chat_history=st.session_state.messages[:-1],
                 grade=grade,
                 subject=subject,
-                context_text=extracted_pdf_text
+                context_text=extracted_pdf_text,
+                image_file=image_data
             )
             st.markdown(response)
 
