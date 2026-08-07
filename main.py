@@ -1,34 +1,152 @@
-# main.py - FastAPI Server Entry Point
-from fastapi import FastAPI, Form, UploadFile, File
-from typing import Optional
-from ai_brain import ask_ai_tutor, extract_text_from_pdf
+from fastapi import FastAPI, Form
+from fastapi.responses import HTMLResponse
+import os
+import uvicorn
+from ai_brain import ask_tuto_ai
 
 app = FastAPI(title="Tuto AI Backend")
 
-@app.get("/")
+HTML_LAYOUT = """
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tuto AI - Smart Learning Partner</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { background-color: #f4f6f9; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        .chat-card { max-width: 800px; margin: 30px auto; border-radius: 15px; border: none; box-shadow: 0 8px 24px rgba(0,0,0,0.08); }
+        .chat-header { background: linear-gradient(135deg, #4f46e5, #7c3aed); color: white; border-radius: 15px 15px 0 0 !important; padding: 20px; }
+        .chat-box { height: 450px; overflow-y: auto; padding: 20px; background: #ffffff; }
+        .message { margin-bottom: 15px; display: flex; flex-direction: column; }
+        .user-msg { align-items: flex-end; }
+        .ai-msg { align-items: flex-start; }
+        .bubble { max-width: 75%; padding: 12px 18px; border-radius: 18px; font-size: 15px; line-height: 1.5; }
+        .user-msg .bubble { background-color: #4f46e5; color: white; border-bottom-right-radius: 4px; }
+        .ai-msg .bubble { background-color: #f1f5f9; color: #1e293b; border-bottom-left-radius: 4px; border: 1px solid #e2e8f0; }
+        .input-area { background: #f8fafc; padding: 15px; border-radius: 0 0 15px 15px; border-top: 1px solid #e2e8f0; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="card chat-card">
+        <div class="card-header chat-header text-center">
+            <h4 class="m-0 fw-bold">🎓 Tuto AI Tutor</h4>
+            <small>Created by Imran Hossen</small>
+        </div>
+        
+        <div class="chat-box" id="chatBox">
+            <div class="message ai-msg">
+                <div class="bubble">
+                    হ্যালো! আমি তোমার AI টিউটর। পড়াশোনা সংক্রান্ত যেকোনো প্রশ্ন করতে পারো!
+                </div>
+            </div>
+        </div>
+
+        <div class="input-area">
+            <form id="chatForm">
+                <div class="row g-2 mb-2">
+                    <div class="col-6">
+                        <input type="text" id="grade" class="form-control form-control-sm" placeholder="শ্রেণী (যেমন: Class 10)">
+                    </div>
+                    <div class="col-6">
+                        <input type="text" id="subject" class="form-control form-control-sm" placeholder="বিষয় (যেমন: Physics)">
+                    </div>
+                </div>
+                <div class="input-group">
+                    <input type="text" id="question" class="form-control" placeholder="তোমার প্রশ্নটি এখানে লেখো..." required>
+                    <button class="btn btn-primary px-4" type="submit" id="sendBtn">পাঠান 🚀</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.getElementById('chatForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        const questionInput = document.getElementById('question');
+        const gradeInput = document.getElementById('grade');
+        const subjectInput = document.getElementById('subject');
+        const chatBox = document.getElementById('chatBox');
+        const sendBtn = document.getElementById('sendBtn');
+
+        const question = questionInput.value.trim();
+        if (!question) return;
+
+        appendMessage(question, 'user-msg');
+        questionInput.value = '';
+        sendBtn.disabled = true;
+
+        const loadingDiv = appendMessage('AI উত্তর চিন্তা করছে...', 'ai-msg');
+
+        try {
+            const formData = new FormData();
+            formData.append('question', question);
+            formData.append('grade', gradeInput.value || 'General');
+            formData.append('subject', subjectInput.value || 'General Studies');
+
+            const response = await fetch('/api/chat', {
+                method: 'POST',
+                body: formData
+            });
+
+            const data = await response.json();
+            
+            if (data.status === 'success') {
+                loadingDiv.querySelector('.bubble').innerText = data.response;
+            } else {
+                loadingDiv.querySelector('.bubble').innerText = "দুঃখিত, কোনো সমস্যা হয়েছে।";
+            }
+        } catch (error) {
+            loadingDiv.querySelector('.bubble').innerText = "সার্ভারের সাথে যোগাযোগ করা যাচ্ছে না।";
+        } finally {
+            sendBtn.disabled = false;
+            chatBox.scrollTop = chatBox.scrollHeight;
+        }
+    });
+
+    function appendMessage(text, className) {
+        const chatBox = document.getElementById('chatBox');
+        const msgDiv = document.createElement('div');
+        msgDiv.className = `message ${className}`;
+        msgDiv.innerHTML = `<div class="bubble">${text}</div>`;
+        chatBox.appendChild(msgDiv);
+        chatBox.scrollTop = chatBox.scrollHeight;
+        return msgDiv;
+    }
+</script>
+
+</body>
+</html>
+"""
+
+@app.get("/", response_class=HTMLResponse)
 def home():
-    return {"message": "Tuto AI Backend is Running Successfully!"}
+    return HTML_LAYOUT
 
 @app.post("/api/chat")
-async def chat_endpoint(
+def chat_endpoint(
     question: str = Form(...),
-    grade: Optional[str] = Form(None),
-    subject: Optional[str] = Form(None),
-    file: Optional[UploadFile] = File(None)
+    grade: str = Form("General"),
+    subject: str = Form("General Studies")
 ):
     try:
-        pdf_text = ""
-        if file and file.filename.endswith(".pdf"):
-            pdf_text = extract_text_from_pdf(file.file)
-
-        user_content = f"Grade: {grade}\nSubject: {subject}\nQuestion: {question}"
-        if pdf_text:
-            user_content += f"\n\nPDF Context:\n{pdf_text}"
-
-        messages = [{"role": "user", "content": user_content}]
-        response = ask_ai_tutor(messages)
-
-        return {"status": "success", "response": response}
+        response_text = ask_tuto_ai(question=question, grade=grade, subject=subject)
+        return {
+            "status": "success",
+            "question": question,
+            "response": response_text
+        }
     except Exception as e:
-        return {"status": "error", "message": str(e)}
+        return {
+            "status": "error",
+            "message": str(e)
+        }
 
+if __name__ == "__main__":
+    port = int(os.environ.get("PORT", 8000))
+    uvicorn.run(app, host="0.0.0.0", port=port)
