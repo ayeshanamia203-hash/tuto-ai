@@ -1,38 +1,48 @@
-import sys
-from ai_brain import ask_ai_tutor
+# main.py - FastAPI Server Entry Point
+from fastapi import FastAPI, File, UploadFile, Form
+from fastapi.middleware.cors import CORSMiddleware
+from typing import Optional
+from ai_brain import ask_ai_tutor, extract_text_from_pdf
 
-def start_tutor_app():
-    print("=" * 60)
-    print(" 🚀 Welcome to Your Global AI Educational Tutor! 🚀")
-    print("=" * 60)
-    print("Type 'exit' or 'quit' to stop.\n")
+app = FastAPI(title="Tuto AI Tutor Backend")
 
-    while True:
-        try:
-            user_input = input("\n📝 Ask your question: ")
+# Allow Frontend (Next.js) to connect with Backend
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
-            if user_input.strip().lower() in ['exit', 'quit']:
-                print("\n👋 Goodbye! Happy Learning!")
-                break
+@app.get("/")
+def home():
+    return {"status": "online", "message": "Tuto AI Tutor API is Running Streamlessly!"}
 
-            if not user_input.strip():
-                print("⚠️ Please enter a valid question.")
-                continue
+@app.post("/api/chat")
+async def chat_endpoint(
+    question: str = Form(...),
+    grade: str = Form("General / Self-Learner"),
+    subject: str = Form("General Studies"),
+    file: Optional[UploadFile] = File(None)
+):
+    context_text = ""
+    image_file = None
 
-            print("\n🤖 AI Tutor is thinking...")
+    if file:
+        file_ext = file.filename.split(".")[-1].lower()
+        if file_ext == "pdf":
+            context_text = extract_text_from_pdf(file.file)
+        elif file_ext in ["png", "jpg", "jpeg"]:
+            image_file = file.file
 
-            response = ask_ai_tutor(user_input)
+    response = ask_ai_tutor(
+        user_question=question,
+        chat_history=None,
+        grade=grade,
+        subject=subject,
+        context_text=context_text,
+        image_file=image_file
+    )
 
-            print("\n" + "=" * 40)
-            print("💡 AI Tutor Response:")
-            print("=" * 40)
-            print(response)
-            print("=" * 40)
-
-        except KeyboardInterrupt:
-            print("\n\n👋 App stopped.")
-            sys.exit()
-
-if __name__ == "__main__":
-    start_tutor_app()
-
+    return {"response": response}
