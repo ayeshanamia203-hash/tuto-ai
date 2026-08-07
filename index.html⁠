@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tuto AI - Smart Learning Partner</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { background-color: #f4f6f9; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        .chat-card { max-width: 800px; margin: 30px auto; border-radius: 15px; border: none; box-shadow: 0 8px 24px rgba(0,0,0,0.08); }
+        .chat-header { background: linear-gradient(135deg, #4f46e5, #7c3aed); color: white; border-radius: 15px 15px 0 0 !important; padding: 20px; }
+        .chat-box { height: 450px; overflow-y: auto; padding: 20px; background: #ffffff; }
+        .message { margin-bottom: 15px; display: flex; flex-direction: column; }
+        .user-msg { align-items: flex-end; }
+        .ai-msg { align-items: flex-start; }
+        .bubble { max-width: 75%; padding: 12px 18px; border-radius: 18px; font-size: 15px; line-height: 1.5; }
+        .user-msg .bubble { background-color: #4f46e5; color: white; border-bottom-right-radius: 4px; }
+        .ai-msg .bubble { background-color: #f1f5f9; color: #1e293b; border-bottom-left-radius: 4px; border: 1px solid #e2e8f0; }
+        .input-area { background: #f8fafc; padding: 15px; border-radius: 0 0 15px 15px; border-top: 1px solid #e2e8f0; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="card chat-card">
+        <div class="card-header chat-header text-center">
+            <h4 class="m-0 fw-bold">🎓 Tuto AI Tutor</h4>
+            <small>Created by Imran Hossen</small>
+        </div>
+        
+        <div class="chat-box" id="chatBox">
+            <div class="message ai-msg">
+                <div class="bubble">
+                    হ্যালো! আমি তোমার AI টিউটর। পড়াশোনা সংক্রান্ত যেকোনো প্রশ্ন করতে পারো!
+                </div>
+            </div>
+        </div>
+
+        <div class="input-area">
+            <form id="chatForm">
+                <div class="row g-2 mb-2">
+                    <div class="col-6">
+                        <input type="text" id="grade" class="form-field form-control form-control-sm" placeholder="শ্রেণী (যেমন: Class 10)">
+                    </div>
+                    <div class="col-6">
+                        <input type="text" id="subject" class="form-field form-control form-control-sm" placeholder="বিষয় (যেমন: Physics)">
+                    </div>
+                </div>
+                <div class="input-group">
+                    <input type="text" id="question" class="form-control" placeholder="তোমার প্রশ্নটি এখানে লেখো..." required>
+                    <button class="btn btn-primary px-4" type="submit" id="sendBtn">পাঠান 🚀</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    const BACKEND_URL = "https://tuto-ai-backend.onrender.com/api/chat";
+
+    document.getElementById('chatForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        const questionInput = document.getElementById('question');
+        const gradeInput = document.getElementById('grade');
+        const subjectInput = document.getElementById('subject');
+        const chatBox = document.getElementById('chatBox');
+        const sendBtn = document.getElementById('sendBtn');
+
+        const question = questionInput.value.trim();
+        if (!question) return;
+
+        // Add User Message
+        appendMessage(question, 'user-msg');
+        questionInput.value = '';
+        sendBtn.disabled = true;
+
+        // Show Loading Indicator
+        const loadingDiv = appendMessage('AI উত্তর চিন্তা করছে...', 'ai-msg');
+
+        try {
+            const formData = new FormData();
+            formData.append('question', question);
+            formData.append('grade', gradeInput.value || 'General');
+            formData.append('subject', subjectInput.value || 'General Studies');
+
+            const response = await fetch(BACKEND_URL, {
+                method: 'POST',
+                body: formData
+            });
+
+            const data = await response.json();
+            
+            if (data.status === 'success') {
+                loadingDiv.querySelector('.bubble').innerText = data.response;
+            } else {
+                loadingDiv.querySelector('.bubble').innerText = "দুঃখিত, কোনো সমস্যা হয়েছে। আবার চেষ্টা করো।";
+            }
+        } catch (error) {
+            loadingDiv.querySelector('.bubble').innerText = "সার্ভারের সাথে যোগাযোগ করা যাচ্ছে না।";
+        } finally {
+            sendBtn.disabled = false;
+            chatBox.scrollTop = chatBox.scrollHeight;
+        }
+    });
+
+    function appendMessage(text, className) {
+        const chatBox = document.getElementById('chatBox');
+        const msgDiv = document.createElement('div');
+        msgDiv.className = `message ${className}`;
+        msgDiv.innerHTML = `<div class="bubble">${text}</div>`;
+        chatBox.appendChild(msgDiv);
+        chatBox.scrollTop = chatBox.scrollHeight;
+        return msgDiv;
+    }
+</script>
+
+</body>
+</html>
