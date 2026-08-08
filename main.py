@@ -2,9 +2,12 @@ from fastapi import FastAPI, Form
 from fastapi.responses import HTMLResponse
 import os
 import uvicorn
-from ai_brain import ask_tuto_ai
+from groq import Groq
 
 app = FastAPI(title="Tuto AI Professional")
+
+# Groq Client Initialization
+GROQ_API_KEY = os.environ.get("GROQ_API_KEY", "")
 
 HTML_LAYOUT = """
 <!DOCTYPE html>
@@ -20,22 +23,17 @@ HTML_LAYOUT = """
             --bg-color: #131314;
             --sidebar-bg: #1e1e20;
             --chat-bg: #131314;
-            --user-bubble: #2b2a33;
-            --ai-bubble: #1e1e20;
             --text-color: #e3e3e3;
             --accent-color: #a8c7fa;
         }
-
         body {
             background-color: var(--bg-color);
             color: var(--text-color);
-            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            font-family: 'Segoe UI', system-ui, sans-serif;
             height: 100vh;
             margin: 0;
             display: flex;
         }
-
-        /* Sidebar UI */
         .sidebar {
             width: 260px;
             background-color: var(--sidebar-bg);
@@ -44,7 +42,6 @@ HTML_LAYOUT = """
             flex-direction: column;
             border-right: 1px solid #2d2d30;
         }
-
         .new-chat-btn {
             background-color: #2b2a33;
             color: var(--text-color);
@@ -52,15 +49,7 @@ HTML_LAYOUT = """
             border-radius: 30px;
             padding: 10px 15px;
             font-weight: 500;
-            transition: 0.2s;
         }
-
-        .new-chat-btn:hover {
-            background-color: #373544;
-            color: #fff;
-        }
-
-        /* Main Chat Area */
         .main-chat {
             flex: 1;
             display: flex;
@@ -68,7 +57,6 @@ HTML_LAYOUT = """
             justify-content: space-between;
             height: 100vh;
         }
-
         .chat-header {
             padding: 15px 25px;
             border-bottom: 1px solid #2d2d30;
@@ -76,7 +64,6 @@ HTML_LAYOUT = """
             justify-content: space-between;
             align-items: center;
         }
-
         .chat-container {
             flex: 1;
             overflow-y: auto;
@@ -85,13 +72,11 @@ HTML_LAYOUT = """
             margin: 0 auto;
             width: 100%;
         }
-
         .message {
             display: flex;
             gap: 15px;
             margin-bottom: 25px;
         }
-
         .avatar {
             width: 35px;
             height: 35px;
@@ -102,25 +87,20 @@ HTML_LAYOUT = """
             font-size: 14px;
             font-weight: bold;
         }
-
         .user-avatar { background-color: #5436da; color: white; }
-        .ai-avatar { background: linear-gradient(135deg, #10a37f, #0d8a6a); color: white; }
-
+        .ai-avatar { background: linear-gradient(135deg, #f59e0b, #d97706); color: white; }
         .bubble {
             max-width: 85%;
             font-size: 15px;
             line-height: 1.6;
             white-space: pre-wrap;
         }
-
-        /* Input Box (Gemini / ChatGPT Style) */
         .input-wrapper {
             max-width: 850px;
             margin: 0 auto 25px auto;
             width: 90%;
             position: relative;
         }
-
         .chat-input {
             background-color: #1e1e20;
             border: 1px solid #3c4043;
@@ -129,13 +109,7 @@ HTML_LAYOUT = """
             padding: 15px 50px 15px 20px;
             width: 100%;
             outline: none;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
         }
-
-        .chat-input:focus {
-            border-color: var(--accent-color);
-        }
-
         .send-btn {
             position: absolute;
             right: 12px;
@@ -147,31 +121,25 @@ HTML_LAYOUT = """
             font-size: 18px;
             cursor: pointer;
         }
-
-        @media (max-width: 768px) {
-            .sidebar { display: none; }
-        }
+        @media (max-width: 768px) { .sidebar { display: none; } }
     </style>
 </head>
 <body>
-
-    <!-- Sidebar -->
     <div class="sidebar">
         <button class="new-chat-btn w-100 mb-4" onclick="location.reload()">
             <i class="fa-solid fa-plus me-2"></i> New Chat
         </button>
         <div class="text-secondary small fw-bold mb-2">RECENT CHATS</div>
-        <div class="text-muted small">✨ Tuto AI Assistant</div>
+        <div class="text-muted small">✨ Tuto AI (Groq Powered)</div>
         <div class="mt-auto text-muted small border-top border-secondary pt-3">
             👨‍💻 Developer: <strong>Imran Hossen</strong>
         </div>
     </div>
 
-    <!-- Main Chat Screen -->
     <div class="main-chat">
         <div class="chat-header">
-            <h5 class="m-0 fw-bold"><i class="fa-solid fa-graduation-cap me-2 text-primary"></i>Tuto AI</h5>
-            <span class="badge bg-dark border border-secondary text-light">v2.0 Pro</span>
+            <h5 class="m-0 fw-bold"><i class="fa-solid fa-graduation-cap me-2 text-warning"></i>Tuto AI</h5>
+            <span class="badge bg-dark border border-secondary text-light">Powered by Groq</span>
         </div>
 
         <div class="chat-container" id="chatBox">
@@ -179,15 +147,14 @@ HTML_LAYOUT = """
                 <div class="avatar ai-avatar">AI</div>
                 <div class="bubble">
                     <strong>Hello Imran!</strong><br>
-                    I am Tuto AI, your personal academic assistant. How can I help you today?
+                    I am Tuto AI, powered by ultra-fast Groq LLM. How can I assist you with your studies today?
                 </div>
             </div>
         </div>
 
-        <!-- Input Area -->
         <div class="input-wrapper">
             <form id="chatForm">
-                <input type="text" id="question" class="chat-input" placeholder="Message Tuto AI..." autocomplete="off" required>
+                <input type="text" id="question" class="chat-input" placeholder="Ask anything in Bangla or English..." autocomplete="off" required>
                 <button type="submit" class="send-btn" id="sendBtn">
                     <i class="fa-solid fa-paper-plane"></i>
                 </button>
@@ -206,7 +173,6 @@ HTML_LAYOUT = """
         const question = input.value.trim();
         if (!question) return;
 
-        // User Message Append
         chatBox.innerHTML += `
             <div class="message">
                 <div class="avatar user-avatar">IH</div>
@@ -218,7 +184,6 @@ HTML_LAYOUT = """
         sendBtn.disabled = true;
         chatBox.scrollTop = chatBox.scrollHeight;
 
-        // AI Thinking Placeholder
         const loadingId = 'loading-' + Date.now();
         chatBox.innerHTML += `
             <div class="message" id="${loadingId}">
@@ -231,8 +196,6 @@ HTML_LAYOUT = """
         try {
             const formData = new FormData();
             formData.append('question', question);
-            formData.append('grade', 'General');
-            formData.append('subject', 'General');
 
             const response = await fetch('/api/chat', {
                 method: 'POST',
@@ -245,17 +208,16 @@ HTML_LAYOUT = """
             if (data.status === 'success') {
                 loadingElem.querySelector('.bubble').innerHTML = `<strong>Tuto AI</strong><br>${data.response}`;
             } else {
-                loadingElem.querySelector('.bubble').innerHTML = `<span class="text-danger">Sorry, something went wrong.</span>`;
+                loadingElem.querySelector('.bubble').innerHTML = `<span class="text-danger">Error: ${data.message}</span>`;
             }
         } catch (error) {
-            document.getElementById(loadingId).querySelector('.bubble').innerHTML = `<span class="text-danger">Unable to connect to server.</span>`;
+            document.getElementById(loadingId).querySelector('.bubble').innerHTML = `<span class="text-danger">Server connection error.</span>`;
         } finally {
             sendBtn.disabled = false;
             chatBox.scrollTop = chatBox.scrollHeight;
         }
     });
 </script>
-
 </body>
 </html>
 """
@@ -265,13 +227,21 @@ def home():
     return HTML_LAYOUT
 
 @app.post("/api/chat")
-def chat_endpoint(
-    question: str = Form(...),
-    grade: str = Form("General"),
-    subject: str = Form("General Studies")
-):
+def chat_endpoint(question: str = Form(...)):
     try:
-        response_text = ask_tuto_ai(question=question, grade=grade, subject=subject)
+        if not GROQ_API_KEY:
+            return {"status": "error", "message": "GROQ_API_KEY environment variable missing in Render."}
+        
+        client = Groq(api_key=GROQ_API_KEY)
+        completion = client.chat.completions.create(
+            model="llama-3.3-70b-versatile",
+            messages=[
+                {"role": "system", "content": "You are Tuto AI, a friendly and smart academic assistant created by Imran Hossen. Respond clearly in whatever language the user talks to you (Bangla, English, or Banglish)."},
+                {"role": "user", "content": question}
+            ]
+        )
+        
+        response_text = completion.choices[0].message.content
         return {
             "status": "success",
             "question": question,
