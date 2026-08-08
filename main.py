@@ -2,7 +2,6 @@ from fastapi import FastAPI, Form
 from fastapi.responses import HTMLResponse
 import os
 import uvicorn
-from ai_brain import ask_tuto_ai
 
 app = FastAPI(title="Tuto AI Backend")
 
@@ -12,114 +11,44 @@ HTML_LAYOUT = """
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tuto AI - Smart Learning Partner</title>
+    <title>Tuto AI</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
         body { background-color: #f4f6f9; font-family: sans-serif; }
-        .chat-card { max-width: 750px; margin: 30px auto; border-radius: 15px; border: none; box-shadow: 0 8px 24px rgba(0,0,0,0.08); }
-        .chat-header { background: linear-gradient(135deg, #4f46e5, #7c3aed); color: white; border-radius: 15px 15px 0 0 !important; padding: 20px; }
-        .chat-box { height: 420px; overflow-y: auto; padding: 20px; background: #ffffff; }
-        .message { margin-bottom: 15px; display: flex; flex-direction: column; }
-        .user-msg { align-items: flex-end; }
-        .ai-msg { align-items: flex-start; }
-        .bubble { max-width: 80%; padding: 12px 18px; border-radius: 18px; font-size: 15px; line-height: 1.5; }
-        .user-msg .bubble { background-color: #4f46e5; color: white; border-bottom-right-radius: 4px; }
-        .ai-msg .bubble { background-color: #f1f5f9; color: #1e293b; border-bottom-left-radius: 4px; border: 1px solid #e2e8f0; }
-        .input-area { background: #f8fafc; padding: 15px; border-radius: 0 0 15px 15px; border-top: 1px solid #e2e8f0; }
+        .chat-card { max-width: 700px; margin: 30px auto; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        .chat-header { background: #4f46e5; color: white; border-radius: 15px 15px 0 0 !important; padding: 15px; }
+        .chat-box { height: 380px; overflow-y: auto; padding: 20px; background: #fff; }
+        .bubble { padding: 10px 15px; border-radius: 15px; background: #f1f5f9; display: inline-block; }
     </style>
 </head>
 <body>
-
 <div class="container">
     <div class="card chat-card">
         <div class="card-header chat-header text-center">
-            <h4 class="m-0 fw-bold">🎓 Tuto AI Tutor</h4>
-            <small>Created by Imran Hossen</small>
+            <h4 class="m-0">🎓 Tuto AI Tutor</h4>
         </div>
-        
         <div class="chat-box" id="chatBox">
-            <div class="message ai-msg">
-                <div class="bubble">
-                    হ্যালো ইমরান ভাই! আমি Tuto AI। পড়াশোনা সংক্রান্ত যেকোনো প্রশ্ন এখানে করতে পারো!
-                </div>
-            </div>
+            <div class="bubble">হ্যালো ইমরান ভাই! আমি Tuto AI। তোমার কী সাহায্য লাগবে?</div>
         </div>
-
-        <div class="input-area">
+        <div class="p-3 bg-light">
             <form id="chatForm">
-                <div class="row g-2 mb-2">
-                    <div class="col-6">
-                        <input type="text" id="grade" class="form-control form-control-sm" placeholder="শ্রেণী (যেমন: Class 10)">
-                    </div>
-                    <div class="col-6">
-                        <input type="text" id="subject" class="form-control form-control-sm" placeholder="বিষয় (যেমন: Physics)">
-                    </div>
-                </div>
                 <div class="input-group">
-                    <input type="text" id="question" class="form-control" placeholder="তোমার প্রশ্নটি এখানে লেখো..." required>
-                    <button class="btn btn-primary px-4" type="submit" id="sendBtn">পাঠান 🚀</button>
+                    <input type="text" id="question" class="form-control" placeholder="প্রশ্ন লেখো..." required>
+                    <button class="btn btn-primary" type="submit">পাঠাও 🚀</button>
                 </div>
             </form>
         </div>
     </div>
 </div>
-
 <script>
-    document.getElementById('chatForm').addEventListener('submit', async (e) => {
+    document.getElementById('chatForm').addEventListener('submit', (e) => {
         e.preventDefault();
-        
-        const questionInput = document.getElementById('question');
-        const gradeInput = document.getElementById('grade');
-        const subjectInput = document.getElementById('subject');
+        const input = document.getElementById('question');
         const chatBox = document.getElementById('chatBox');
-        const sendBtn = document.getElementById('sendBtn');
-
-        const question = questionInput.value.trim();
-        if (!question) return;
-
-        appendMessage(question, 'user-msg');
-        questionInput.value = '';
-        sendBtn.disabled = true;
-
-        const loadingDiv = appendMessage('AI উত্তর চিন্তা করছে...', 'ai-msg');
-
-        try {
-            const formData = new FormData();
-            formData.append('question', question);
-            formData.append('grade', gradeInput.value || 'General');
-            formData.append('subject', subjectInput.value || 'General Studies');
-
-            const response = await fetch('/api/chat', {
-                method: 'POST',
-                body: formData
-            });
-
-            const data = await response.json();
-            
-            if (data.status === 'success') {
-                loadingDiv.querySelector('.bubble').innerText = data.response;
-            } else {
-                loadingDiv.querySelector('.bubble').innerText = "দুঃখিত, কোনো সমস্যা হয়েছে।";
-            }
-        } catch (error) {
-            loadingDiv.querySelector('.bubble').innerText = "সার্ভারের সাথে যোগাযোগ করা যাচ্ছে না।";
-        } finally {
-            sendBtn.disabled = false;
-            chatBox.scrollTop = chatBox.scrollHeight;
-        }
+        chatBox.innerHTML += `<div class="text-end my-2"><span class="bubble bg-primary text-white">${input.value}</span></div>`;
+        input.value = '';
     });
-
-    function appendMessage(text, className) {
-        const chatBox = document.getElementById('chatBox');
-        const msgDiv = document.createElement('div');
-        msgDiv.className = `message ${className}`;
-        msgDiv.innerHTML = `<div class="bubble">${text}</div>`;
-        chatBox.appendChild(msgDiv);
-        chatBox.scrollTop = chatBox.scrollHeight;
-        return msgDiv;
-    }
 </script>
-
 </body>
 </html>
 """
@@ -127,25 +56,6 @@ HTML_LAYOUT = """
 @app.get("/", response_class=HTMLResponse)
 def home():
     return HTML_LAYOUT
-
-@app.post("/api/chat")
-def chat_endpoint(
-    question: str = Form(...),
-    grade: str = Form("General"),
-    subject: str = Form("General Studies")
-):
-    try:
-        response_text = ask_tuto_ai(question=question, grade=grade, subject=subject)
-        return {
-            "status": "success",
-            "question": question,
-            "response": response_text
-        }
-    except Exception as e:
-        return {
-            "status": "error",
-            "message": str(e)
-        }
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 8000))
