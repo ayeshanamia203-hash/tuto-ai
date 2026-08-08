@@ -6,7 +6,6 @@ from groq import Groq
 
 app = FastAPI(title="Tuto AI Professional")
 
-# Groq Client Initialization
 GROQ_API_KEY = os.environ.get("GROQ_API_KEY", "")
 
 HTML_LAYOUT = """
@@ -15,7 +14,7 @@ HTML_LAYOUT = """
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tuto AI - Pro Tutor</title>
+    <title>Tuto AI - Created by Imran Hossen</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
@@ -23,7 +22,7 @@ HTML_LAYOUT = """
             --bg-color: #131314;
             --sidebar-bg: #1e1e20;
             --chat-bg: #131314;
-            --text-color: #e3e3e3;
+            --text-color: #ffffff;
             --accent-color: #a8c7fa;
         }
         body {
@@ -86,14 +85,19 @@ HTML_LAYOUT = """
             justify-content: center;
             font-size: 14px;
             font-weight: bold;
+            flex-shrink: 0;
         }
-        .user-avatar { background-color: #5436da; color: white; }
-        .ai-avatar { background: linear-gradient(135deg, #f59e0b, #d97706); color: white; }
+        .user-avatar { background-color: #5436da; color: #ffffff; }
+        .ai-avatar { background: linear-gradient(135deg, #f59e0b, #d97706); color: #ffffff; }
         .bubble {
             max-width: 85%;
-            font-size: 15px;
+            font-size: 16px;
             line-height: 1.6;
+            color: #ffffff !important;
             white-space: pre-wrap;
+        }
+        .bubble strong {
+            color: #a8c7fa !important;
         }
         .input-wrapper {
             max-width: 850px;
@@ -104,11 +108,12 @@ HTML_LAYOUT = """
         .chat-input {
             background-color: #1e1e20;
             border: 1px solid #3c4043;
-            color: var(--text-color);
+            color: #ffffff;
             border-radius: 25px;
             padding: 15px 50px 15px 20px;
             width: 100%;
             outline: none;
+            font-size: 15px;
         }
         .send-btn {
             position: absolute;
@@ -129,17 +134,17 @@ HTML_LAYOUT = """
         <button class="new-chat-btn w-100 mb-4" onclick="location.reload()">
             <i class="fa-solid fa-plus me-2"></i> New Chat
         </button>
-        <div class="text-secondary small fw-bold mb-2">RECENT CHATS</div>
-        <div class="text-muted small">✨ Tuto AI (Groq Powered)</div>
-        <div class="mt-auto text-muted small border-top border-secondary pt-3">
-            👨‍💻 Developer: <strong>Imran Hossen</strong>
+        <div class="text-secondary small fw-bold mb-2">PROJECT</div>
+        <div class="text-light small">✨ Tuto AI System</div>
+        <div class="mt-auto text-secondary small border-top border-secondary pt-3">
+            👨‍💻 Developer: <strong class="text-light">Imran Hossen</strong>
         </div>
     </div>
 
     <div class="main-chat">
         <div class="chat-header">
-            <h5 class="m-0 fw-bold"><i class="fa-solid fa-graduation-cap me-2 text-warning"></i>Tuto AI</h5>
-            <span class="badge bg-dark border border-secondary text-light">Powered by Groq</span>
+            <h5 class="m-0 fw-bold text-light"><i class="fa-solid fa-graduation-cap me-2 text-warning"></i>Tuto AI</h5>
+            <span class="badge bg-primary text-light px-3 py-2" style="font-size: 13px;">Created by Imran Hossen</span>
         </div>
 
         <div class="chat-container" id="chatBox">
@@ -147,14 +152,14 @@ HTML_LAYOUT = """
                 <div class="avatar ai-avatar">AI</div>
                 <div class="bubble">
                     <strong>Hello Imran!</strong><br>
-                    I am Tuto AI, powered by ultra-fast Groq LLM. How can I assist you with your studies today?
+                    I am Tuto AI, your academic assistant. How can I help you today?
                 </div>
             </div>
         </div>
 
         <div class="input-wrapper">
             <form id="chatForm">
-                <input type="text" id="question" class="chat-input" placeholder="Ask anything in Bangla or English..." autocomplete="off" required>
+                <input type="text" id="question" class="chat-input" placeholder="Message Tuto AI..." autocomplete="off" required>
                 <button type="submit" class="send-btn" id="sendBtn">
                     <i class="fa-solid fa-paper-plane"></i>
                 </button>
@@ -188,7 +193,7 @@ HTML_LAYOUT = """
         chatBox.innerHTML += `
             <div class="message" id="${loadingId}">
                 <div class="avatar ai-avatar">AI</div>
-                <div class="bubble text-muted"><i class="fa-solid fa-circle-notch fa-spin me-2"></i>Thinking...</div>
+                <div class="bubble text-secondary"><i class="fa-solid fa-circle-notch fa-spin me-2"></i>Thinking...</div>
             </div>
         `;
         chatBox.scrollTop = chatBox.scrollHeight;
