@@ -15,14 +15,14 @@ HTML_LAYOUT = """
     <title>Tuto AI - Smart Learning Partner</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
-        body { background-color: #f4f6f9; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-        .chat-card { max-width: 800px; margin: 30px auto; border-radius: 15px; border: none; box-shadow: 0 8px 24px rgba(0,0,0,0.08); }
+        body { background-color: #f4f6f9; font-family: sans-serif; }
+        .chat-card { max-width: 750px; margin: 30px auto; border-radius: 15px; border: none; box-shadow: 0 8px 24px rgba(0,0,0,0.08); }
         .chat-header { background: linear-gradient(135deg, #4f46e5, #7c3aed); color: white; border-radius: 15px 15px 0 0 !important; padding: 20px; }
-        .chat-box { height: 450px; overflow-y: auto; padding: 20px; background: #ffffff; }
+        .chat-box { height: 420px; overflow-y: auto; padding: 20px; background: #ffffff; }
         .message { margin-bottom: 15px; display: flex; flex-direction: column; }
         .user-msg { align-items: flex-end; }
         .ai-msg { align-items: flex-start; }
-        .bubble { max-width: 75%; padding: 12px 18px; border-radius: 18px; font-size: 15px; line-height: 1.5; }
+        .bubble { max-width: 80%; padding: 12px 18px; border-radius: 18px; font-size: 15px; line-height: 1.5; }
         .user-msg .bubble { background-color: #4f46e5; color: white; border-bottom-right-radius: 4px; }
         .ai-msg .bubble { background-color: #f1f5f9; color: #1e293b; border-bottom-left-radius: 4px; border: 1px solid #e2e8f0; }
         .input-area { background: #f8fafc; padding: 15px; border-radius: 0 0 15px 15px; border-top: 1px solid #e2e8f0; }
@@ -40,7 +40,7 @@ HTML_LAYOUT = """
         <div class="chat-box" id="chatBox">
             <div class="message ai-msg">
                 <div class="bubble">
-                    হ্যালো! আমি তোমার AI টিউটর। পড়াশোনা সংক্রান্ত যেকোনো প্রশ্ন করতে পারো!
+                    হ্যালো ইমরান ভাই! আমি Tuto AI। পড়াশোনা সংক্রান্ত যেকোনো প্রশ্ন এখানে করতে পারো!
                 </div>
             </div>
         </div>
