@@ -373,9 +373,9 @@ async def chat_endpoint(question: str = Form(...), file: UploadFile = File(None)
             mime_type = file.content_type or "image/jpeg"
             image_url = f"data:{mime_type};base64,{base64_image}"
 
-            # Groq Vision Model (llama-3.2-11b-vision-preview)
+            # Updated Groq Vision Model
             completion = client.chat.completions.create(
-                model="llama-3.2-11b-vision-preview",
+                model="llama-3.2-90b-vision-preview",
                 messages=[
                     {
                         "role": "user",
