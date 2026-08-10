@@ -1,7 +1,8 @@
-from fastapi import FastAPI, Form
+from fastapi import FastAPI, Form, File, UploadFile
 from fastapi.responses import HTMLResponse
 import os
 import uvicorn
+import base64
 from groq import Groq
 
 app = FastAPI(title="Tuto AI Professional")
@@ -14,7 +15,7 @@ HTML_LAYOUT = """
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tuto AI - Created by Imran Hossen</title>
+    <title>Tuto AI - Day 7 Vision Edition</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
@@ -96,36 +97,87 @@ HTML_LAYOUT = """
             color: #ffffff !important;
             white-space: pre-wrap;
         }
-        .bubble strong {
-            color: #a8c7fa !important;
+        .bubble strong { color: #a8c7fa !important; }
+        .uploaded-img-preview {
+            max-width: 200px;
+            border-radius: 10px;
+            margin-bottom: 10px;
+            border: 1px solid #444;
         }
+        
+        /* Input Wrapper with Plus Button */
         .input-wrapper {
             max-width: 850px;
             margin: 0 auto 25px auto;
             width: 90%;
             position: relative;
-        }
-        .chat-input {
+            display: flex;
+            align-items: center;
             background-color: #1e1e20;
             border: 1px solid #3c4043;
-            color: #ffffff;
             border-radius: 25px;
-            padding: 15px 50px 15px 20px;
+            padding: 5px 15px;
+        }
+        .plus-btn {
+            background: none;
+            border: none;
+            color: var(--accent-color);
+            font-size: 20px;
+            cursor: pointer;
+            padding: 5px 10px;
+            transition: 0.2s;
+        }
+        .plus-btn:hover { color: #fff; }
+        .chat-input {
+            background: none;
+            border: none;
+            color: #ffffff;
+            padding: 10px;
             width: 100%;
             outline: none;
             font-size: 15px;
         }
         .send-btn {
-            position: absolute;
-            right: 12px;
-            top: 50%;
-            transform: translateY(-50%);
             background: none;
             border: none;
             color: var(--accent-color);
             font-size: 18px;
             cursor: pointer;
+            padding: 5px 10px;
         }
+        
+        /* Modal Custom Style */
+        .modal-content {
+            background-color: #1e1e20;
+            color: #fff;
+            border: 1px solid #444;
+        }
+        .modal-btn {
+            background-color: #2b2a33;
+            color: #fff;
+            border: 1px solid #444;
+            border-radius: 15px;
+            padding: 15px;
+            width: 100%;
+            text-align: left;
+            margin-bottom: 10px;
+            transition: 0.2s;
+        }
+        .modal-btn:hover {
+            background-color: #3b3a45;
+            color: #a8c7fa;
+        }
+        
+        #imagePreviewArea {
+            display: none;
+            padding: 5px 15px;
+            background: #2b2a33;
+            border-radius: 10px;
+            margin-bottom: 8px;
+            align-items: center;
+            justify-content: space-between;
+        }
+
         @media (max-width: 768px) { .sidebar { display: none; } }
     </style>
 </head>
@@ -152,22 +204,86 @@ HTML_LAYOUT = """
                 <div class="avatar ai-avatar">AI</div>
                 <div class="bubble">
                     <strong>Hello Imran!</strong><br>
-                    I am Tuto AI, your academic assistant. How can I help you today?
+                    I am Tuto AI. You can now send me text or upload photos of your study materials and math problems!
                 </div>
             </div>
         </div>
 
-        <div class="input-wrapper">
-            <form id="chatForm">
-                <input type="text" id="question" class="chat-input" placeholder="Message Tuto AI..." autocomplete="off" required>
-                <button type="submit" class="send-btn" id="sendBtn">
-                    <i class="fa-solid fa-paper-plane"></i>
+        <!-- Input Area -->
+        <div class="container max-width-850">
+            <!-- Preview Box before sending image -->
+            <div id="imagePreviewArea">
+                <span class="text-light small" id="fileNameText"><i class="fa-solid fa-image me-2"></i>Image attached</span>
+                <button type="button" class="btn-close btn-close-white btn-sm" onclick="clearImage()"></button>
+            </div>
+
+            <div class="input-wrapper">
+                <button type="button" class="plus-btn" data-bs-toggle="modal" data-bs-target="#uploadModal">
+                    <i class="fa-solid fa-circle-plus"></i>
                 </button>
-            </form>
+                <form id="chatForm" class="d-flex w-100 align-items-center">
+                    <input type="text" id="question" class="chat-input" placeholder="Message Tuto AI or attach photo..." autocomplete="off">
+                    <button type="submit" class="send-btn" id="sendBtn">
+                        <i class="fa-solid fa-paper-plane"></i>
+                    </button>
+                </form>
+            </div>
         </div>
     </div>
 
+    <!-- Hidden File Inputs -->
+    <input type="file" id="galleryInput" accept="image/*" style="display: none;" onchange="handleFileSelect(this)">
+    <input type="file" id="cameraInput" accept="image/*" capture="environment" style="display: none;" onchange="handleFileSelect(this)">
+
+    <!-- Upload Options Modal -->
+    <div class="modal fade" id="uploadModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header border-0">
+                    <h5 class="modal-title fw-bold"><i class="fa-solid fa-paperclip me-2 text-primary"></i>Attach Photo</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <button class="modal-btn" onclick="triggerCamera()">
+                        <i class="fa-solid fa-camera fa-lg me-3 text-warning"></i> <strong>Take Photo</strong> (Open Camera)
+                    </button>
+                    <button class="modal-btn" onclick="triggerGallery()">
+                        <i class="fa-solid fa-images fa-lg me-3 text-info"></i> <strong>Upload Photo</strong> (From Gallery)
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
+    let selectedFile = null;
+
+    function triggerGallery() {
+        bootstrap.Modal.getInstance(document.getElementById('uploadModal')).hide();
+        document.getElementById('galleryInput').click();
+    }
+
+    function triggerCamera() {
+        bootstrap.Modal.getInstance(document.getElementById('uploadModal')).hide();
+        document.getElementById('cameraInput').click();
+    }
+
+    function handleFileSelect(input) {
+        if (input.files && input.files[0]) {
+            selectedFile = input.files[0];
+            document.getElementById('fileNameText').innerText = "📷 " + selectedFile.name;
+            document.getElementById('imagePreviewArea').style.display = 'flex';
+        }
+    }
+
+    function clearImage() {
+        selectedFile = null;
+        document.getElementById('galleryInput').value = '';
+        document.getElementById('cameraInput').value = '';
+        document.getElementById('imagePreviewArea').style.display = 'none';
+    }
+
     document.getElementById('chatForm').addEventListener('submit', async (e) => {
         e.preventDefault();
         
@@ -176,16 +292,30 @@ HTML_LAYOUT = """
         const sendBtn = document.getElementById('sendBtn');
 
         const question = input.value.trim();
-        if (!question) return;
+        if (!question && !selectedFile) return;
+
+        let userContentHTML = `<strong>You</strong><br>${question}`;
+        
+        if (selectedFile) {
+            const imgURL = URL.createObjectURL(selectedFile);
+            userContentHTML = `<img src="${imgURL}" class="uploaded-img-preview"><br>` + userContentHTML;
+        }
 
         chatBox.innerHTML += `
             <div class="message">
                 <div class="avatar user-avatar">IH</div>
-                <div class="bubble"><strong>You</strong><br>${question}</div>
+                <div class="bubble">${userContentHTML}</div>
             </div>
         `;
         
+        const formData = new FormData();
+        formData.append('question', question || "Please analyze this image.");
+        if (selectedFile) {
+            formData.append('file', selectedFile);
+        }
+
         input.value = '';
+        clearImage();
         sendBtn.disabled = true;
         chatBox.scrollTop = chatBox.scrollHeight;
 
@@ -193,15 +323,12 @@ HTML_LAYOUT = """
         chatBox.innerHTML += `
             <div class="message" id="${loadingId}">
                 <div class="avatar ai-avatar">AI</div>
-                <div class="bubble text-secondary"><i class="fa-solid fa-circle-notch fa-spin me-2"></i>Thinking...</div>
+                <div class="bubble text-secondary"><i class="fa-solid fa-circle-notch fa-spin me-2"></i>Analyzing & thinking...</div>
             </div>
         `;
         chatBox.scrollTop = chatBox.scrollHeight;
 
         try {
-            const formData = new FormData();
-            formData.append('question', question);
-
             const response = await fetch('/api/chat', {
                 method: 'POST',
                 body: formData
@@ -232,19 +359,42 @@ def home():
     return HTML_LAYOUT
 
 @app.post("/api/chat")
-def chat_endpoint(question: str = Form(...)):
+async def chat_endpoint(question: str = Form(...), file: UploadFile = File(None)):
     try:
         if not GROQ_API_KEY:
-            return {"status": "error", "message": "GROQ_API_KEY environment variable missing in Render."}
+            return {"status": "error", "message": "GROQ_API_KEY missing in Render environment."}
         
         client = Groq(api_key=GROQ_API_KEY)
-        completion = client.chat.completions.create(
-            model="llama-3.3-70b-versatile",
-            messages=[
-                {"role": "system", "content": "You are Tuto AI, a friendly and smart academic assistant created by Imran Hossen. Respond clearly in whatever language the user talks to you (Bangla, English, or Banglish)."},
-                {"role": "user", "content": question}
-            ]
-        )
+        
+        # If an image file is uploaded
+        if file and file.filename:
+            contents = await file.read()
+            base64_image = base64.b64encode(contents).decode('utf-8')
+            mime_type = file.content_type or "image/jpeg"
+            image_url = f"data:{mime_type};base64,{base64_image}"
+
+            # Groq Vision Model (llama-3.2-11b-vision-preview)
+            completion = client.chat.completions.create(
+                model="llama-3.2-11b-vision-preview",
+                messages=[
+                    {
+                        "role": "user",
+                        "content": [
+                            {"type": "text", "text": f"You are Tuto AI created by Imran Hossen. Answer the question based on this image: {question}"},
+                            {"type": "image_url", "image_url": {"url": image_url}}
+                        ]
+                    }
+                ]
+            )
+        else:
+            # Standard Text Model
+            completion = client.chat.completions.create(
+                model="llama-3.3-70b-versatile",
+                messages=[
+                    {"role": "system", "content": "You are Tuto AI, a friendly academic assistant created by Imran Hossen. Respond clearly in whatever language the user speaks."},
+                    {"role": "user", "content": question}
+                ]
+            )
         
         response_text = completion.choices[0].message.content
         return {
