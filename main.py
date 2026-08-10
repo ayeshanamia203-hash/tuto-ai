@@ -105,7 +105,6 @@ HTML_LAYOUT = """
             border: 1px solid #444;
         }
         
-        /* Input Wrapper with Plus Button */
         .input-wrapper {
             max-width: 850px;
             margin: 0 auto 25px auto;
@@ -146,7 +145,6 @@ HTML_LAYOUT = """
             padding: 5px 10px;
         }
         
-        /* Modal Custom Style */
         .modal-content {
             background-color: #1e1e20;
             color: #fff;
@@ -209,9 +207,7 @@ HTML_LAYOUT = """
             </div>
         </div>
 
-        <!-- Input Area -->
         <div class="container max-width-850">
-            <!-- Preview Box before sending image -->
             <div id="imagePreviewArea">
                 <span class="text-light small" id="fileNameText"><i class="fa-solid fa-image me-2"></i>Image attached</span>
                 <button type="button" class="btn-close btn-close-white btn-sm" onclick="clearImage()"></button>
@@ -231,11 +227,9 @@ HTML_LAYOUT = """
         </div>
     </div>
 
-    <!-- Hidden File Inputs -->
     <input type="file" id="galleryInput" accept="image/*" style="display: none;" onchange="handleFileSelect(this)">
     <input type="file" id="cameraInput" accept="image/*" capture="environment" style="display: none;" onchange="handleFileSelect(this)">
 
-    <!-- Upload Options Modal -->
     <div class="modal fade" id="uploadModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
@@ -366,16 +360,15 @@ async def chat_endpoint(question: str = Form(...), file: UploadFile = File(None)
         
         client = Groq(api_key=GROQ_API_KEY)
         
-        # If an image file is uploaded
         if file and file.filename:
             contents = await file.read()
             base64_image = base64.b64encode(contents).decode('utf-8')
             mime_type = file.content_type or "image/jpeg"
             image_url = f"data:{mime_type};base64,{base64_image}"
 
-            # Updated Groq Vision Model
+            # Groq Stable Vision Model
             completion = client.chat.completions.create(
-                model="llama-3.2-90b-vision-preview",
+                model="llama-3.2-11b-vision-instruct",
                 messages=[
                     {
                         "role": "user",
@@ -387,7 +380,6 @@ async def chat_endpoint(question: str = Form(...), file: UploadFile = File(None)
                 ]
             )
         else:
-            # Standard Text Model
             completion = client.chat.completions.create(
                 model="llama-3.3-70b-versatile",
                 messages=[
