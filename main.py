@@ -360,7 +360,7 @@ async def chat_endpoint(question: str = Form(...), file: UploadFile = File(None)
         
         client = Groq(api_key=GROQ_API_KEY)
         
-        # If image is attached -> Use Groq Llama 3.2 Vision Preview Model
+        # If image is attached -> Use Groq Active Vision Model (Qwen 3.6 27B)
         if file and file.filename:
             contents = await file.read()
             base64_image = base64.b64encode(contents).decode('utf-8')
@@ -368,12 +368,16 @@ async def chat_endpoint(question: str = Form(...), file: UploadFile = File(None)
             image_url = f"data:{mime_type};base64,{base64_image}"
 
             completion = client.chat.completions.create(
-                model="llama-3.2-11b-vision-preview",
+                model="qwen/qwen3.6-27b",
                 messages=[
+                    {
+                        "role": "system",
+                        "content": "You are Tuto AI, a helpful tutor created by Imran Hossen. CRITICAL INSTRUCTION: Provide ONLY the final direct answer to the user. Do NOT write any inner monologue, thinking steps, analysis steps, or 'Plan:'. Keep the answer concise and direct."
+                    },
                     {
                         "role": "user",
                         "content": [
-                            {"type": "text", "text": f"You are Tuto AI, a helpful tutor created by Imran Hossen. Answer directly based on this image: {question}"},
+                            {"type": "text", "text": question},
                             {"type": "image_url", "image_url": {"url": image_url}}
                         ]
                     }
