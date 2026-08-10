@@ -371,9 +371,13 @@ async def chat_endpoint(question: str = Form(...), file: UploadFile = File(None)
                 model="qwen/qwen3.6-27b",
                 messages=[
                     {
+                        "role": "system",
+                        "content": "You are Tuto AI, a helpful tutor created by Imran Hossen. Answer directly and concisely based on the image provided. Do not write internal analysis steps or chain-of-thought."
+                    },
+                    {
                         "role": "user",
                         "content": [
-                            {"type": "text", "text": f"You are Tuto AI created by Imran Hossen. Answer the question based on this image: {question}"},
+                            {"type": "text", "text": question},
                             {"type": "image_url", "image_url": {"url": image_url}}
                         ]
                     }
