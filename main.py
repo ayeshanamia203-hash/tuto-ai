@@ -3,6 +3,7 @@ from fastapi.responses import HTMLResponse
 import os
 import uvicorn
 import base64
+import re
 from groq import Groq
 
 app = FastAPI(title="Tuto AI Professional")
@@ -317,7 +318,7 @@ HTML_LAYOUT = """
         chatBox.innerHTML += `
             <div class="message" id="${loadingId}">
                 <div class="avatar ai-avatar">AI</div>
-                <div class="bubble text-secondary"><i class="fa-solid fa-circle-notch fa-spin me-2"></i>Analyzing & thinking...</div>
+                <div class="bubble text-secondary"><i class="fa-solid fa-circle-notch fa-spin me-2"></i>Analyzing...</div>
             </div>
         `;
         chatBox.scrollTop = chatBox.scrollHeight;
@@ -348,6 +349,38 @@ HTML_LAYOUT = """
 </html>
 """
 
+def clean_ai_response(text: str) -> str:
+    """থিংকিং প্রসেস এবং ড্রাফটিং অংশ কেটে শুধু আসল উত্তর রাখে"""
+    if not text:
+        return ""
+    
+    # <think>...</think> ট্যাগ থাকলে তা বাদ দেয়
+    text = re.sub(r'<think>.*?</think>', '', text, flags=re.DOTALL)
+    
+    # **Drafting the response:** বা Based on... এর পরের অংশ থেকে উত্তর নেয়
+    if "**Drafting the response:**" in text:
+        text = text.split("**Drafting the response:**")[-1]
+    elif "Drafting the response:" in text:
+        text = text.split("Drafting the response:")[-1]
+    elif "**Final Response:**" in text:
+        text = text.split("**Final Response:**")[-1]
+    
+    # যদি সংখ্যাযুক্ত লিস্ট বা প্ল্যান দিয়ে শুরু হয়, তবে তা ফিল্টার করার চেষ্টা
+    lines = text.strip().split('\n')
+    filtered_lines = []
+    is_draft_started = False
+    
+    for line in lines:
+        if is_draft_started:
+            filtered_lines.append(line)
+        elif not re.match(r'^\d+\.\s*\*\*', line.strip()) and not line.strip().startswith('Plan:'):
+            filtered_lines.append(line)
+        if "Drafting" in line or "Response:" in line:
+            is_draft_started = True
+
+    result = "\n".join(filtered_lines).strip()
+    return result if result else text.strip()
+
 @app.get("/", response_class=HTMLResponse)
 def home():
     return HTML_LAYOUT
@@ -360,7 +393,6 @@ async def chat_endpoint(question: str = Form(...), file: UploadFile = File(None)
         
         client = Groq(api_key=GROQ_API_KEY)
         
-        # If image is attached -> Use Groq Active Vision Model (Qwen 3.6 27B)
         if file and file.filename:
             contents = await file.read()
             base64_image = base64.b64encode(contents).decode('utf-8')
@@ -372,7 +404,7 @@ async def chat_endpoint(question: str = Form(...), file: UploadFile = File(None)
                 messages=[
                     {
                         "role": "system",
-                        "content": "You are Tuto AI, a helpful tutor created by Imran Hossen. CRITICAL INSTRUCTION: Provide ONLY the final direct answer to the user. Do NOT write any inner monologue, thinking steps, analysis steps, or 'Plan:'. Keep the answer concise and direct."
+                        "content": "You are Tuto AI, created by Imran Hossen. Answer concisely and directly."
                     },
                     {
                         "role": "user",
@@ -383,8 +415,9 @@ async def chat_endpoint(question: str = Form(...), file: UploadFile = File(None)
                     }
                 ]
             )
+            raw_response = completion.choices[0].message.content
+            final_response = clean_ai_response(raw_response)
         else:
-            # Text Only -> Llama 3.3
             completion = client.chat.completions.create(
                 model="llama-3.3-70b-versatile",
                 messages=[
@@ -392,12 +425,12 @@ async def chat_endpoint(question: str = Form(...), file: UploadFile = File(None)
                     {"role": "user", "content": question}
                 ]
             )
+            final_response = completion.choices[0].message.content
         
-        response_text = completion.choices[0].message.content
         return {
             "status": "success",
             "question": question,
-            "response": response_text
+            "response": final_response
         }
     except Exception as e:
         return {
