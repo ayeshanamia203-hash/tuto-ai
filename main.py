@@ -360,15 +360,15 @@ async def chat_endpoint(question: str = Form(...), file: UploadFile = File(None)
         
         client = Groq(api_key=GROQ_API_KEY)
         
+        # If image is attached -> Use Groq Active Vision Model (Qwen 3.6 27B)
         if file and file.filename:
             contents = await file.read()
             base64_image = base64.b64encode(contents).decode('utf-8')
             mime_type = file.content_type or "image/jpeg"
             image_url = f"data:{mime_type};base64,{base64_image}"
 
-            # Groq Stable Vision Model
             completion = client.chat.completions.create(
-                model="llama-3.2-11b-vision-instruct",
+                model="qwen/qwen3.6-27b",
                 messages=[
                     {
                         "role": "user",
@@ -380,6 +380,7 @@ async def chat_endpoint(question: str = Form(...), file: UploadFile = File(None)
                 ]
             )
         else:
+            # Text Only -> Llama 3.3
             completion = client.chat.completions.create(
                 model="llama-3.3-70b-versatile",
                 messages=[
