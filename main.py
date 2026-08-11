@@ -6,7 +6,7 @@ import base64
 import re
 from groq import Groq
 
-app = FastAPI(title="Tuto AI Professional - Day 8 UI Upgrade")
+app = FastAPI(title="Tuto AI Professional - Natural Vision Edition")
 
 GROQ_API_KEY = os.environ.get("GROQ_API_KEY", "")
 
@@ -16,7 +16,7 @@ HTML_LAYOUT = """
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tuto AI - Day 8 Math & Science Edition</title>
+    <title>Tuto AI - Smart Vision Edition</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
@@ -262,7 +262,7 @@ HTML_LAYOUT = """
                 <div class="avatar ai-avatar">AI</div>
                 <div class="bubble">
                     <strong>Hello Imran!</strong><br>
-                    I am Tuto AI. Send me your Math, Physics, or Chemistry problems or upload a photo to solve step-by-step!
+                    I am Tuto AI. Send me your Math, Physics, or Chemistry problems, or share any image to chat about it!
                 </div>
             </div>
         </div>
@@ -316,13 +316,11 @@ HTML_LAYOUT = """
     let selectedFile = null;
     const questionInput = document.getElementById('question');
 
-    // Auto resize input box like ChatGPT / Gemini
     questionInput.addEventListener('input', function() {
         this.style.height = 'auto';
         this.style.height = (this.scrollHeight) + 'px';
     });
 
-    // Enter = Send, Shift+Enter = New line
     questionInput.addEventListener('keydown', function(e) {
         if (e.key === 'Enter' && !e.shiftKey) {
             e.preventDefault();
@@ -395,13 +393,13 @@ HTML_LAYOUT = """
         `;
         
         const formData = new FormData();
-        formData.append('question', question || "Please analyze this problem step-by-step.");
+        formData.append('question', question || "Describe or analyze this image naturally.");
         if (selectedFile) {
             formData.append('file', selectedFile);
         }
 
         questionInput.value = '';
-        questionInput.style.height = 'auto'; // Reset height
+        questionInput.style.height = 'auto';
         clearImage();
         sendBtn.disabled = true;
         chatBox.scrollTop = chatBox.scrollHeight;
@@ -410,7 +408,7 @@ HTML_LAYOUT = """
         chatBox.innerHTML += `
             <div class="message" id="${loadingId}">
                 <div class="avatar ai-avatar">AI</div>
-                <div class="bubble text-secondary"><i class="fa-solid fa-circle-notch fa-spin me-2"></i>Analyzing & calculating...</div>
+                <div class="bubble text-secondary"><i class="fa-solid fa-circle-notch fa-spin me-2"></i>Analyzing...</div>
             </div>
         `;
         chatBox.scrollTop = chatBox.scrollHeight;
@@ -466,14 +464,13 @@ async def chat_endpoint(question: str = Form(...), file: UploadFile = File(None)
         
         client = Groq(api_key=GROQ_API_KEY)
         
-        EDUCATOR_SYSTEM_PROMPT = (
-            "You are Tuto AI, a world-class expert AI Tutor created by Imran Hossen. "
-            "Your goal is to teach students effectively like a top educator. "
+        SMART_SYSTEM_PROMPT = (
+            "You are Tuto AI, a friendly, intelligent AI created by Imran Hossen. "
             "INSTRUCTIONS:\n"
-            "1. Respond in the language the student speaks (Bangla, English, or Banglish).\n"
-            "2. Break down math and science concepts into clear, numbered steps (Step 1, Step 2, Step 3).\n"
-            "3. ALWAYS use LaTeX formatting for mathematical expressions, equations, and formulas. Use $...$ for inline math (e.g., $a^2 + b^2 = c^2$) and $$...$$ for standalone display equations.\n"
-            "4. Do NOT output any inner thinking, monologue, or 'Plan:'. Give only the structured, friendly explanation."
+            "1. Respond in the language the user speaks (Bangla, English, or Banglish).\n"
+            "2. IF the user shares a Math/Science/Academic problem or text: Act like an expert tutor and break it down into clear numbered steps. ALWAYS use LaTeX for math formulas ($...$ for inline, $$...$$ for display).\n"
+            "3. IF the user shares a personal photo, human portrait, object, or general image: Respond warmly, naturally, and conversationally like ChatGPT/Gemini. Do NOT force 'Step 1, Step 2' or treat human photos as math problems!\n"
+            "4. Never output internal monologue, reasoning, or 'Plan:'."
         )
 
         if file and file.filename:
@@ -485,7 +482,7 @@ async def chat_endpoint(question: str = Form(...), file: UploadFile = File(None)
             completion = client.chat.completions.create(
                 model="qwen/qwen3.6-27b",
                 messages=[
-                    {"role": "system", "content": EDUCATOR_SYSTEM_PROMPT},
+                    {"role": "system", "content": SMART_SYSTEM_PROMPT},
                     {
                         "role": "user",
                         "content": [
@@ -501,7 +498,7 @@ async def chat_endpoint(question: str = Form(...), file: UploadFile = File(None)
             completion = client.chat.completions.create(
                 model="llama-3.3-70b-versatile",
                 messages=[
-                    {"role": "system", "content": EDUCATOR_SYSTEM_PROMPT},
+                    {"role": "system", "content": SMART_SYSTEM_PROMPT},
                     {"role": "user", "content": question}
                 ]
             )
