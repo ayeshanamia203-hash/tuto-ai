@@ -6,7 +6,7 @@ import base64
 import re
 from groq import Groq
 
-app = FastAPI(title="Tuto AI Professional - Day 8")
+app = FastAPI(title="Tuto AI Professional - Day 8 UI Upgrade")
 
 GROQ_API_KEY = os.environ.get("GROQ_API_KEY", "")
 
@@ -126,44 +126,93 @@ HTML_LAYOUT = """
             border: 1px solid #444;
         }
         
+        /* Auto Expanding Input Box & Image Preview Box */
         .input-wrapper {
             max-width: 850px;
             margin: 0 auto 25px auto;
             width: 90%;
-            position: relative;
-            display: flex;
-            align-items: center;
             background-color: #1e1e20;
             border: 1px solid #3c4043;
-            border-radius: 25px;
-            padding: 5px 15px;
+            border-radius: 20px;
+            padding: 8px 15px;
+            display: flex;
+            flex-direction: column;
         }
+
+        #imagePreviewArea {
+            display: none;
+            position: relative;
+            width: fit-content;
+            margin-bottom: 8px;
+        }
+
+        #previewImgThumb {
+            width: 70px;
+            height: 70px;
+            object-fit: cover;
+            border-radius: 12px;
+            border: 1px solid #555;
+        }
+
+        .close-img-btn {
+            position: absolute;
+            top: -6px;
+            right: -6px;
+            background: #e11d48;
+            color: #fff;
+            border: none;
+            border-radius: 50%;
+            width: 22px;
+            height: 22px;
+            font-size: 12px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.5);
+        }
+
+        .input-row {
+            display: flex;
+            align-items: flex-end;
+            gap: 10px;
+        }
+
         .plus-btn {
             background: none;
             border: none;
             color: var(--accent-color);
             font-size: 20px;
             cursor: pointer;
-            padding: 5px 10px;
+            padding: 5px;
+            margin-bottom: 3px;
             transition: 0.2s;
         }
         .plus-btn:hover { color: #fff; }
-        .chat-input {
+
+        .chat-textarea {
             background: none;
             border: none;
             color: #ffffff;
-            padding: 10px;
+            padding: 6px 0;
             width: 100%;
             outline: none;
             font-size: 15px;
+            resize: none;
+            max-height: 150px;
+            min-height: 28px;
+            line-height: 1.4;
+            font-family: inherit;
         }
+
         .send-btn {
             background: none;
             border: none;
             color: var(--accent-color);
             font-size: 18px;
             cursor: pointer;
-            padding: 5px 10px;
+            padding: 5px;
+            margin-bottom: 3px;
         }
         
         .modal-content {
@@ -185,16 +234,6 @@ HTML_LAYOUT = """
         .modal-btn:hover {
             background-color: #3b3a45;
             color: #a8c7fa;
-        }
-        
-        #imagePreviewArea {
-            display: none;
-            padding: 5px 15px;
-            background: #2b2a33;
-            border-radius: 10px;
-            margin-bottom: 8px;
-            align-items: center;
-            justify-content: space-between;
         }
 
         @media (max-width: 768px) { .sidebar { display: none; } }
@@ -229,21 +268,23 @@ HTML_LAYOUT = """
         </div>
 
         <div class="container max-width-850">
-            <div id="imagePreviewArea">
-                <span class="text-light small" id="fileNameText"><i class="fa-solid fa-image me-2"></i>Image attached</span>
-                <button type="button" class="btn-close btn-close-white btn-sm" onclick="clearImage()"></button>
-            </div>
-
             <div class="input-wrapper">
-                <button type="button" class="plus-btn" data-bs-toggle="modal" data-bs-target="#uploadModal">
-                    <i class="fa-solid fa-circle-plus"></i>
-                </button>
-                <form id="chatForm" class="d-flex w-100 align-items-center">
-                    <input type="text" id="question" class="chat-input" placeholder="Message Tuto AI or attach photo..." autocomplete="off">
-                    <button type="submit" class="send-btn" id="sendBtn">
-                        <i class="fa-solid fa-paper-plane"></i>
+                <div id="imagePreviewArea">
+                    <img id="previewImgThumb" src="" alt="Thumbnail">
+                    <button type="button" class="close-img-btn" onclick="clearImage()"><i class="fa-solid fa-xmark"></i></button>
+                </div>
+
+                <div class="input-row">
+                    <button type="button" class="plus-btn" data-bs-toggle="modal" data-bs-target="#uploadModal">
+                        <i class="fa-solid fa-circle-plus"></i>
                     </button>
-                </form>
+                    <form id="chatForm" class="d-flex w-100 align-items-end">
+                        <textarea id="question" class="chat-textarea" rows="1" placeholder="Message Tuto AI or attach photo..."></textarea>
+                        <button type="submit" class="send-btn" id="sendBtn">
+                            <i class="fa-solid fa-paper-plane"></i>
+                        </button>
+                    </form>
+                </div>
             </div>
         </div>
     </div>
@@ -273,6 +314,21 @@ HTML_LAYOUT = """
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
     let selectedFile = null;
+    const questionInput = document.getElementById('question');
+
+    // Auto resize input box like ChatGPT / Gemini
+    questionInput.addEventListener('input', function() {
+        this.style.height = 'auto';
+        this.style.height = (this.scrollHeight) + 'px';
+    });
+
+    // Enter = Send, Shift+Enter = New line
+    questionInput.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            document.getElementById('chatForm').dispatchEvent(new Event('submit'));
+        }
+    });
 
     function renderMathInElem(element) {
         if (window.renderMathInElement) {
@@ -301,8 +357,9 @@ HTML_LAYOUT = """
     function handleFileSelect(input) {
         if (input.files && input.files[0]) {
             selectedFile = input.files[0];
-            document.getElementById('fileNameText').innerText = "📷 " + selectedFile.name;
-            document.getElementById('imagePreviewArea').style.display = 'flex';
+            const imgURL = URL.createObjectURL(selectedFile);
+            document.getElementById('previewImgThumb').src = imgURL;
+            document.getElementById('imagePreviewArea').style.display = 'block';
         }
     }
 
@@ -311,19 +368,19 @@ HTML_LAYOUT = """
         document.getElementById('galleryInput').value = '';
         document.getElementById('cameraInput').value = '';
         document.getElementById('imagePreviewArea').style.display = 'none';
+        document.getElementById('previewImgThumb').src = '';
     }
 
     document.getElementById('chatForm').addEventListener('submit', async (e) => {
         e.preventDefault();
         
-        const input = document.getElementById('question');
         const chatBox = document.getElementById('chatBox');
         const sendBtn = document.getElementById('sendBtn');
 
-        const question = input.value.trim();
+        const question = questionInput.value.trim();
         if (!question && !selectedFile) return;
 
-        let userContentHTML = `<strong>You</strong><br>${question}`;
+        let userContentHTML = `<strong>You</strong><br>${question.replace(/\\n/g, '<br>')}`;
         
         if (selectedFile) {
             const imgURL = URL.createObjectURL(selectedFile);
@@ -343,7 +400,8 @@ HTML_LAYOUT = """
             formData.append('file', selectedFile);
         }
 
-        input.value = '';
+        questionInput.value = '';
+        questionInput.style.height = 'auto'; // Reset height
         clearImage();
         sendBtn.disabled = true;
         chatBox.scrollTop = chatBox.scrollHeight;
@@ -408,7 +466,6 @@ async def chat_endpoint(question: str = Form(...), file: UploadFile = File(None)
         
         client = Groq(api_key=GROQ_API_KEY)
         
-        # World-Class Educator System Prompt
         EDUCATOR_SYSTEM_PROMPT = (
             "You are Tuto AI, a world-class expert AI Tutor created by Imran Hossen. "
             "Your goal is to teach students effectively like a top educator. "
