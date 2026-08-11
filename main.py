@@ -6,7 +6,7 @@ import base64
 import re
 from groq import Groq
 
-app = FastAPI(title="Tuto AI Professional")
+app = FastAPI(title="Tuto AI Professional - Day 8")
 
 GROQ_API_KEY = os.environ.get("GROQ_API_KEY", "")
 
@@ -16,9 +16,18 @@ HTML_LAYOUT = """
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tuto AI - Day 7 Vision Edition</title>
+    <title>Tuto AI - Day 8 Math & Science Edition</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- KaTeX Math Rendering CSS & JS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js"></script>
+    
+    <!-- Marked.js for Markdown Rendering -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+
     <style>
         :root {
             --bg-color: #131314;
@@ -96,9 +105,20 @@ HTML_LAYOUT = """
             font-size: 16px;
             line-height: 1.6;
             color: #ffffff !important;
-            white-space: pre-wrap;
         }
+        .bubble p { margin-bottom: 8px; }
         .bubble strong { color: #a8c7fa !important; }
+        .bubble table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 10px 0;
+            color: #fff;
+        }
+        .bubble table, .bubble th, .bubble td {
+            border: 1px solid #444;
+            padding: 8px;
+        }
+        .bubble th { background-color: #2b2a33; }
         .uploaded-img-preview {
             max-width: 200px;
             border-radius: 10px;
@@ -203,7 +223,7 @@ HTML_LAYOUT = """
                 <div class="avatar ai-avatar">AI</div>
                 <div class="bubble">
                     <strong>Hello Imran!</strong><br>
-                    I am Tuto AI. You can now send me text or upload photos of your study materials and math problems!
+                    I am Tuto AI. Send me your Math, Physics, or Chemistry problems or upload a photo to solve step-by-step!
                 </div>
             </div>
         </div>
@@ -253,6 +273,20 @@ HTML_LAYOUT = """
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
     let selectedFile = null;
+
+    function renderMathInElem(element) {
+        if (window.renderMathInElement) {
+            window.renderMathInElement(element, {
+                delimiters: [
+                    {left: '$$', right: '$$', display: true},
+                    {left: '$', right: '$', display: false},
+                    {left: '\\(', right: '\\)', display: false},
+                    {left: '\\[', right: '\\]', display: true}
+                ],
+                throwOnError : false
+            });
+        }
+    }
 
     function triggerGallery() {
         bootstrap.Modal.getInstance(document.getElementById('uploadModal')).hide();
@@ -304,7 +338,7 @@ HTML_LAYOUT = """
         `;
         
         const formData = new FormData();
-        formData.append('question', question || "Please analyze this image.");
+        formData.append('question', question || "Please analyze this problem step-by-step.");
         if (selectedFile) {
             formData.append('file', selectedFile);
         }
@@ -318,7 +352,7 @@ HTML_LAYOUT = """
         chatBox.innerHTML += `
             <div class="message" id="${loadingId}">
                 <div class="avatar ai-avatar">AI</div>
-                <div class="bubble text-secondary"><i class="fa-solid fa-circle-notch fa-spin me-2"></i>Analyzing...</div>
+                <div class="bubble text-secondary"><i class="fa-solid fa-circle-notch fa-spin me-2"></i>Analyzing & calculating...</div>
             </div>
         `;
         chatBox.scrollTop = chatBox.scrollHeight;
@@ -333,7 +367,10 @@ HTML_LAYOUT = """
             const loadingElem = document.getElementById(loadingId);
             
             if (data.status === 'success') {
-                loadingElem.querySelector('.bubble').innerHTML = `<strong>Tuto AI</strong><br>${data.response}`;
+                const htmlContent = marked.parse(data.response);
+                const bubbleElem = loadingElem.querySelector('.bubble');
+                bubbleElem.innerHTML = `<strong>Tuto AI</strong><br>${htmlContent}`;
+                renderMathInElem(bubbleElem);
             } else {
                 loadingElem.querySelector('.bubble').innerHTML = `<span class="text-danger">Error: ${data.message}</span>`;
             }
@@ -350,36 +387,14 @@ HTML_LAYOUT = """
 """
 
 def clean_ai_response(text: str) -> str:
-    """থিংকিং প্রসেস এবং ড্রাফটিং অংশ কেটে শুধু আসল উত্তর রাখে"""
     if not text:
         return ""
-    
-    # <think>...</think> ট্যাগ থাকলে তা বাদ দেয়
     text = re.sub(r'<think>.*?</think>', '', text, flags=re.DOTALL)
-    
-    # **Drafting the response:** বা Based on... এর পরের অংশ থেকে উত্তর নেয়
     if "**Drafting the response:**" in text:
         text = text.split("**Drafting the response:**")[-1]
     elif "Drafting the response:" in text:
         text = text.split("Drafting the response:")[-1]
-    elif "**Final Response:**" in text:
-        text = text.split("**Final Response:**")[-1]
-    
-    # যদি সংখ্যাযুক্ত লিস্ট বা প্ল্যান দিয়ে শুরু হয়, তবে তা ফিল্টার করার চেষ্টা
-    lines = text.strip().split('\n')
-    filtered_lines = []
-    is_draft_started = False
-    
-    for line in lines:
-        if is_draft_started:
-            filtered_lines.append(line)
-        elif not re.match(r'^\d+\.\s*\*\*', line.strip()) and not line.strip().startswith('Plan:'):
-            filtered_lines.append(line)
-        if "Drafting" in line or "Response:" in line:
-            is_draft_started = True
-
-    result = "\n".join(filtered_lines).strip()
-    return result if result else text.strip()
+    return text.strip()
 
 @app.get("/", response_class=HTMLResponse)
 def home():
@@ -393,6 +408,17 @@ async def chat_endpoint(question: str = Form(...), file: UploadFile = File(None)
         
         client = Groq(api_key=GROQ_API_KEY)
         
+        # World-Class Educator System Prompt
+        EDUCATOR_SYSTEM_PROMPT = (
+            "You are Tuto AI, a world-class expert AI Tutor created by Imran Hossen. "
+            "Your goal is to teach students effectively like a top educator. "
+            "INSTRUCTIONS:\n"
+            "1. Respond in the language the student speaks (Bangla, English, or Banglish).\n"
+            "2. Break down math and science concepts into clear, numbered steps (Step 1, Step 2, Step 3).\n"
+            "3. ALWAYS use LaTeX formatting for mathematical expressions, equations, and formulas. Use $...$ for inline math (e.g., $a^2 + b^2 = c^2$) and $$...$$ for standalone display equations.\n"
+            "4. Do NOT output any inner thinking, monologue, or 'Plan:'. Give only the structured, friendly explanation."
+        )
+
         if file and file.filename:
             contents = await file.read()
             base64_image = base64.b64encode(contents).decode('utf-8')
@@ -402,10 +428,7 @@ async def chat_endpoint(question: str = Form(...), file: UploadFile = File(None)
             completion = client.chat.completions.create(
                 model="qwen/qwen3.6-27b",
                 messages=[
-                    {
-                        "role": "system",
-                        "content": "You are Tuto AI, created by Imran Hossen. Answer concisely and directly."
-                    },
+                    {"role": "system", "content": EDUCATOR_SYSTEM_PROMPT},
                     {
                         "role": "user",
                         "content": [
@@ -421,7 +444,7 @@ async def chat_endpoint(question: str = Form(...), file: UploadFile = File(None)
             completion = client.chat.completions.create(
                 model="llama-3.3-70b-versatile",
                 messages=[
-                    {"role": "system", "content": "You are Tuto AI, a friendly academic assistant created by Imran Hossen. Respond clearly in whatever language the user speaks."},
+                    {"role": "system", "content": EDUCATOR_SYSTEM_PROMPT},
                     {"role": "user", "content": question}
                 ]
             )
