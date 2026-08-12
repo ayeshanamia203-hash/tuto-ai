@@ -1,17 +1,21 @@
 from fastapi import FastAPI, Form, File, UploadFile
 from fastapi.responses import HTMLResponse
+from pydantic import BaseModel
 import os
 import uvicorn
 import base64
 import re
 from groq import Groq
 
-app = FastAPI(title="Tuto AI Professional - Day 9 Multi-Chat Persistence")
+app = FastAPI(title="Tuto AI Professional - Smart Auto-Title Multi-Chat")
 
 GROQ_API_KEY = os.environ.get("GROQ_API_KEY", "")
 
 # In-memory chat store for sessions
 chat_sessions = {}
+
+class TitleRequest(BaseModel):
+    prompt: str
 
 HTML_LAYOUT = """
 <!DOCTYPE html>
@@ -19,7 +23,7 @@ HTML_LAYOUT = """
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tuto AI - Day 9 Multi-Chat Edition</title>
+    <title>Tuto AI - Day 9 Smart Multi-Chat</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
@@ -469,6 +473,26 @@ HTML_LAYOUT = """
         });
     }
 
+    async function generateSmartTitle(promptText, sessionId) {
+        try {
+            const res = await fetch('/api/generate-title', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ prompt: promptText })
+            });
+            const data = await res.json();
+            if (data.status === 'success' && data.title) {
+                if (allSessions[sessionId]) {
+                    allSessions[sessionId].title = data.title;
+                    saveSessionsToStorage();
+                    renderSidebarHistory();
+                }
+            }
+        } catch (e) {
+            console.error("Title generation failed:", e);
+        }
+    }
+
     function triggerGallery() {
         bootstrap.Modal.getInstance(document.getElementById('uploadModal')).hide();
         document.getElementById('galleryInput').click();
@@ -503,10 +527,10 @@ HTML_LAYOUT = """
         const question = questionInput.value.trim();
         if (!question && !selectedFile) return;
 
-        // Auto-set title from first message if it's "New Chat"
+        // If title is "New Chat", generate smart AI title in background
         if (allSessions[currentSessionId].title === 'New Chat') {
-            allSessions[currentSessionId].title = question || "Image Analysis";
-            renderSidebarHistory();
+            const titlePrompt = question || (selectedFile ? "Image Analysis" : "New Conversation");
+            generateSmartTitle(titlePrompt, currentSessionId);
         }
 
         let userContentHTML = `<strong>You</strong><br>${question.replace(/\\n/g, '<br>')}`;
@@ -591,6 +615,27 @@ def clean_ai_response(text: str) -> str:
 @app.get("/", response_class=HTMLResponse)
 def home():
     return HTML_LAYOUT
+
+@app.post("/api/generate-title")
+async def generate_title(data: TitleRequest):
+    try:
+        if not GROQ_API_KEY:
+            return {"status": "error", "title": "New Chat"}
+        client = Groq(api_key=GROQ_API_KEY)
+        
+        prompt = (
+            f"Generate a short, concise 2 to 4 word title representing this user prompt: '{data.prompt}'. "
+            "Output ONLY the title in plain text, with no quotes, no periods, and no conversation."
+        )
+        completion = client.chat.completions.create(
+            model="llama-3.3-70b-versatile",
+            messages=[{"role": "user", "content": prompt}],
+            max_tokens=15
+        )
+        title = completion.choices[0].message.content.strip().replace('"', '').replace("'", "")
+        return {"status": "success", "title": title}
+    except Exception:
+        return {"status": "error", "title": "New Chat"}
 
 @app.post("/api/chat")
 async def chat_endpoint(
