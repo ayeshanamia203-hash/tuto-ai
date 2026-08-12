@@ -6,9 +6,12 @@ import base64
 import re
 from groq import Groq
 
-app = FastAPI(title="Tuto AI Professional - Natural Vision Edition")
+app = FastAPI(title="Tuto AI Professional - Day 9 Memory Engine")
 
 GROQ_API_KEY = os.environ.get("GROQ_API_KEY", "")
+
+# Day 9 Memory Storage: Stores last few chat messages per session
+chat_history = []
 
 HTML_LAYOUT = """
 <!DOCTYPE html>
@@ -16,7 +19,7 @@ HTML_LAYOUT = """
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tuto AI - Smart Vision Edition</title>
+    <title>Tuto AI - Day 9 Memory Edition</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
@@ -126,7 +129,6 @@ HTML_LAYOUT = """
             border: 1px solid #444;
         }
         
-        /* Auto Expanding Input Box & Image Preview Box */
         .input-wrapper {
             max-width: 850px;
             margin: 0 auto 25px auto;
@@ -241,7 +243,7 @@ HTML_LAYOUT = """
 </head>
 <body>
     <div class="sidebar">
-        <button class="new-chat-btn w-100 mb-4" onclick="location.reload()">
+        <button class="new-chat-btn w-100 mb-4" onclick="clearMemoryAndReload()">
             <i class="fa-solid fa-plus me-2"></i> New Chat
         </button>
         <div class="text-secondary small fw-bold mb-2">PROJECT</div>
@@ -342,6 +344,11 @@ HTML_LAYOUT = """
         }
     }
 
+    async function clearMemoryAndReload() {
+        await fetch('/api/clear_memory', { method: 'POST' });
+        location.reload();
+    }
+
     function triggerGallery() {
         bootstrap.Modal.getInstance(document.getElementById('uploadModal')).hide();
         document.getElementById('galleryInput').click();
@@ -408,7 +415,7 @@ HTML_LAYOUT = """
         chatBox.innerHTML += `
             <div class="message" id="${loadingId}">
                 <div class="avatar ai-avatar">AI</div>
-                <div class="bubble text-secondary"><i class="fa-solid fa-circle-notch fa-spin me-2"></i>Analyzing...</div>
+                <div class="bubble text-secondary"><i class="fa-solid fa-circle-notch fa-spin me-2"></i>Thinking & remembering...</div>
             </div>
         `;
         chatBox.scrollTop = chatBox.scrollHeight;
@@ -456,23 +463,35 @@ def clean_ai_response(text: str) -> str:
 def home():
     return HTML_LAYOUT
 
+@app.post("/api/clear_memory")
+def clear_memory():
+    global chat_history
+    chat_history.clear()
+    return {"status": "success", "message": "Memory cleared."}
+
 @app.post("/api/chat")
 async def chat_endpoint(question: str = Form(...), file: UploadFile = File(None)):
+    global chat_history
     try:
         if not GROQ_API_KEY:
             return {"status": "error", "message": "GROQ_API_KEY missing in Render environment."}
         
         client = Groq(api_key=GROQ_API_KEY)
         
-               SMART_SYSTEM_PROMPT = (
-            "You are Tuto AI, a smart and friendly AI companion created by Imran Hossen. "
+        SMART_SYSTEM_PROMPT = (
+            "You are Tuto AI, a smart, memory-aware AI tutor created by Imran Hossen. "
             "INSTRUCTIONS:\n"
-            "1. ALWAYS default to replying in BANGLA (বাংলা) unless the user explicitly speaks in English.\n"
-            "2. IF the user uploads a Math/Physics/Chemistry/Academic problem: Act like an expert tutor and give step-by-step solutions with LaTeX formulas ($...$).\n"
-            "3. IF the user uploads a personal photo, selfie, human portrait, nature, or general image: Respond in a warm, natural, friendly conversational Bangla tone like Gemini/ChatGPT (e.g., 'ছবিতে একটি সুন্দর মেয়েকে দেখা যাচ্ছে...'). Do NOT write robot-like analysis (like 'The Subject', 'The Pose', 'Step 1'). Talk naturally as a friend!\n"
-            "4. Never output internal monologue, reasoning, or '<think>' tags."
+            "1. ALWAYS default to English. Switch to Bangla ONLY if the user asks in Bangla.\n"
+            "2. REMEMBER past conversation context provided in the chat history.\n"
+            "3. IF solving Math/Science: Break into clear steps and use LaTeX formulas ($...$).\n"
+            "4. IF analyzing general photos or selfies: Be warm, natural, and friendly. Avoid robotic headings.\n"
+            "5. Never output internal monologue, reasoning, or '<think>' tags."
         )
- 
+
+        messages_payload = [{"role": "system", "content": SMART_SYSTEM_PROMPT}]
+        
+        # Add past memory (up to last 10 exchanges)
+        messages_payload.extend(chat_history[-10:])
 
         if file and file.filename:
             contents = await file.read()
@@ -480,31 +499,40 @@ async def chat_endpoint(question: str = Form(...), file: UploadFile = File(None)
             mime_type = file.content_type or "image/jpeg"
             image_url = f"data:{mime_type};base64,{base64_image}"
 
+            current_user_msg = {
+                "role": "user",
+                "content": [
+                    {"type": "text", "text": question},
+                    {"type": "image_url", "image_url": {"url": image_url}}
+                ]
+            }
+            messages_payload.append(current_user_msg)
+
             completion = client.chat.completions.create(
                 model="qwen/qwen3.6-27b",
-                messages=[
-                    {"role": "system", "content": SMART_SYSTEM_PROMPT},
-                    {
-                        "role": "user",
-                        "content": [
-                            {"type": "text", "text": question},
-                            {"type": "image_url", "image_url": {"url": image_url}}
-                        ]
-                    }
-                ]
+                messages=messages_payload
             )
             raw_response = completion.choices[0].message.content
             final_response = clean_ai_response(raw_response)
+            
+            # Save to memory (simplified text format for image interactions)
+            chat_history.append({"role": "user", "content": f"[User sent an image] {question}"})
+            chat_history.append({"role": "assistant", "content": final_response})
+
         else:
+            current_user_msg = {"role": "user", "content": question}
+            messages_payload.append(current_user_msg)
+
             completion = client.chat.completions.create(
                 model="llama-3.3-70b-versatile",
-                messages=[
-                    {"role": "system", "content": SMART_SYSTEM_PROMPT},
-                    {"role": "user", "content": question}
-                ]
+                messages=messages_payload
             )
-            final_response = completion.choices[0].message.content
-        
+            final_response = clean_ai_response(completion.choices[0].message.content)
+
+            # Save text chat to memory
+            chat_history.append(current_user_msg)
+            chat_history.append({"role": "assistant", "content": final_response})
+
         return {
             "status": "success",
             "question": question,
