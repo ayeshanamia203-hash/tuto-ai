@@ -6,12 +6,12 @@ import base64
 import re
 from groq import Groq
 
-app = FastAPI(title="Tuto AI Professional - Day 9 Memory Engine")
+app = FastAPI(title="Tuto AI Professional - Day 9 Multi-Chat Persistence")
 
 GROQ_API_KEY = os.environ.get("GROQ_API_KEY", "")
 
-# Day 9 Memory Storage: Stores last few chat messages per session
-chat_history = []
+# In-memory chat store for sessions
+chat_sessions = {}
 
 HTML_LAYOUT = """
 <!DOCTYPE html>
@@ -19,7 +19,7 @@ HTML_LAYOUT = """
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tuto AI - Day 9 Memory Edition</title>
+    <title>Tuto AI - Day 9 Multi-Chat Edition</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
@@ -62,6 +62,49 @@ HTML_LAYOUT = """
             border-radius: 30px;
             padding: 10px 15px;
             font-weight: 500;
+            transition: 0.2s;
+        }
+        .new-chat-btn:hover {
+            background-color: #3b3a45;
+        }
+        .history-list {
+            flex: 1;
+            overflow-y: auto;
+            margin-top: 15px;
+            margin-bottom: 15px;
+        }
+        .history-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 8px 12px;
+            border-radius: 10px;
+            color: #ccc;
+            cursor: pointer;
+            font-size: 14px;
+            margin-bottom: 5px;
+            transition: background 0.2s;
+        }
+        .history-item:hover, .history-item.active {
+            background-color: #2b2a33;
+            color: #fff;
+        }
+        .history-title {
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 170px;
+        }
+        .delete-chat-btn {
+            color: #888;
+            border: none;
+            background: none;
+            font-size: 12px;
+            cursor: pointer;
+            padding: 2px 5px;
+        }
+        .delete-chat-btn:hover {
+            color: #e11d48;
         }
         .main-chat {
             flex: 1;
@@ -243,11 +286,14 @@ HTML_LAYOUT = """
 </head>
 <body>
     <div class="sidebar">
-        <button class="new-chat-btn w-100 mb-4" onclick="clearMemoryAndReload()">
+        <button class="new-chat-btn w-100 mb-2" onclick="startNewChat()">
             <i class="fa-solid fa-plus me-2"></i> New Chat
         </button>
-        <div class="text-secondary small fw-bold mb-2">PROJECT</div>
-        <div class="text-light small">✨ Tuto AI System</div>
+        <div class="text-secondary small fw-bold mt-2">RECENT CHATS</div>
+        <div class="history-list" id="historyList">
+            <!-- Chat history items will appear here -->
+        </div>
+
         <div class="mt-auto text-secondary small border-top border-secondary pt-3">
             👨‍💻 Developer: <strong class="text-light">Imran Hossen</strong>
         </div>
@@ -260,13 +306,7 @@ HTML_LAYOUT = """
         </div>
 
         <div class="chat-container" id="chatBox">
-            <div class="message">
-                <div class="avatar ai-avatar">AI</div>
-                <div class="bubble">
-                    <strong>Hello Imran!</strong><br>
-                    I am Tuto AI. Send me your Math, Physics, or Chemistry problems, or share any image to chat about it!
-                </div>
-            </div>
+            <!-- Messages rendered dynamically -->
         </div>
 
         <div class="container max-width-850">
@@ -317,6 +357,30 @@ HTML_LAYOUT = """
 <script>
     let selectedFile = null;
     const questionInput = document.getElementById('question');
+    const chatBox = document.getElementById('chatBox');
+    const historyList = document.getElementById('historyList');
+
+    let allSessions = JSON.parse(localStorage.getItem('tuto_all_sessions')) || {};
+    let currentSessionId = localStorage.getItem('tuto_current_session_id') || null;
+
+    const DEFAULT_WELCOME = `
+        <div class="message">
+            <div class="avatar ai-avatar">AI</div>
+            <div class="bubble">
+                <strong>Hello Imran!</strong><br>
+                I am Tuto AI. Send me your Math, Physics, or Chemistry problems, or share any image to chat about it!
+            </div>
+        </div>
+    `;
+
+    window.addEventListener('DOMContentLoaded', () => {
+        if (!currentSessionId || !allSessions[currentSessionId]) {
+            startNewChat(false);
+        } else {
+            renderSidebarHistory();
+            loadSession(currentSessionId);
+        }
+    });
 
     questionInput.addEventListener('input', function() {
         this.style.height = 'auto';
@@ -344,9 +408,65 @@ HTML_LAYOUT = """
         }
     }
 
-    async function clearMemoryAndReload() {
-        await fetch('/api/clear_memory', { method: 'POST' });
-        location.reload();
+    function saveSessionsToStorage() {
+        localStorage.setItem('tuto_all_sessions', JSON.stringify(allSessions));
+        localStorage.setItem('tuto_current_session_id', currentSessionId);
+    }
+
+    function startNewChat(shouldRender = true) {
+        currentSessionId = 'session_' + Date.now();
+        allSessions[currentSessionId] = {
+            title: 'New Chat',
+            html: DEFAULT_WELCOME,
+            messages: []
+        };
+        saveSessionsToStorage();
+        if (shouldRender) {
+            renderSidebarHistory();
+            loadSession(currentSessionId);
+        }
+    }
+
+    function loadSession(sessionId) {
+        currentSessionId = sessionId;
+        saveSessionsToStorage();
+        chatBox.innerHTML = allSessions[sessionId].html || DEFAULT_WELCOME;
+        document.querySelectorAll('.bubble').forEach(elem => renderMathInElem(elem));
+        chatBox.scrollTop = chatBox.scrollHeight;
+        renderSidebarHistory();
+    }
+
+    function deleteSession(e, sessionId) {
+        e.stopPropagation();
+        delete allSessions[sessionId];
+        if (currentSessionId === sessionId) {
+            const keys = Object.keys(allSessions);
+            if (keys.length > 0) {
+                currentSessionId = keys[keys.length - 1];
+            } else {
+                startNewChat(false);
+            }
+        }
+        saveSessionsToStorage();
+        renderSidebarHistory();
+        loadSession(currentSessionId);
+    }
+
+    function renderSidebarHistory() {
+        historyList.innerHTML = '';
+        const keys = Object.keys(allSessions).reverse();
+        keys.forEach(id => {
+            const session = allSessions[id];
+            const isActive = id === currentSessionId ? 'active' : '';
+            historyList.innerHTML += `
+                <div class="history-item ${isActive}" onclick="loadSession('${id}')">
+                    <div class="history-title"><i class="fa-regular fa-message me-2"></i>${session.title}</div>
+                    <button class="delete-chat-btn" onclick="deleteSession(event, '${id}')" title="Delete Chat">
+                        <i class="fa-solid fa-trash-can"></i>
+                    </button>
+                </div>
+            `;
+        });
     }
 
     function triggerGallery() {
@@ -379,11 +499,15 @@ HTML_LAYOUT = """
     document.getElementById('chatForm').addEventListener('submit', async (e) => {
         e.preventDefault();
         
-        const chatBox = document.getElementById('chatBox');
         const sendBtn = document.getElementById('sendBtn');
-
         const question = questionInput.value.trim();
         if (!question && !selectedFile) return;
+
+        // Auto-set title from first message if it's "New Chat"
+        if (allSessions[currentSessionId].title === 'New Chat') {
+            allSessions[currentSessionId].title = question || "Image Analysis";
+            renderSidebarHistory();
+        }
 
         let userContentHTML = `<strong>You</strong><br>${question.replace(/\\n/g, '<br>')}`;
         
@@ -401,6 +525,7 @@ HTML_LAYOUT = """
         
         const formData = new FormData();
         formData.append('question', question || "Describe or analyze this image naturally.");
+        formData.append('session_id', currentSessionId);
         if (selectedFile) {
             formData.append('file', selectedFile);
         }
@@ -434,6 +559,10 @@ HTML_LAYOUT = """
                 const bubbleElem = loadingElem.querySelector('.bubble');
                 bubbleElem.innerHTML = `<strong>Tuto AI</strong><br>${htmlContent}`;
                 renderMathInElem(bubbleElem);
+
+                // Save full chat HTML into session
+                allSessions[currentSessionId].html = chatBox.innerHTML;
+                saveSessionsToStorage();
             } else {
                 loadingElem.querySelector('.bubble').innerHTML = `<span class="text-danger">Error: ${data.message}</span>`;
             }
@@ -463,21 +592,22 @@ def clean_ai_response(text: str) -> str:
 def home():
     return HTML_LAYOUT
 
-@app.post("/api/clear_memory")
-def clear_memory():
-    global chat_history
-    chat_history.clear()
-    return {"status": "success", "message": "Memory cleared."}
-
 @app.post("/api/chat")
-async def chat_endpoint(question: str = Form(...), file: UploadFile = File(None)):
-    global chat_history
+async def chat_endpoint(
+    question: str = Form(...), 
+    session_id: str = Form("default"),
+    file: UploadFile = File(None)
+):
+    global chat_sessions
     try:
         if not GROQ_API_KEY:
             return {"status": "error", "message": "GROQ_API_KEY missing in Render environment."}
         
         client = Groq(api_key=GROQ_API_KEY)
         
+        if session_id not in chat_sessions:
+            chat_sessions[session_id] = []
+
         SMART_SYSTEM_PROMPT = (
             "You are Tuto AI, a smart, memory-aware AI tutor created by Imran Hossen. "
             "INSTRUCTIONS:\n"
@@ -490,8 +620,8 @@ async def chat_endpoint(question: str = Form(...), file: UploadFile = File(None)
 
         messages_payload = [{"role": "system", "content": SMART_SYSTEM_PROMPT}]
         
-        # Add past memory (up to last 10 exchanges)
-        messages_payload.extend(chat_history[-10:])
+        # Add past memory for THIS session
+        messages_payload.extend(chat_sessions[session_id][-10:])
 
         if file and file.filename:
             contents = await file.read()
@@ -515,9 +645,8 @@ async def chat_endpoint(question: str = Form(...), file: UploadFile = File(None)
             raw_response = completion.choices[0].message.content
             final_response = clean_ai_response(raw_response)
             
-            # Save to memory (simplified text format for image interactions)
-            chat_history.append({"role": "user", "content": f"[User sent an image] {question}"})
-            chat_history.append({"role": "assistant", "content": final_response})
+            chat_sessions[session_id].append({"role": "user", "content": f"[User sent image] {question}"})
+            chat_sessions[session_id].append({"role": "assistant", "content": final_response})
 
         else:
             current_user_msg = {"role": "user", "content": question}
@@ -529,9 +658,8 @@ async def chat_endpoint(question: str = Form(...), file: UploadFile = File(None)
             )
             final_response = clean_ai_response(completion.choices[0].message.content)
 
-            # Save text chat to memory
-            chat_history.append(current_user_msg)
-            chat_history.append({"role": "assistant", "content": final_response})
+            chat_sessions[session_id].append(current_user_msg)
+            chat_sessions[session_id].append({"role": "assistant", "content": final_response})
 
         return {
             "status": "success",
