@@ -7,7 +7,7 @@ import base64
 import re
 from groq import Groq
 
-app = FastAPI(title="Tuto AI Professional - Smart Auto-Title Multi-Chat")
+app = FastAPI(title="Tuto AI Professional Edition")
 
 GROQ_API_KEY = os.environ.get("GROQ_API_KEY", "")
 
@@ -23,7 +23,7 @@ HTML_LAYOUT = """
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tuto AI - Day 9 Smart Multi-Chat</title>
+    <title>Tuto AI</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
@@ -297,16 +297,11 @@ HTML_LAYOUT = """
         <div class="history-list" id="historyList">
             <!-- Chat history items will appear here -->
         </div>
-
-        <div class="mt-auto text-secondary small border-top border-secondary pt-3">
-            👨‍💻 Developer: <strong class="text-light">Imran Hossen</strong>
-        </div>
     </div>
 
     <div class="main-chat">
         <div class="chat-header">
             <h5 class="m-0 fw-bold text-light"><i class="fa-solid fa-graduation-cap me-2 text-warning"></i>Tuto AI</h5>
-            <span class="badge bg-primary text-light px-3 py-2" style="font-size: 13px;">Created by Imran Hossen</span>
         </div>
 
         <div class="chat-container" id="chatBox">
@@ -371,7 +366,7 @@ HTML_LAYOUT = """
         <div class="message">
             <div class="avatar ai-avatar">AI</div>
             <div class="bubble">
-                <strong>Hello Imran!</strong><br>
+                <strong>Hello!</strong><br>
                 I am Tuto AI. Send me your Math, Physics, or Chemistry problems, or share any image to chat about it!
             </div>
         </div>
@@ -527,7 +522,6 @@ HTML_LAYOUT = """
         const question = questionInput.value.trim();
         if (!question && !selectedFile) return;
 
-        // If title is "New Chat", generate smart AI title in background
         if (allSessions[currentSessionId].title === 'New Chat') {
             const titlePrompt = question || (selectedFile ? "Image Analysis" : "New Conversation");
             generateSmartTitle(titlePrompt, currentSessionId);
@@ -542,7 +536,7 @@ HTML_LAYOUT = """
 
         chatBox.innerHTML += `
             <div class="message">
-                <div class="avatar user-avatar">IH</div>
+                <div class="avatar user-avatar">You</div>
                 <div class="bubble">${userContentHTML}</div>
             </div>
         `;
@@ -564,7 +558,7 @@ HTML_LAYOUT = """
         chatBox.innerHTML += `
             <div class="message" id="${loadingId}">
                 <div class="avatar ai-avatar">AI</div>
-                <div class="bubble text-secondary"><i class="fa-solid fa-circle-notch fa-spin me-2"></i>Thinking & remembering...</div>
+                <div class="bubble text-secondary"><i class="fa-solid fa-circle-notch fa-spin me-2"></i>Thinking...</div>
             </div>
         `;
         chatBox.scrollTop = chatBox.scrollHeight;
@@ -584,7 +578,6 @@ HTML_LAYOUT = """
                 bubbleElem.innerHTML = `<strong>Tuto AI</strong><br>${htmlContent}`;
                 renderMathInElem(bubbleElem);
 
-                // Save full chat HTML into session
                 allSessions[currentSessionId].html = chatBox.innerHTML;
                 saveSessionsToStorage();
             } else {
@@ -654,8 +647,11 @@ async def chat_endpoint(
             chat_sessions[session_id] = []
 
         SMART_SYSTEM_PROMPT = (
-            "You are Tuto AI, a smart, memory-aware AI tutor created by Imran Hossen. "
-            "INSTRUCTIONS:\n"
+            "You are Tuto AI, an advanced AI tutor created and developed solely by Imran Hossen. "
+            "CRITICAL IDENTITY INSTRUCTIONS:\n"
+            "- If anyone asks who created, built, developed, or programmed you, ALWAYS answer that you were created by Imran Hossen.\n"
+            "- Maintain this identity naturally regardless of language (English, Bangla, etc.).\n"
+            "GENERAL INSTRUCTIONS:\n"
             "1. ALWAYS default to English. Switch to Bangla ONLY if the user asks in Bangla.\n"
             "2. REMEMBER past conversation context provided in the chat history.\n"
             "3. IF solving Math/Science: Break into clear steps and use LaTeX formulas ($...$).\n"
@@ -665,7 +661,6 @@ async def chat_endpoint(
 
         messages_payload = [{"role": "system", "content": SMART_SYSTEM_PROMPT}]
         
-        # Add past memory for THIS session
         messages_payload.extend(chat_sessions[session_id][-10:])
 
         if file and file.filename:
