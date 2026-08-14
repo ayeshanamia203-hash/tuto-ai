@@ -25,20 +25,20 @@ HTML_LAYOUT = """
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Tuto AI</title>
-    <link href="[https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css](https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css)" rel="stylesheet">
-    <link rel="stylesheet" href="[https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css](https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css)">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <!-- KaTeX Math Rendering CSS & JS -->
-    <link rel="stylesheet" href="[https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css](https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css)">
-    <script defer src="[https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js](https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js)"></script>
-    <script defer src="[https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js](https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js)"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js"></script>
     
     <!-- Marked.js for Markdown Rendering -->
-    <script src="[https://cdn.jsdelivr.net/npm/marked/marked.min.js](https://cdn.jsdelivr.net/npm/marked/marked.min.js)"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 
     <!-- Highlight.js for Syntax Highlighting -->
-    <link rel="stylesheet" href="[https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/atom-one-dark.min.css](https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/atom-one-dark.min.css)">
-    <script src="[https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js](https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js)"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/atom-one-dark.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
 
     <style>
         :root {
@@ -48,13 +48,17 @@ HTML_LAYOUT = """
             --text-color: #ffffff;
             --accent-color: #a8c7fa;
         }
+        * {
+            box-sizing: border-box;
+        }
         body {
             background-color: var(--bg-color);
             color: var(--text-color);
-            font-family: 'Segoe UI', system-ui, sans-serif;
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
             height: 100vh;
             margin: 0;
             display: flex;
+            overflow: hidden;
         }
         .sidebar {
             width: 260px;
@@ -63,6 +67,7 @@ HTML_LAYOUT = """
             display: flex;
             flex-direction: column;
             border-right: 1px solid #2d2d30;
+            flex-shrink: 0;
         }
         .new-chat-btn {
             background-color: #2b2a33;
@@ -121,6 +126,7 @@ HTML_LAYOUT = """
             flex-direction: column;
             justify-content: space-between;
             height: 100vh;
+            overflow: hidden;
         }
         .chat-header {
             padding: 15px 25px;
@@ -182,7 +188,7 @@ HTML_LAYOUT = """
             border: 1px solid #444;
         }
         
-        /* Code Block Container Styling */
+        /* Code Container Styling */
         .code-container {
             position: relative;
             margin: 12px 0;
@@ -358,7 +364,7 @@ HTML_LAYOUT = """
         </button>
         <div class="text-secondary small fw-bold mt-2">RECENT CHATS</div>
         <div class="history-list" id="historyList">
-            <!-- Chat history items will appear here -->
+            <!-- Chat history -->
         </div>
     </div>
 
@@ -368,10 +374,10 @@ HTML_LAYOUT = """
         </div>
 
         <div class="chat-container" id="chatBox">
-            <!-- Messages rendered dynamically -->
+            <!-- Chat messages -->
         </div>
 
-        <div class="container max-width-850">
+        <div class="container max-width-850 p-0">
             <div class="input-wrapper">
                 <div id="imagePreviewArea">
                     <img id="previewImgThumb" src="" alt="Thumbnail">
@@ -418,7 +424,7 @@ HTML_LAYOUT = """
         </div>
     </div>
 
-<script src="[https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js](https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js)"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
     let selectedFile = null;
     const questionInput = document.getElementById('question');
@@ -549,33 +555,28 @@ HTML_LAYOUT = """
         }
     }
 
-    // Wrap pre/code elements and attach Copy Button
     function processCodeBlocks(element) {
         if (!element) return;
         
         element.querySelectorAll('pre').forEach((pre) => {
-            if (pre.closest('.code-container')) return; // Avoid duplicate wrapping
+            if (pre.closest('.code-container')) return;
 
             const codeBlock = pre.querySelector('code');
             const codeText = codeBlock ? codeBlock.innerText : pre.innerText;
             
-            // Detect language class if present
             let lang = 'code';
             if (codeBlock && codeBlock.className) {
                 const match = codeBlock.className.match(/language-(\\w+)/);
                 if (match) lang = match[1];
             }
 
-            // Create container
             const container = document.createElement('div');
             container.className = 'code-container';
 
-            // Create header bar
             const header = document.createElement('div');
             header.className = 'code-header';
             header.innerHTML = `<span>${lang}</span>`;
 
-            // Create copy button
             const copyBtn = document.createElement('button');
             copyBtn.className = 'copy-code-btn';
             copyBtn.type = 'button';
@@ -595,12 +596,10 @@ HTML_LAYOUT = """
 
             header.appendChild(copyBtn);
             
-            // Replace pre element with wrapped structure
             pre.parentNode.insertBefore(container, pre);
             container.appendChild(header);
             container.appendChild(pre);
 
-            // Highlight syntax
             if (window.hljs && codeBlock) {
                 try { hljs.highlightElement(codeBlock); } catch(e) {}
             }
@@ -691,13 +690,21 @@ HTML_LAYOUT = """
         }
     }
 
+    function closeModal() {
+        const modalElem = document.getElementById('uploadModal');
+        const modalInstance = bootstrap.Modal.getInstance(modalElem);
+        if (modalInstance) {
+            modalInstance.hide();
+        }
+    }
+
     function triggerGallery() {
-        bootstrap.Modal.getInstance(document.getElementById('uploadModal')).hide();
+        closeModal();
         document.getElementById('galleryInput').click();
     }
 
     function triggerCamera() {
-        bootstrap.Modal.getInstance(document.getElementById('uploadModal')).hide();
+        closeModal();
         document.getElementById('cameraInput').click();
     }
 
