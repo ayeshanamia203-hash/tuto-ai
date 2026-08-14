@@ -36,6 +36,10 @@ HTML_LAYOUT = """
     <!-- Marked.js for Markdown Rendering -->
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 
+    <!-- Highlight.js for Syntax Highlighting -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/atom-one-dark.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+
     <style>
         :root {
             --bg-color: #131314;
@@ -156,6 +160,7 @@ HTML_LAYOUT = """
             font-size: 16px;
             line-height: 1.6;
             color: #ffffff !important;
+            width: 100%;
         }
         .bubble p { margin-bottom: 8px; }
         .bubble strong { color: #a8c7fa !important; }
@@ -177,6 +182,41 @@ HTML_LAYOUT = """
             border: 1px solid #444;
         }
         
+        /* Code Block & Copy Button Styling */
+        pre {
+            background: #282c34;
+            border-radius: 8px;
+            padding: 35px 12px 12px 12px;
+            margin: 10px 0;
+            overflow-x: auto;
+            border: 1px solid #3e4451;
+            position: relative;
+        }
+        pre code {
+            font-family: 'Consolas', 'Courier New', monospace;
+            font-size: 14px;
+        }
+        .copy-code-btn {
+            position: absolute;
+            top: 6px;
+            right: 8px;
+            background: #3e4451;
+            color: #abb2bf;
+            border: none;
+            border-radius: 5px;
+            padding: 3px 8px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .copy-code-btn:hover {
+            background: #4b5263;
+            color: #ffffff;
+        }
+
         .input-wrapper {
             max-width: 850px;
             margin: 0 auto 25px auto;
@@ -377,7 +417,6 @@ HTML_LAYOUT = """
     let allSessions = JSON.parse(localStorage.getItem('tuto_all_sessions')) || {};
     let currentSessionId = localStorage.getItem('tuto_current_session_id') || null;
 
-    // Audio Recorder Setup for Groq Whisper
     let mediaRecorder = null;
     let audioChunks = [];
     let isRecording = false;
@@ -402,7 +441,7 @@ HTML_LAYOUT = """
 
             mediaRecorder.onstop = async () => {
                 const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
-                stream.getTracks().forEach(track => track.stop()); // Turn off mic
+                stream.getTracks().forEach(track => track.stop());
                 await transcribeAudio(audioBlob);
             };
 
@@ -484,16 +523,58 @@ HTML_LAYOUT = """
 
     function renderMathInElem(element) {
         if (window.renderMathInElement) {
-            window.renderMathInElement(element, {
-                delimiters: [
-                    {left: '$$', right: '$$', display: true},
-                    {left: '$', right: '$', display: false},
-                    {left: '\\(', right: '\\)', display: false},
-                    {left: '\\[', right: '\\]', display: true}
-                ],
-                throwOnError : false
+            try {
+                window.renderMathInElement(element, {
+                    delimiters: [
+                        {left: '$$', right: '$$', display: true},
+                        {left: '$', right: '$', display: false},
+                        {left: '\\(', right: '\\)', display: false},
+                        {left: '\\[', right: '\\]', display: true}
+                    ],
+                    throwOnError : false
+                });
+            } catch(e) {}
+        }
+    }
+
+    // Function for Code Highlighting & Adding Copy Button
+    function processCodeBlocks(element) {
+        if (!element) return;
+        
+        // 1. Highlight.js Execution
+        if (window.hljs) {
+            element.querySelectorAll('pre code').forEach((block) => {
+                try {
+                    hljs.highlightElement(block);
+                } catch(e) {}
             });
         }
+
+        // 2. Append Copy Buttons to <pre> tags
+        element.querySelectorAll('pre').forEach((pre) => {
+            if (pre.querySelector('.copy-code-btn')) return;
+
+            const copyBtn = document.createElement('button');
+            copyBtn.className = 'copy-code-btn';
+            copyBtn.type = 'button';
+            copyBtn.innerHTML = '<i class="fa-regular fa-copy me-1"></i>Copy';
+            
+            copyBtn.addEventListener('click', async () => {
+                const codeBlock = pre.querySelector('code');
+                const codeText = codeBlock ? codeBlock.innerText : pre.innerText;
+                try {
+                    await navigator.clipboard.writeText(codeText);
+                    copyBtn.innerHTML = '<i class="fa-solid fa-check me-1"></i>Copied!';
+                    setTimeout(() => {
+                        copyBtn.innerHTML = '<i class="fa-regular fa-copy me-1"></i>Copy';
+                    }, 2000);
+                } catch (err) {
+                    console.error('Failed to copy code: ', err);
+                }
+            });
+
+            pre.appendChild(copyBtn);
+        });
     }
 
     function saveSessionsToStorage() {
@@ -519,7 +600,10 @@ HTML_LAYOUT = """
         currentSessionId = sessionId;
         saveSessionsToStorage();
         chatBox.innerHTML = allSessions[sessionId].html || DEFAULT_WELCOME;
-        document.querySelectorAll('.bubble').forEach(elem => renderMathInElem(elem));
+        document.querySelectorAll('.bubble').forEach(elem => {
+            renderMathInElem(elem);
+            processCodeBlocks(elem);
+        });
         chatBox.scrollTop = chatBox.scrollHeight;
         renderSidebarHistory();
     }
@@ -662,9 +746,17 @@ HTML_LAYOUT = """
             const loadingElem = document.getElementById(loadingId);
             
             if (data.status === 'success') {
-                const htmlContent = marked.parse(data.response);
+                let htmlContent = "";
+                try {
+                    htmlContent = typeof marked !== 'undefined' ? marked.parse(data.response) : data.response;
+                } catch(mErr) {
+                    htmlContent = data.response.replace(/\\n/g, '<br>');
+                }
+
                 const bubbleElem = loadingElem.querySelector('.bubble');
                 bubbleElem.innerHTML = `<strong>Tuto AI</strong><br>${htmlContent}`;
+                
+                processCodeBlocks(bubbleElem);
                 renderMathInElem(bubbleElem);
 
                 allSessions[currentSessionId].html = chatBox.innerHTML;
@@ -706,7 +798,6 @@ async def transcribe_audio(audio: UploadFile = File(...)):
         
         client = Groq(api_key=GROQ_API_KEY)
         
-        # Save temporary audio file for Groq Whisper
         with tempfile.NamedTemporaryFile(delete=False, suffix=".webm") as temp_audio:
             content = await audio.read()
             temp_audio.write(content)
@@ -719,7 +810,7 @@ async def transcribe_audio(audio: UploadFile = File(...)):
                 response_format="json"
             )
 
-        os.remove(temp_audio_path) # Clean temp file
+        os.remove(temp_audio_path)
 
         return {"status": "success", "text": transcription.text}
     except Exception as e:
@@ -794,7 +885,7 @@ async def chat_endpoint(
             messages_payload.append(current_user_msg)
 
             completion = client.chat.completions.create(
-                model="qwen/qwen3.6-27b",
+                model="llama-3.2-11b-vision-preview",
                 messages=messages_payload
             )
             raw_response = completion.choices[0].message.content
