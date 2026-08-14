@@ -239,7 +239,7 @@ HTML_LAYOUT = """
         }
         .plus-btn:hover, .mic-btn:hover { color: #fff; }
         .mic-btn.recording {
-            color: #ef4444;
+            color: #ef4444 !important;
             animation: pulse 1.2s infinite;
         }
 
@@ -380,12 +380,23 @@ HTML_LAYOUT = """
     let recognition = null;
     let isRecording = false;
 
-    if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+    function initSpeechRecognition() {
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (!SpeechRecognition) {
+            alert("Speech recognition is not supported in this browser. Try Google Chrome.");
+            return false;
+        }
+
         recognition = new SpeechRecognition();
         recognition.continuous = false;
         recognition.interimResults = true;
-        recognition.lang = 'bn-BD'; // Default Bangla, auto handles English too
+        recognition.lang = 'bn-BD'; // Default Bangla
+
+        recognition.onstart = () => {
+            isRecording = true;
+            micBtn.classList.add('recording');
+            questionInput.placeholder = "Listening... Speak now";
+        };
 
         recognition.onresult = (event) => {
             let transcript = '';
@@ -398,27 +409,36 @@ HTML_LAYOUT = """
         };
 
         recognition.onerror = (event) => {
-            console.error('Speech recognition error:', event.error);
+            console.error('Speech error:', event.error);
             stopRecording();
+            if(event.error === 'not-allowed') {
+                alert("Please allow Microphone permission in your browser settings!");
+            }
         };
 
         recognition.onend = () => {
             stopRecording();
         };
-    } else {
-        micBtn.style.display = 'none'; // Hide mic if browser doesn't support
+
+        return true;
     }
 
     function toggleVoiceInput() {
-        if (!recognition) return;
+        if (!recognition) {
+            const isSupported = initSpeechRecognition();
+            if (!isSupported) return;
+        }
+
         if (isRecording) {
             recognition.stop();
             stopRecording();
         } else {
-            recognition.start();
-            isRecording = true;
-            micBtn.classList.add('recording');
-            questionInput.placeholder = "Listening... Speak now";
+            try {
+                recognition.start();
+            } catch(e) {
+                console.error("Start error:", e);
+                stopRecording();
+            }
         }
     }
 
@@ -584,7 +604,7 @@ HTML_LAYOUT = """
     document.getElementById('chatForm').addEventListener('submit', async (e) => {
         e.preventDefault();
         
-        if (isRecording) {
+        if (isRecording && recognition) {
             recognition.stop();
             stopRecording();
         }
