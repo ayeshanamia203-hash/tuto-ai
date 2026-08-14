@@ -36,6 +36,10 @@ HTML_LAYOUT = """
     <!-- Marked.js for Markdown Rendering -->
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 
+    <!-- Highlight.js for Code Highlighting -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/atom-one-dark.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+
     <style>
         :root {
             --bg-color: #131314;
@@ -156,6 +160,7 @@ HTML_LAYOUT = """
             font-size: 16px;
             line-height: 1.6;
             color: #ffffff !important;
+            width: 100%;
         }
         .bubble p { margin-bottom: 8px; }
         .bubble strong { color: #a8c7fa !important; }
@@ -177,6 +182,50 @@ HTML_LAYOUT = """
             border: 1px solid #444;
         }
         
+        /* Code Box & Copy Button Styles */
+        .code-block-container {
+            position: relative;
+            margin: 12px 0;
+            border-radius: 8px;
+            overflow: hidden;
+            border: 1px solid #3c4043;
+        }
+        .code-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #282c34;
+            padding: 6px 14px;
+            font-size: 12px;
+            color: #abb2bf;
+            border-bottom: 1px solid #3e4451;
+        }
+        .copy-code-btn {
+            background: transparent;
+            border: none;
+            color: #abb2bf;
+            font-size: 12px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            transition: color 0.2s;
+        }
+        .copy-code-btn:hover {
+            color: #ffffff;
+        }
+        .bubble pre {
+            margin: 0 !important;
+            padding: 12px !important;
+            background: #282c34 !important;
+            border-radius: 0 !important;
+            overflow-x: auto;
+        }
+        .bubble code {
+            font-family: 'Consolas', 'Fira Code', 'Courier New', monospace;
+            font-size: 14px;
+        }
+
         .input-wrapper {
             max-width: 850px;
             margin: 0 auto 25px auto;
@@ -377,6 +426,42 @@ HTML_LAYOUT = """
     let allSessions = JSON.parse(localStorage.getItem('tuto_all_sessions')) || {};
     let currentSessionId = localStorage.getItem('tuto_current_session_id') || null;
 
+    // Custom marked renderer for Code blocks & Copy buttons
+    const renderer = new marked.Renderer();
+    renderer.code = function(code, language) {
+        const validLang = language && hljs.getLanguage(language) ? language : 'code';
+        const highlightedCode = language && hljs.getLanguage(language) 
+            ? hljs.highlight(code, { language }).value 
+            : hljs.highlightAuto(code).value;
+
+        const codeId = 'code-' + Math.random().toString(36).substr(2, 9);
+        
+        return `
+            <div class="code-block-container">
+                <div class="code-header">
+                    <span>${validLang}</span>
+                    <button class="copy-code-btn" onclick="copyCodeToClipboard('${codeId}', this)">
+                        <i class="fa-regular fa-copy"></i> Copy
+                    </button>
+                </div>
+                <pre><code id="${codeId}" class="hljs ${validLang}">${highlightedCode}</code></pre>
+            </div>
+        `;
+    };
+    marked.setOptions({ renderer: renderer });
+
+    function copyCodeToClipboard(codeId, btnElem) {
+        const codeText = document.getElementById(codeId).innerText;
+        navigator.clipboard.writeText(codeText).then(() => {
+            btnElem.innerHTML = `<i class="fa-solid fa-check text-success"></i> Copied!`;
+            setTimeout(() => {
+                btnElem.innerHTML = `<i class="fa-regular fa-copy"></i> Copy`;
+            }, 2000);
+        }).catch(err => {
+            console.error('Failed to copy code: ', err);
+        });
+    }
+
     // Audio Recorder Setup for Groq Whisper
     let mediaRecorder = null;
     let audioChunks = [];
@@ -402,7 +487,7 @@ HTML_LAYOUT = """
 
             mediaRecorder.onstop = async () => {
                 const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
-                stream.getTracks().forEach(track => track.stop()); // Turn off mic
+                stream.getTracks().forEach(track => track.stop());
                 await transcribeAudio(audioBlob);
             };
 
@@ -706,7 +791,6 @@ async def transcribe_audio(audio: UploadFile = File(...)):
         
         client = Groq(api_key=GROQ_API_KEY)
         
-        # Save temporary audio file for Groq Whisper
         with tempfile.NamedTemporaryFile(delete=False, suffix=".webm") as temp_audio:
             content = await audio.read()
             temp_audio.write(content)
@@ -719,7 +803,7 @@ async def transcribe_audio(audio: UploadFile = File(...)):
                 response_format="json"
             )
 
-        os.remove(temp_audio_path) # Clean temp file
+        os.remove(temp_audio_path)
 
         return {"status": "success", "text": transcription.text}
     except Exception as e:
