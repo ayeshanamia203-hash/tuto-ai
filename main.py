@@ -5,6 +5,7 @@ import os
 import uvicorn
 import base64
 import re
+import tempfile
 from groq import Groq
 
 app = FastAPI(title="Tuto AI Professional Edition")
@@ -331,7 +332,7 @@ HTML_LAYOUT = """
                     </button>
                     <form id="chatForm" class="d-flex w-100 align-items-end gap-2">
                         <textarea id="question" class="chat-textarea" rows="1" placeholder="Message Tuto AI or attach photo..."></textarea>
-                        <button type="button" class="mic-btn" id="micBtn" onclick="toggleVoiceInput()" title="Voice Input">
+                        <button type="button" class="mic-btn" id="micBtn" onclick="toggleVoiceRecording()" title="Voice Input (Groq Whisper)">
                             <i class="fa-solid fa-microphone"></i>
                         </button>
                         <button type="submit" class="send-btn" id="sendBtn">
@@ -376,76 +377,78 @@ HTML_LAYOUT = """
     let allSessions = JSON.parse(localStorage.getItem('tuto_all_sessions')) || {};
     let currentSessionId = localStorage.getItem('tuto_current_session_id') || null;
 
-    // Speech Recognition Setup
-    let recognition = null;
+    // Audio Recorder Setup for Groq Whisper
+    let mediaRecorder = null;
+    let audioChunks = [];
     let isRecording = false;
 
-    function initSpeechRecognition() {
-        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-        if (!SpeechRecognition) {
-            alert("Speech recognition is not supported in this browser. Try Google Chrome.");
-            return false;
+    async function toggleVoiceRecording() {
+        if (isRecording) {
+            stopRecordingAndTranscribe();
+        } else {
+            startRecording();
         }
+    }
 
-        recognition = new SpeechRecognition();
-        recognition.continuous = false;
-        recognition.interimResults = true;
-        recognition.lang = 'bn-BD'; // Default Bangla
+    async function startRecording() {
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            mediaRecorder = new MediaRecorder(stream);
+            audioChunks = [];
 
-        recognition.onstart = () => {
+            mediaRecorder.ondataavailable = (event) => {
+                if (event.data.size > 0) audioChunks.push(event.data);
+            };
+
+            mediaRecorder.onstop = async () => {
+                const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+                stream.getTracks().forEach(track => track.stop()); // Turn off mic
+                await transcribeAudio(audioBlob);
+            };
+
+            mediaRecorder.start();
             isRecording = true;
             micBtn.classList.add('recording');
-            questionInput.placeholder = "Listening... Speak now";
-        };
-
-        recognition.onresult = (event) => {
-            let transcript = '';
-            for (let i = event.resultIndex; i < event.results.length; i++) {
-                transcript += event.results[i][0].transcript;
-            }
-            questionInput.value = transcript;
-            questionInput.style.height = 'auto';
-            questionInput.style.height = (questionInput.scrollHeight) + 'px';
-        };
-
-        recognition.onerror = (event) => {
-            console.error('Speech error:', event.error);
-            stopRecording();
-            if(event.error === 'not-allowed') {
-                alert("Please allow Microphone permission in your browser settings!");
-            }
-        };
-
-        recognition.onend = () => {
-            stopRecording();
-        };
-
-        return true;
-    }
-
-    function toggleVoiceInput() {
-        if (!recognition) {
-            const isSupported = initSpeechRecognition();
-            if (!isSupported) return;
-        }
-
-        if (isRecording) {
-            recognition.stop();
-            stopRecording();
-        } else {
-            try {
-                recognition.start();
-            } catch(e) {
-                console.error("Start error:", e);
-                stopRecording();
-            }
+            questionInput.placeholder = "Recording... Click mic again to stop";
+        } catch (err) {
+            console.error("Mic access denied or not supported:", err);
+            alert("Microphone permission denied or not supported by browser!");
         }
     }
 
-    function stopRecording() {
-        isRecording = false;
-        micBtn.classList.remove('recording');
-        questionInput.placeholder = "Message Tuto AI or attach photo...";
+    function stopRecordingAndTranscribe() {
+        if (mediaRecorder && isRecording) {
+            mediaRecorder.stop();
+            isRecording = false;
+            micBtn.classList.remove('recording');
+            questionInput.placeholder = "Processing voice with Groq AI...";
+        }
+    }
+
+    async function transcribeAudio(audioBlob) {
+        const formData = new FormData();
+        formData.append('audio', audioBlob, 'audio.webm');
+
+        try {
+            const response = await fetch('/api/transcribe', {
+                method: 'POST',
+                body: formData
+            });
+
+            const data = await response.json();
+            if (data.status === 'success' && data.text) {
+                questionInput.value = data.text;
+                questionInput.style.height = 'auto';
+                questionInput.style.height = (questionInput.scrollHeight) + 'px';
+            } else {
+                alert("Voice recognition error: " + (data.message || "Could not recognize audio"));
+            }
+        } catch (err) {
+            console.error("Transcription fetch error:", err);
+            alert("Error connecting to Groq Whisper API");
+        } finally {
+            questionInput.placeholder = "Message Tuto AI or attach photo...";
+        }
     }
 
     const DEFAULT_WELCOME = `
@@ -603,11 +606,6 @@ HTML_LAYOUT = """
 
     document.getElementById('chatForm').addEventListener('submit', async (e) => {
         e.preventDefault();
-        
-        if (isRecording && recognition) {
-            recognition.stop();
-            stopRecording();
-        }
 
         const sendBtn = document.getElementById('sendBtn');
         const question = questionInput.value.trim();
@@ -700,6 +698,33 @@ def clean_ai_response(text: str) -> str:
 def home():
     return HTML_LAYOUT
 
+@app.post("/api/transcribe")
+async def transcribe_audio(audio: UploadFile = File(...)):
+    try:
+        if not GROQ_API_KEY:
+            return {"status": "error", "message": "GROQ_API_KEY missing."}
+        
+        client = Groq(api_key=GROQ_API_KEY)
+        
+        # Save temporary audio file for Groq Whisper
+        with tempfile.NamedTemporaryFile(delete=False, suffix=".webm") as temp_audio:
+            content = await audio.read()
+            temp_audio.write(content)
+            temp_audio_path = temp_audio.name
+
+        with open(temp_audio_path, "rb") as file_to_transcribe:
+            transcription = client.audio.transcriptions.create(
+                file=(os.path.basename(temp_audio_path), file_to_transcribe.read()),
+                model="whisper-large-v3",
+                response_format="json"
+            )
+
+        os.remove(temp_audio_path) # Clean temp file
+
+        return {"status": "success", "text": transcription.text}
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+
 @app.post("/api/generate-title")
 async def generate_title(data: TitleRequest):
     try:
@@ -751,7 +776,6 @@ async def chat_endpoint(
         )
 
         messages_payload = [{"role": "system", "content": SMART_SYSTEM_PROMPT}]
-        
         messages_payload.extend(chat_sessions[session_id][-10:])
 
         if file and file.filename:
