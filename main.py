@@ -25,20 +25,20 @@ HTML_LAYOUT = """
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Tuto AI</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="[https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css](https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css)" rel="stylesheet">
+    <link rel="stylesheet" href="[https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css](https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css)">
     
     <!-- KaTeX Math Rendering CSS & JS -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
-    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
-    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js"></script>
+    <link rel="stylesheet" href="[https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css](https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css)">
+    <script defer src="[https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js](https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js)"></script>
+    <script defer src="[https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js](https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js)"></script>
     
     <!-- Marked.js for Markdown Rendering -->
-    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="[https://cdn.jsdelivr.net/npm/marked/marked.min.js](https://cdn.jsdelivr.net/npm/marked/marked.min.js)"></script>
 
     <!-- Highlight.js for Syntax Highlighting -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/atom-one-dark.min.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+    <link rel="stylesheet" href="[https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/atom-one-dark.min.css](https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/atom-one-dark.min.css)">
+    <script src="[https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js](https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js)"></script>
 
     <style>
         :root {
@@ -182,29 +182,42 @@ HTML_LAYOUT = """
             border: 1px solid #444;
         }
         
-        /* Code Block & Copy Button Styling */
-        pre {
-            background: #282c34;
-            border-radius: 8px;
-            padding: 35px 12px 12px 12px;
-            margin: 10px 0;
-            overflow-x: auto;
-            border: 1px solid #3e4451;
+        /* Code Block Container Styling */
+        .code-container {
             position: relative;
+            margin: 12px 0;
+            border-radius: 8px;
+            overflow: hidden;
+            border: 1px solid #3e4451;
+            background: #282c34;
+        }
+        .code-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #21252b;
+            padding: 6px 12px;
+            font-size: 12px;
+            color: #abb2bf;
+            font-family: monospace;
+            border-bottom: 1px solid #3e4451;
+        }
+        pre {
+            margin: 0 !important;
+            padding: 12px !important;
+            background: transparent !important;
+            overflow-x: auto;
         }
         pre code {
-            font-family: 'Consolas', 'Courier New', monospace;
+            font-family: 'Consolas', 'Fira Code', 'Courier New', monospace;
             font-size: 14px;
         }
         .copy-code-btn {
-            position: absolute;
-            top: 6px;
-            right: 8px;
             background: #3e4451;
-            color: #abb2bf;
+            color: #ffffff;
             border: none;
-            border-radius: 5px;
-            padding: 3px 8px;
+            border-radius: 4px;
+            padding: 2px 8px;
             font-size: 12px;
             cursor: pointer;
             transition: 0.2s;
@@ -214,7 +227,6 @@ HTML_LAYOUT = """
         }
         .copy-code-btn:hover {
             background: #4b5263;
-            color: #ffffff;
         }
 
         .input-wrapper {
@@ -406,7 +418,7 @@ HTML_LAYOUT = """
         </div>
     </div>
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="[https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js](https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js)"></script>
 <script>
     let selectedFile = null;
     const questionInput = document.getElementById('question');
@@ -537,33 +549,41 @@ HTML_LAYOUT = """
         }
     }
 
-    // Function for Code Highlighting & Adding Copy Button
+    // Wrap pre/code elements and attach Copy Button
     function processCodeBlocks(element) {
         if (!element) return;
         
-        // 1. Highlight.js Execution
-        if (window.hljs) {
-            element.querySelectorAll('pre code').forEach((block) => {
-                try {
-                    hljs.highlightElement(block);
-                } catch(e) {}
-            });
-        }
-
-        // 2. Append Copy Buttons to <pre> tags
         element.querySelectorAll('pre').forEach((pre) => {
-            if (pre.querySelector('.copy-code-btn')) return;
+            if (pre.closest('.code-container')) return; // Avoid duplicate wrapping
 
+            const codeBlock = pre.querySelector('code');
+            const codeText = codeBlock ? codeBlock.innerText : pre.innerText;
+            
+            // Detect language class if present
+            let lang = 'code';
+            if (codeBlock && codeBlock.className) {
+                const match = codeBlock.className.match(/language-(\\w+)/);
+                if (match) lang = match[1];
+            }
+
+            // Create container
+            const container = document.createElement('div');
+            container.className = 'code-container';
+
+            // Create header bar
+            const header = document.createElement('div');
+            header.className = 'code-header';
+            header.innerHTML = `<span>${lang}</span>`;
+
+            // Create copy button
             const copyBtn = document.createElement('button');
             copyBtn.className = 'copy-code-btn';
             copyBtn.type = 'button';
             copyBtn.innerHTML = '<i class="fa-regular fa-copy me-1"></i>Copy';
             
             copyBtn.addEventListener('click', async () => {
-                const codeBlock = pre.querySelector('code');
-                const codeText = codeBlock ? codeBlock.innerText : pre.innerText;
                 try {
-                    await navigator.clipboard.writeText(codeText);
+                    await navigator.clipboard.writeText(codeText.trim());
                     copyBtn.innerHTML = '<i class="fa-solid fa-check me-1"></i>Copied!';
                     setTimeout(() => {
                         copyBtn.innerHTML = '<i class="fa-regular fa-copy me-1"></i>Copy';
@@ -573,7 +593,17 @@ HTML_LAYOUT = """
                 }
             });
 
-            pre.appendChild(copyBtn);
+            header.appendChild(copyBtn);
+            
+            // Replace pre element with wrapped structure
+            pre.parentNode.insertBefore(container, pre);
+            container.appendChild(header);
+            container.appendChild(pre);
+
+            // Highlight syntax
+            if (window.hljs && codeBlock) {
+                try { hljs.highlightElement(codeBlock); } catch(e) {}
+            }
         });
     }
 
@@ -861,8 +891,8 @@ async def chat_endpoint(
             "GENERAL INSTRUCTIONS:\n"
             "1. ALWAYS default to English. Switch to Bangla ONLY if the user asks in Bangla.\n"
             "2. REMEMBER past conversation context provided in the chat history.\n"
-            "3. IF solving Math/Science: Break into clear steps and use LaTeX formulas ($...$).\n"
-            "4. IF analyzing general photos or selfies: Be warm, natural, and friendly. Avoid robotic headings.\n"
+            "3. IF writing code (Python, HTML, JS, C++, etc.), ALWAYS wrap code snippets in markdown code blocks with language tags, e.g. ```python ... ```.\n"
+            "4. IF solving Math/Science: Break into clear steps and use LaTeX formulas ($...$).\n"
             "5. Never output internal monologue, reasoning, or '<think>' tags."
         )
 
