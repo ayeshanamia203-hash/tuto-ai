@@ -227,17 +227,27 @@ HTML_LAYOUT = """
             gap: 10px;
         }
 
-        .plus-btn {
+        .plus-btn, .mic-btn {
             background: none;
             border: none;
             color: var(--accent-color);
-            font-size: 20px;
+            font-size: 18px;
             cursor: pointer;
             padding: 5px;
             margin-bottom: 3px;
             transition: 0.2s;
         }
-        .plus-btn:hover { color: #fff; }
+        .plus-btn:hover, .mic-btn:hover { color: #fff; }
+        .mic-btn.recording {
+            color: #ef4444;
+            animation: pulse 1.2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.2); }
+            100% { transform: scale(1); }
+        }
 
         .chat-textarea {
             background: none;
@@ -319,8 +329,11 @@ HTML_LAYOUT = """
                     <button type="button" class="plus-btn" data-bs-toggle="modal" data-bs-target="#uploadModal">
                         <i class="fa-solid fa-circle-plus"></i>
                     </button>
-                    <form id="chatForm" class="d-flex w-100 align-items-end">
+                    <form id="chatForm" class="d-flex w-100 align-items-end gap-2">
                         <textarea id="question" class="chat-textarea" rows="1" placeholder="Message Tuto AI or attach photo..."></textarea>
+                        <button type="button" class="mic-btn" id="micBtn" onclick="toggleVoiceInput()" title="Voice Input">
+                            <i class="fa-solid fa-microphone"></i>
+                        </button>
                         <button type="submit" class="send-btn" id="sendBtn">
                             <i class="fa-solid fa-paper-plane"></i>
                         </button>
@@ -358,9 +371,62 @@ HTML_LAYOUT = """
     const questionInput = document.getElementById('question');
     const chatBox = document.getElementById('chatBox');
     const historyList = document.getElementById('historyList');
+    const micBtn = document.getElementById('micBtn');
 
     let allSessions = JSON.parse(localStorage.getItem('tuto_all_sessions')) || {};
     let currentSessionId = localStorage.getItem('tuto_current_session_id') || null;
+
+    // Speech Recognition Setup
+    let recognition = null;
+    let isRecording = false;
+
+    if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        recognition = new SpeechRecognition();
+        recognition.continuous = false;
+        recognition.interimResults = true;
+        recognition.lang = 'bn-BD'; // Default Bangla, auto handles English too
+
+        recognition.onresult = (event) => {
+            let transcript = '';
+            for (let i = event.resultIndex; i < event.results.length; i++) {
+                transcript += event.results[i][0].transcript;
+            }
+            questionInput.value = transcript;
+            questionInput.style.height = 'auto';
+            questionInput.style.height = (questionInput.scrollHeight) + 'px';
+        };
+
+        recognition.onerror = (event) => {
+            console.error('Speech recognition error:', event.error);
+            stopRecording();
+        };
+
+        recognition.onend = () => {
+            stopRecording();
+        };
+    } else {
+        micBtn.style.display = 'none'; // Hide mic if browser doesn't support
+    }
+
+    function toggleVoiceInput() {
+        if (!recognition) return;
+        if (isRecording) {
+            recognition.stop();
+            stopRecording();
+        } else {
+            recognition.start();
+            isRecording = true;
+            micBtn.classList.add('recording');
+            questionInput.placeholder = "Listening... Speak now";
+        }
+    }
+
+    function stopRecording() {
+        isRecording = false;
+        micBtn.classList.remove('recording');
+        questionInput.placeholder = "Message Tuto AI or attach photo...";
+    }
 
     const DEFAULT_WELCOME = `
         <div class="message">
@@ -518,6 +584,11 @@ HTML_LAYOUT = """
     document.getElementById('chatForm').addEventListener('submit', async (e) => {
         e.preventDefault();
         
+        if (isRecording) {
+            recognition.stop();
+            stopRecording();
+        }
+
         const sendBtn = document.getElementById('sendBtn');
         const question = questionInput.value.trim();
         if (!question && !selectedFile) return;
