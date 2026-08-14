@@ -8,13 +8,11 @@ import re
 import tempfile
 from groq import Groq
 from pypdf import PdfReader
-from PIL import Image
 
 app = FastAPI(title="Tuto AI Professional Edition")
 
 GROQ_API_KEY = os.environ.get("GROQ_API_KEY", "")
 
-# In-memory storage for chat histories
 chat_sessions = {}
 
 class TitleRequest(BaseModel):
@@ -27,20 +25,17 @@ HTML_LAYOUT = """
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Tuto AI</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="[https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css](https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css)" rel="stylesheet">
+    <link rel="stylesheet" href="[https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css](https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css)">
     
-    <!-- KaTeX Math Rendering -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
-    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
-    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js"></script>
-    
-    <!-- Marked.js for Markdown -->
-    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <!-- KaTeX Math -->
+    <link rel="stylesheet" href="[https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css](https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css)">
+    <script defer src="[https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js](https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js)"></script>
+    <script defer src="[https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js](https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js)"></script>
 
     <!-- Highlight.js for Syntax Highlighting -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/atom-one-dark.min.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+    <link rel="stylesheet" href="[https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/atom-one-dark.min.css](https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/atom-one-dark.min.css)">
+    <script src="[https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js](https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js)"></script>
 
     <style>
         :root {
@@ -72,11 +67,6 @@ HTML_LAYOUT = """
             border-radius: 30px;
             padding: 10px 15px;
             font-weight: 500;
-            transition: all 0.2s;
-        }
-        .new-chat-btn:hover {
-            background-color: #3b3a43;
-            color: #fff;
         }
         .history-list {
             flex: 1;
@@ -93,7 +83,6 @@ HTML_LAYOUT = """
             cursor: pointer;
             font-size: 14px;
             margin-bottom: 5px;
-            transition: background 0.2s;
         }
         .history-item:hover, .history-item.active {
             background-color: #2b2a33;
@@ -111,11 +100,6 @@ HTML_LAYOUT = """
             background: none;
             font-size: 12px;
             cursor: pointer;
-            opacity: 0.7;
-        }
-        .delete-chat-btn:hover {
-            color: #ff4d4d;
-            opacity: 1;
         }
         .main-chat {
             flex: 1;
@@ -127,9 +111,6 @@ HTML_LAYOUT = """
         .chat-header {
             padding: 15px 25px;
             border-bottom: 1px solid #2d2d30;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
         }
         .chat-container {
             flex: 1;
@@ -165,17 +146,16 @@ HTML_LAYOUT = """
             width: 100%;
         }
         
-        /* Code Box Style */
         .code-box {
             background: #282c34;
             border-radius: 8px;
-            margin: 12px 0;
+            margin: 10px 0;
             overflow: hidden;
             border: 1px solid #3e4451;
         }
         .code-header {
             background: #21252b;
-            padding: 6px 14px;
+            padding: 6px 12px;
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -191,7 +171,6 @@ HTML_LAYOUT = """
             cursor: pointer;
             font-size: 11px;
         }
-        .copy-btn:hover { background: #4b5263; color: #fff; }
         pre { margin: 0; padding: 12px; }
 
         .input-wrapper {
@@ -207,8 +186,7 @@ HTML_LAYOUT = """
         .plus-btn, .mic-btn, .send-btn {
             background: none; border: none; color: var(--accent-color); font-size: 18px; cursor: pointer;
         }
-        .mic-btn.recording { color: #ef4444; animation: pulse 1s infinite; }
-        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.4; } 100% { opacity: 1; } }
+        .mic-btn.recording { color: #ef4444; }
         .chat-textarea {
             background: none; border: none; color: #ffffff; width: 100%; outline: none; font-size: 15px; resize: none;
         }
@@ -230,7 +208,7 @@ HTML_LAYOUT = """
         <button class="new-chat-btn w-100 mb-2" onclick="startNewChat()">
             <i class="fa-solid fa-plus me-2"></i> New Chat
         </button>
-        <div class="text-secondary small fw-bold mt-2 mb-1">RECENT CHATS</div>
+        <div class="text-secondary small fw-bold mt-2">RECENT CHATS</div>
         <div class="history-list" id="historyList"></div>
     </div>
 
@@ -264,7 +242,7 @@ HTML_LAYOUT = """
         </div>
     </div>
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="[https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js](https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js)"></script>
 <script>
     const questionInput = document.getElementById('question');
     const chatBox = document.getElementById('chatBox');
@@ -282,7 +260,7 @@ HTML_LAYOUT = """
     const DEFAULT_WELCOME = `
         <div class="message">
             <div class="avatar ai-avatar">AI</div>
-            <div class="bubble"><strong>Hello!</strong><br>I am Tuto AI. How can I help you today? You can ask questions, send code, or attach images/PDFs!</div>
+            <div class="bubble"><strong>Hello!</strong><br>I am Tuto AI. How can I help you today? Ask questions, write code, or send files!</div>
         </div>
     `;
 
@@ -357,32 +335,43 @@ HTML_LAYOUT = """
         filePreviewArea.innerHTML = '';
     }
 
-    function formatTextToHTML(text) {
-        try {
-            return marked.parse(text);
-        } catch(e) {
-            return text.replace(/\\n/g, '<br>');
-        }
+    // Bulletproof custom markdown formatter
+    function safeFormatMarkdown(text) {
+        if (!text) return "";
+        let escaped = text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+        
+        // Code Blocks ```code```
+        escaped = escaped.replace(/```(\\w*)\\n?([\\s\\S]*?)```/g, function(match, lang, code) {
+            return `<div class="code-box"><div class="code-header"><span>${lang || 'Code'}</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div><pre><code>${code.trim()}</code></pre></div>`;
+        });
+
+        // Inline Code `code`
+        escaped = escaped.replace(/`([^`]+)`/g, '<code style="background:#2b2a33; padding:2px 6px; border-radius:4px;">$1</code>');
+
+        // Bold **text**
+        escaped = escaped.replace(/\\*\\*(.*?)\\*\\*/g, '<strong>$1</strong>');
+
+        // New lines
+        escaped = escaped.replace(/\\n/g, '<br>');
+
+        return escaped;
     }
 
     function renderMathAndCode() {
-        renderMathInElement(chatBox, {
-            delimiters: [
-                {left: '$$', right: '$$', display: true},
-                {left: '$', right: '$', display: false}
-            ],
-            throwOnError: false
-        });
+        if (typeof renderMathInElement === 'function') {
+            renderMathInElement(chatBox, {
+                delimiters: [
+                    {left: '$$', right: '$$', display: true},
+                    {left: '$', right: '$', display: false}
+                ],
+                throwOnError: false
+            });
+        }
         
         chatBox.querySelectorAll('pre code').forEach((block) => {
-            if (!block.classList.contains('hljs-done')) {
+            if (typeof hljs !== 'undefined' && !block.classList.contains('hljs-done')) {
                 hljs.highlightElement(block);
                 block.classList.add('hljs-done');
-                const wrapper = document.createElement('div');
-                wrapper.className = 'code-box';
-                wrapper.innerHTML = `<div class="code-header"><span>Code</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>`;
-                block.parentNode.parentNode.insertBefore(wrapper, block.parentNode);
-                wrapper.appendChild(block.parentNode);
             }
         });
     }
@@ -419,7 +408,7 @@ HTML_LAYOUT = """
                     if (data.text) {
                         questionInput.value = data.text;
                     }
-                } catch(e) { console.error(e); }
+                } catch(e) {}
                 micBtn.innerHTML = `<i class="fa-solid fa-microphone"></i>`;
             };
 
@@ -492,7 +481,7 @@ HTML_LAYOUT = """
             const loadingElem = document.getElementById(loadingId);
 
             if (data.status === 'success') {
-                const parsedHTML = formatTextToHTML(data.response);
+                const parsedHTML = safeFormatMarkdown(data.response);
                 loadingElem.querySelector('.bubble').innerHTML = `<strong>Tuto AI</strong><br>${parsedHTML}`;
                 renderMathAndCode();
 
@@ -566,7 +555,7 @@ async def chat_endpoint(
     global chat_sessions
     try:
         if not GROQ_API_KEY:
-            return {"status": "error", "message": "GROQ_API_KEY is not configured on server."}
+            return {"status": "error", "message": "GROQ_API_KEY is missing on server."}
 
         client = Groq(api_key=GROQ_API_KEY)
         
@@ -599,7 +588,7 @@ async def chat_endpoint(
         if session_id not in chat_sessions:
             chat_sessions[session_id] = []
 
-        system_prompt = "You are Tuto AI, created solely by Imran Hossen. Help users with clear explanations and clean markdown code blocks."
+        system_prompt = "You are Tuto AI, created solely by Imran Hossen. Write clean code inside triple backtick blocks."
 
         messages = [{"role": "system", "content": system_prompt}]
         messages.extend(chat_sessions[session_id][-6:])
