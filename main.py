@@ -23,7 +23,7 @@ HTML_LAYOUT = """
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Tuto AI</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -51,14 +51,17 @@ HTML_LAYOUT = """
         * {
             box-sizing: border-box;
         }
-        body {
+        html, body {
             background-color: var(--bg-color);
             color: var(--text-color);
             font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
-            height: 100vh;
+            height: 100%;
             margin: 0;
-            display: flex;
+            padding: 0;
             overflow: hidden;
+        }
+        body {
+            display: flex;
         }
         .sidebar {
             width: 260px;
@@ -68,6 +71,7 @@ HTML_LAYOUT = """
             flex-direction: column;
             border-right: 1px solid #2d2d30;
             flex-shrink: 0;
+            height: 100%;
         }
         .new-chat-btn {
             background-color: #2b2a33;
@@ -124,9 +128,10 @@ HTML_LAYOUT = """
             flex: 1;
             display: flex;
             flex-direction: column;
-            justify-content: space-between;
             height: 100vh;
+            height: 100dvh; /* Dynamic Viewport Height for Mobile/iPad Safari */
             overflow: hidden;
+            position: relative;
         }
         .chat-header {
             padding: 15px 25px;
@@ -134,11 +139,12 @@ HTML_LAYOUT = """
             display: flex;
             justify-content: space-between;
             align-items: center;
+            flex-shrink: 0;
         }
         .chat-container {
             flex: 1;
             overflow-y: auto;
-            padding: 30px;
+            padding: 20px 30px;
             max-width: 850px;
             margin: 0 auto;
             width: 100%;
@@ -235,10 +241,16 @@ HTML_LAYOUT = """
             background: #4b5263;
         }
 
+        .input-container-box {
+            padding: 10px 20px 20px 20px;
+            background: var(--bg-color);
+            flex-shrink: 0;
+        }
+
         .input-wrapper {
             max-width: 850px;
-            margin: 0 auto 25px auto;
-            width: 90%;
+            margin: 0 auto;
+            width: 100%;
             background-color: #1e1e20;
             border: 1px solid #3c4043;
             border-radius: 20px;
@@ -317,7 +329,7 @@ HTML_LAYOUT = """
             outline: none;
             font-size: 15px;
             resize: none;
-            max-height: 150px;
+            max-height: 120px;
             min-height: 28px;
             line-height: 1.4;
             font-family: inherit;
@@ -377,7 +389,7 @@ HTML_LAYOUT = """
             <!-- Chat messages -->
         </div>
 
-        <div class="container max-width-850 p-0">
+        <div class="input-container-box">
             <div class="input-wrapper">
                 <div id="imagePreviewArea">
                     <img id="previewImgThumb" src="" alt="Thumbnail">
