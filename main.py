@@ -6,6 +6,7 @@ import uvicorn
 import base64
 import re
 import tempfile
+import io
 from groq import Groq
 
 app = FastAPI(title="Tuto AI Professional Edition")
@@ -129,7 +130,7 @@ HTML_LAYOUT = """
             display: flex;
             flex-direction: column;
             height: 100vh;
-            height: 100dvh; /* Dynamic Viewport Height for Mobile/iPad Safari */
+            height: 100dvh;
             overflow: hidden;
             position: relative;
         }
@@ -153,6 +154,7 @@ HTML_LAYOUT = """
             display: flex;
             gap: 15px;
             margin-bottom: 25px;
+            position: relative;
         }
         .avatar {
             width: 35px;
@@ -193,7 +195,33 @@ HTML_LAYOUT = """
             margin-bottom: 10px;
             border: 1px solid #444;
         }
-        
+        .pdf-badge {
+            background-color: #2b2a33;
+            border: 1px solid #e11d48;
+            color: #ff4d4d;
+            padding: 6px 12px;
+            border-radius: 8px;
+            font-size: 14px;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 10px;
+        }
+
+        /* Voice Output (TTS) Button Styling */
+        .tts-btn {
+            background: none;
+            border: none;
+            color: #888;
+            cursor: pointer;
+            font-size: 14px;
+            margin-left: 8px;
+            transition: color 0.2s;
+        }
+        .tts-btn:hover {
+            color: var(--accent-color);
+        }
+
         /* Code Container Styling */
         .code-container {
             position: relative;
@@ -259,7 +287,7 @@ HTML_LAYOUT = """
             flex-direction: column;
         }
 
-        #imagePreviewArea {
+        #filePreviewArea {
             display: none;
             position: relative;
             width: fit-content;
@@ -272,6 +300,17 @@ HTML_LAYOUT = """
             object-fit: cover;
             border-radius: 12px;
             border: 1px solid #555;
+        }
+        
+        #pdfPreviewThumb {
+            display: none;
+            background: #2b2a33;
+            border: 1px solid #e11d48;
+            color: #ff4d4d;
+            padding: 8px 12px;
+            border-radius: 10px;
+            font-size: 13px;
+            font-weight: 500;
         }
 
         .close-img-btn {
@@ -391,9 +430,10 @@ HTML_LAYOUT = """
 
         <div class="input-container-box">
             <div class="input-wrapper">
-                <div id="imagePreviewArea">
-                    <img id="previewImgThumb" src="" alt="Thumbnail">
-                    <button type="button" class="close-img-btn" onclick="clearImage()"><i class="fa-solid fa-xmark"></i></button>
+                <div id="filePreviewArea">
+                    <img id="previewImgThumb" src="" alt="Thumbnail" style="display: none;">
+                    <div id="pdfPreviewThumb"><i class="fa-solid fa-file-pdf me-2"></i><span id="pdfFileName">document.pdf</span></div>
+                    <button type="button" class="close-img-btn" onclick="clearSelectedFile()"><i class="fa-solid fa-xmark"></i></button>
                 </div>
 
                 <div class="input-row">
@@ -401,7 +441,7 @@ HTML_LAYOUT = """
                         <i class="fa-solid fa-circle-plus"></i>
                     </button>
                     <form id="chatForm" class="d-flex w-100 align-items-end gap-2">
-                        <textarea id="question" class="chat-textarea" rows="1" placeholder="Message Tuto AI or attach photo..."></textarea>
+                        <textarea id="question" class="chat-textarea" rows="1" placeholder="Message Tuto AI, attach photo or PDF..."></textarea>
                         <button type="button" class="mic-btn" id="micBtn" onclick="toggleVoiceRecording()" title="Voice Input (Groq Whisper)">
                             <i class="fa-solid fa-microphone"></i>
                         </button>
@@ -416,12 +456,13 @@ HTML_LAYOUT = """
 
     <input type="file" id="galleryInput" accept="image/*" style="display: none;" onchange="handleFileSelect(this)">
     <input type="file" id="cameraInput" accept="image/*" capture="environment" style="display: none;" onchange="handleFileSelect(this)">
+    <input type="file" id="pdfInput" accept="application/pdf" style="display: none;" onchange="handleFileSelect(this)">
 
     <div class="modal fade" id="uploadModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header border-0">
-                    <h5 class="modal-title fw-bold"><i class="fa-solid fa-paperclip me-2 text-primary"></i>Attach Photo</h5>
+                    <h5 class="modal-title fw-bold"><i class="fa-solid fa-paperclip me-2 text-primary"></i>Attach File</h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
@@ -430,6 +471,9 @@ HTML_LAYOUT = """
                     </button>
                     <button class="modal-btn" onclick="triggerGallery()">
                         <i class="fa-solid fa-images fa-lg me-3 text-info"></i> <strong>Upload Photo</strong> (From Gallery)
+                    </button>
+                    <button class="modal-btn" onclick="triggerPDF()">
+                        <i class="fa-solid fa-file-pdf fa-lg me-3 text-danger"></i> <strong>Upload PDF Document</strong> (Books / Notes)
                     </button>
                 </div>
             </div>
@@ -450,6 +494,41 @@ HTML_LAYOUT = """
     let mediaRecorder = null;
     let audioChunks = [];
     let isRecording = false;
+
+    // --- Voice Output (Text-to-Speech) Function ---
+    function speakText(btn) {
+        if (!('speechSynthesis' in window)) {
+            alert("Sorry, your browser doesn't support Voice Output!");
+            return;
+        }
+
+        const bubbleElem = btn.closest('.bubble');
+        let textToSpeak = bubbleElem ? bubbleElem.innerText.replace(/^Tuto AI/i, '').trim() : '';
+        textToSpeak = textToSpeak.replace(/Copy/g, ''); // Clean UI strings
+
+        if (window.speechSynthesis.speaking) {
+            window.speechSynthesis.cancel();
+            btn.innerHTML = '<i class="fa-solid fa-volume-high"></i>';
+            return;
+        }
+
+        const utterance = new SpeechSynthesisUtterance(textToSpeak);
+        utterance.rate = 1.0;
+        
+        // Auto language detection (Bangla vs English)
+        if (/[\u0980-\u09FF]/.test(textToSpeak)) {
+            utterance.lang = 'bn-BD';
+        } else {
+            utterance.lang = 'en-US';
+        }
+
+        btn.innerHTML = '<i class="fa-solid fa-volume-xmark text-warning"></i>';
+
+        utterance.onend = () => { btn.innerHTML = '<i class="fa-solid fa-volume-high"></i>'; };
+        utterance.onerror = () => { btn.innerHTML = '<i class="fa-solid fa-volume-high"></i>'; };
+
+        window.speechSynthesis.speak(utterance);
+    }
 
     async function toggleVoiceRecording() {
         if (isRecording) {
@@ -516,7 +595,7 @@ HTML_LAYOUT = """
             console.error("Transcription fetch error:", err);
             alert("Error connecting to Groq Whisper API");
         } finally {
-            questionInput.placeholder = "Message Tuto AI or attach photo...";
+            questionInput.placeholder = "Message Tuto AI, attach photo or PDF...";
         }
     }
 
@@ -525,7 +604,7 @@ HTML_LAYOUT = """
             <div class="avatar ai-avatar">AI</div>
             <div class="bubble">
                 <strong>Hello!</strong><br>
-                I am Tuto AI. Send me your Math, Physics, or Chemistry problems, or share any image to chat about it!
+                I am Tuto AI. Send me your Math, Physics, or Chemistry problems, share any photo, or upload a PDF document!
             </div>
         </div>
     `;
@@ -720,20 +799,37 @@ HTML_LAYOUT = """
         document.getElementById('cameraInput').click();
     }
 
+    function triggerPDF() {
+        closeModal();
+        document.getElementById('pdfInput').click();
+    }
+
     function handleFileSelect(input) {
         if (input.files && input.files[0]) {
             selectedFile = input.files[0];
-            const imgURL = URL.createObjectURL(selectedFile);
-            document.getElementById('previewImgThumb').src = imgURL;
-            document.getElementById('imagePreviewArea').style.display = 'block';
+            const previewArea = document.getElementById('filePreviewArea');
+            const imgThumb = document.getElementById('previewImgThumb');
+            const pdfThumb = document.getElementById('pdfPreviewThumb');
+
+            if (selectedFile.type === 'application/pdf') {
+                imgThumb.style.display = 'none';
+                pdfThumb.style.display = 'inline-block';
+                document.getElementById('pdfFileName').innerText = selectedFile.name;
+            } else {
+                pdfThumb.style.display = 'none';
+                imgThumb.style.display = 'block';
+                imgThumb.src = URL.createObjectURL(selectedFile);
+            }
+            previewArea.style.display = 'block';
         }
     }
 
-    function clearImage() {
+    function clearSelectedFile() {
         selectedFile = null;
         document.getElementById('galleryInput').value = '';
         document.getElementById('cameraInput').value = '';
-        document.getElementById('imagePreviewArea').style.display = 'none';
+        document.getElementById('pdfInput').value = '';
+        document.getElementById('filePreviewArea').style.display = 'none';
         document.getElementById('previewImgThumb').src = '';
     }
 
@@ -745,15 +841,19 @@ HTML_LAYOUT = """
         if (!question && !selectedFile) return;
 
         if (allSessions[currentSessionId].title === 'New Chat') {
-            const titlePrompt = question || (selectedFile ? "Image Analysis" : "New Conversation");
+            const titlePrompt = question || (selectedFile ? selectedFile.name : "New Conversation");
             generateSmartTitle(titlePrompt, currentSessionId);
         }
 
         let userContentHTML = `<strong>You</strong><br>${question.replace(/\\n/g, '<br>')}`;
         
         if (selectedFile) {
-            const imgURL = URL.createObjectURL(selectedFile);
-            userContentHTML = `<img src="${imgURL}" class="uploaded-img-preview"><br>` + userContentHTML;
+            if (selectedFile.type === 'application/pdf') {
+                userContentHTML = `<div class="pdf-badge"><i class="fa-solid fa-file-pdf"></i> ${selectedFile.name}</div><br>` + userContentHTML;
+            } else {
+                const imgURL = URL.createObjectURL(selectedFile);
+                userContentHTML = `<img src="${imgURL}" class="uploaded-img-preview"><br>` + userContentHTML;
+            }
         }
 
         chatBox.innerHTML += `
@@ -764,7 +864,7 @@ HTML_LAYOUT = """
         `;
         
         const formData = new FormData();
-        formData.append('question', question || "Describe or analyze this image naturally.");
+        formData.append('question', question || "Analyze this file and explain naturally.");
         formData.append('session_id', currentSessionId);
         if (selectedFile) {
             formData.append('file', selectedFile);
@@ -772,7 +872,7 @@ HTML_LAYOUT = """
 
         questionInput.value = '';
         questionInput.style.height = 'auto';
-        clearImage();
+        clearSelectedFile();
         sendBtn.disabled = true;
         chatBox.scrollTop = chatBox.scrollHeight;
 
@@ -803,7 +903,15 @@ HTML_LAYOUT = """
                 }
 
                 const bubbleElem = loadingElem.querySelector('.bubble');
-                bubbleElem.innerHTML = `<strong>Tuto AI</strong><br>${htmlContent}`;
+                bubbleElem.innerHTML = `
+                    <div class="d-flex justify-content-between align-items-center mb-1">
+                        <strong>Tuto AI</strong>
+                        <button type="button" class="tts-btn" onclick="speakText(this)" title="Read Aloud (Voice Output)">
+                            <i class="fa-solid fa-volume-high"></i>
+                        </button>
+                    </div>
+                    <div>${htmlContent}</div>
+                `;
                 
                 processCodeBlocks(bubbleElem);
                 renderMathInElem(bubbleElem);
@@ -834,6 +942,22 @@ def clean_ai_response(text: str) -> str:
     elif "Drafting the response:" in text:
         text = text.split("Drafting the response:")[-1]
     return text.strip()
+
+def extract_pdf_text(contents: bytes) -> str:
+    pdf_text = ""
+    try:
+        import pypdf
+        reader = pypdf.PdfReader(io.BytesIO(contents))
+        for page in reader.pages:
+            t = page.extract_text()
+            if t:
+                pdf_text += t + "\n"
+    except Exception:
+        # Simple fallback text extraction if pypdf is not installed
+        raw_matches = re.findall(rb'\((.*?)\)', contents)
+        extracted_strings = [m.decode('utf-8', errors='ignore') for m in raw_matches if len(m) > 3]
+        pdf_text = " ".join(extracted_strings)
+    return pdf_text.strip()
 
 @app.get("/", response_class=HTMLResponse)
 def home():
@@ -919,29 +1043,48 @@ async def chat_endpoint(
         messages_payload.extend(chat_sessions[session_id][-10:])
 
         if file and file.filename:
+            filename = file.filename.lower()
             contents = await file.read()
-            base64_image = base64.b64encode(contents).decode('utf-8')
-            mime_type = file.content_type or "image/jpeg"
-            image_url = f"data:{mime_type};base64,{base64_image}"
 
-            current_user_msg = {
-                "role": "user",
-                "content": [
-                    {"type": "text", "text": question},
-                    {"type": "image_url", "image_url": {"url": image_url}}
-                ]
-            }
-            messages_payload.append(current_user_msg)
+            if filename.endswith(".pdf"):
+                extracted_text = extract_pdf_text(contents)
+                pdf_prompt = f"User uploaded PDF document ('{file.filename}').\n\nPDF Text Content:\n{extracted_text[:6000]}\n\nUser Question: {question}"
+                
+                current_user_msg = {"role": "user", "content": pdf_prompt}
+                messages_payload.append(current_user_msg)
 
-            completion = client.chat.completions.create(
-                model="llama-3.2-11b-vision-preview",
-                messages=messages_payload
-            )
-            raw_response = completion.choices[0].message.content
-            final_response = clean_ai_response(raw_response)
-            
-            chat_sessions[session_id].append({"role": "user", "content": f"[User sent image] {question}"})
-            chat_sessions[session_id].append({"role": "assistant", "content": final_response})
+                completion = client.chat.completions.create(
+                    model="llama-3.3-70b-versatile",
+                    messages=messages_payload
+                )
+                final_response = clean_ai_response(completion.choices[0].message.content)
+                chat_sessions[session_id].append({"role": "user", "content": f"[PDF File: {file.filename}] {question}"})
+                chat_sessions[session_id].append({"role": "assistant", "content": final_response})
+
+            else:
+                # Image Upload Handling (Fixed Active Model)
+                base64_image = base64.b64encode(contents).decode('utf-8')
+                mime_type = file.content_type or "image/jpeg"
+                image_url = f"data:{mime_type};base64,{base64_image}"
+
+                current_user_msg = {
+                    "role": "user",
+                    "content": [
+                        {"type": "text", "text": question},
+                        {"type": "image_url", "image_url": {"url": image_url}}
+                    ]
+                }
+                messages_payload.append(current_user_msg)
+
+                completion = client.chat.completions.create(
+                    model="llama-3.2-11b-vision-instruct",
+                    messages=messages_payload
+                )
+                raw_response = completion.choices[0].message.content
+                final_response = clean_ai_response(raw_response)
+                
+                chat_sessions[session_id].append({"role": "user", "content": f"[User sent image] {question}"})
+                chat_sessions[session_id].append({"role": "assistant", "content": final_response})
 
         else:
             current_user_msg = {"role": "user", "content": question}
