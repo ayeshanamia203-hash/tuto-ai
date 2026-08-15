@@ -964,7 +964,7 @@ async def transcribe_audio(audio: UploadFile = File(...)):
                 file=(os.path.basename(temp_audio_path), file_to_transcribe.read()),
                 model="whisper-large-v3",
                 response_format="json"
-            )https://github.com/ayeshanamia203-hash/tuto-ai/edit/main/main.py
+            )
 
         os.remove(temp_audio_path)
 
