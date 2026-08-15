@@ -1062,7 +1062,7 @@ async def chat_endpoint(
                 chat_sessions[session_id].append({"role": "assistant", "content": final_response})
 
             else:
-                # Image Upload Handling (Fixed Active Model)
+                # Permanent Solution: Dynamic Vision Model Fallback Loop
                 base64_image = base64.b64encode(contents).decode('utf-8')
                 mime_type = file.content_type or "image/jpeg"
                 image_url = f"data:{mime_type};base64,{base64_image}"
@@ -1076,13 +1076,34 @@ async def chat_endpoint(
                 }
                 messages_payload.append(current_user_msg)
 
-                completion = client.chat.completions.create(
-                    model="llama-3.2-11b-vision-instruct",
-                    messages=messages_payload
-                )
-                raw_response = completion.choices[0].message.content
-                final_response = clean_ai_response(raw_response)
-                
+                # Priority Fallback list for Groq Vision models
+                vision_models = [
+                    "llama-3.2-11b-vision-preview",
+                    "llama-3.2-90b-vision-preview",
+                    "llama-3.2-11b-vision-instruct",
+                    "llama-3.2-90b-vision-instruct"
+                ]
+
+                completion = None
+                last_error = None
+
+                for model_name in vision_models:
+                    try:
+                        completion = client.chat.completions.create(
+                            model=model_name,
+                            messages=messages_payload
+                        )
+                        break
+                    except Exception as err:
+                        last_error = err
+                        continue
+
+                if completion:
+                    raw_response = completion.choices[0].message.content
+                    final_response = clean_ai_response(raw_response)
+                else:
+                    raise Exception(f"Vision API Error: All vision models failed. Details: {last_error}")
+
                 chat_sessions[session_id].append({"role": "user", "content": f"[User sent image] {question}"})
                 chat_sessions[session_id].append({"role": "assistant", "content": final_response})
 
