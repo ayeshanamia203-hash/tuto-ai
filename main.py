@@ -953,7 +953,6 @@ def extract_pdf_text(contents: bytes) -> str:
             if t:
                 pdf_text += t + "\n"
     except Exception:
-        # Simple fallback text extraction if pypdf is not installed
         raw_matches = re.findall(rb'\((.*?)\)', contents)
         extracted_strings = [m.decode('utf-8', errors='ignore') for m in raw_matches if len(m) > 3]
         pdf_text = " ".join(extracted_strings)
@@ -1062,7 +1061,6 @@ async def chat_endpoint(
                 chat_sessions[session_id].append({"role": "assistant", "content": final_response})
 
             else:
-                # Permanent Solution: Dynamic Vision Model Fallback Loop
                 base64_image = base64.b64encode(contents).decode('utf-8')
                 mime_type = file.content_type or "image/jpeg"
                 image_url = f"data:{mime_type};base64,{base64_image}"
@@ -1076,12 +1074,10 @@ async def chat_endpoint(
                 }
                 messages_payload.append(current_user_msg)
 
-                # Priority Fallback list for Groq Vision models
+                # Active Vision Models Supported by Groq
                 vision_models = [
                     "llama-3.2-11b-vision-preview",
-                    "llama-3.2-90b-vision-preview",
-                    "llama-3.2-11b-vision-instruct",
-                    "llama-3.2-90b-vision-instruct"
+                    "llama-3.2-90b-vision-preview"
                 ]
 
                 completion = None
