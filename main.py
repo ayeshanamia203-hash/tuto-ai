@@ -1074,10 +1074,12 @@ async def chat_endpoint(
                 }
                 messages_payload.append(current_user_msg)
 
-                # Active Vision Models Supported by Groq
+                # Groq Active Vision Models (Updated List)
                 vision_models = [
-                    "llama-3.2-11b-vision-preview",
-                    "llama-3.2-90b-vision-preview"
+                    "meta-llama/llama-3.2-11b-vision-instruct",
+                    "meta-llama/llama-3.2-90b-vision-instruct",
+                    "llama-3.2-11b-vision-instruct",
+                    "llama-3.2-90b-vision-instruct"
                 ]
 
                 completion = None
