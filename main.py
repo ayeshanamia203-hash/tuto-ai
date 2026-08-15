@@ -208,7 +208,6 @@ HTML_LAYOUT = """
             margin-bottom: 10px;
         }
 
-        /* Voice Output (TTS) Button Styling */
         .tts-btn {
             background: none;
             border: none;
@@ -222,7 +221,6 @@ HTML_LAYOUT = """
             color: var(--accent-color);
         }
 
-        /* Code Container Styling */
         .code-container {
             position: relative;
             margin: 12px 0;
@@ -414,9 +412,7 @@ HTML_LAYOUT = """
             <i class="fa-solid fa-plus me-2"></i> New Chat
         </button>
         <div class="text-secondary small fw-bold mt-2">RECENT CHATS</div>
-        <div class="history-list" id="historyList">
-            <!-- Chat history -->
-        </div>
+        <div class="history-list" id="historyList"></div>
     </div>
 
     <div class="main-chat">
@@ -424,9 +420,7 @@ HTML_LAYOUT = """
             <h5 class="m-0 fw-bold text-light"><i class="fa-solid fa-graduation-cap me-2 text-warning"></i>Tuto AI</h5>
         </div>
 
-        <div class="chat-container" id="chatBox">
-            <!-- Chat messages -->
-        </div>
+        <div class="chat-container" id="chatBox"></div>
 
         <div class="input-container-box">
             <div class="input-wrapper">
@@ -495,7 +489,6 @@ HTML_LAYOUT = """
     let audioChunks = [];
     let isRecording = false;
 
-    // --- Voice Output (Text-to-Speech) Function ---
     function speakText(btn) {
         if (!('speechSynthesis' in window)) {
             alert("Sorry, your browser doesn't support Voice Output!");
@@ -504,7 +497,7 @@ HTML_LAYOUT = """
 
         const bubbleElem = btn.closest('.bubble');
         let textToSpeak = bubbleElem ? bubbleElem.innerText.replace(/^Tuto AI/i, '').trim() : '';
-        textToSpeak = textToSpeak.replace(/Copy/g, ''); // Clean UI strings
+        textToSpeak = textToSpeak.replace(/Copy/g, '');
 
         if (window.speechSynthesis.speaking) {
             window.speechSynthesis.cancel();
@@ -515,7 +508,6 @@ HTML_LAYOUT = """
         const utterance = new SpeechSynthesisUtterance(textToSpeak);
         utterance.rate = 1.0;
         
-        // Auto language detection (Bangla vs English)
         if (/[\u0980-\u09FF]/.test(textToSpeak)) {
             utterance.lang = 'bn-BD';
         } else {
@@ -559,7 +551,6 @@ HTML_LAYOUT = """
             micBtn.classList.add('recording');
             questionInput.placeholder = "Recording... Click mic again to stop";
         } catch (err) {
-            console.error("Mic access denied or not supported:", err);
             alert("Microphone permission denied or not supported by browser!");
         }
     }
@@ -592,7 +583,6 @@ HTML_LAYOUT = """
                 alert("Voice recognition error: " + (data.message || "Could not recognize audio"));
             }
         } catch (err) {
-            console.error("Transcription fetch error:", err);
             alert("Error connecting to Groq Whisper API");
         } finally {
             questionInput.placeholder = "Message Tuto AI, attach photo or PDF...";
@@ -648,7 +638,6 @@ HTML_LAYOUT = """
 
     function processCodeBlocks(element) {
         if (!element) return;
-        
         element.querySelectorAll('pre').forEach((pre) => {
             if (pre.closest('.code-container')) return;
 
@@ -680,13 +669,10 @@ HTML_LAYOUT = """
                     setTimeout(() => {
                         copyBtn.innerHTML = '<i class="fa-regular fa-copy me-1"></i>Copy';
                     }, 2000);
-                } catch (err) {
-                    console.error('Failed to copy code: ', err);
-                }
+                } catch (err) {}
             });
 
             header.appendChild(copyBtn);
-            
             pre.parentNode.insertBefore(container, pre);
             container.appendChild(header);
             container.appendChild(pre);
@@ -776,9 +762,7 @@ HTML_LAYOUT = """
                     renderSidebarHistory();
                 }
             }
-        } catch (e) {
-            console.error("Title generation failed:", e);
-        }
+        } catch (e) {}
     }
 
     function closeModal() {
@@ -980,7 +964,7 @@ async def transcribe_audio(audio: UploadFile = File(...)):
                 file=(os.path.basename(temp_audio_path), file_to_transcribe.read()),
                 model="whisper-large-v3",
                 response_format="json"
-            )
+            )https://github.com/ayeshanamia203-hash/tuto-ai/edit/main/main.py
 
         os.remove(temp_audio_path)
 
@@ -1074,33 +1058,13 @@ async def chat_endpoint(
                 }
                 messages_payload.append(current_user_msg)
 
-                # Groq Active Vision Models (Updated List)
-                vision_models = [
-                    "meta-llama/llama-3.2-11b-vision-instruct",
-                    "meta-llama/llama-3.2-90b-vision-instruct",
-                    "llama-3.2-11b-vision-instruct",
-                    "llama-3.2-90b-vision-instruct"
-                ]
-
-                completion = None
-                last_error = None
-
-                for model_name in vision_models:
-                    try:
-                        completion = client.chat.completions.create(
-                            model=model_name,
-                            messages=messages_payload
-                        )
-                        break
-                    except Exception as err:
-                        last_error = err
-                        continue
-
-                if completion:
-                    raw_response = completion.choices[0].message.content
-                    final_response = clean_ai_response(raw_response)
-                else:
-                    raise Exception(f"Vision API Error: All vision models failed. Details: {last_error}")
+                # Groq-এর বর্তমানে চালু থাকা সচল Vision Model
+                completion = client.chat.completions.create(
+                    model="llama-3.2-11b-vision-preview",
+                    messages=messages_payload
+                )
+                
+                final_response = clean_ai_response(completion.choices[0].message.content)
 
                 chat_sessions[session_id].append({"role": "user", "content": f"[User sent image] {question}"})
                 chat_sessions[session_id].append({"role": "assistant", "content": final_response})
