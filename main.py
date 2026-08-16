@@ -8,10 +8,15 @@ import re
 import tempfile
 import io
 from groq import Groq
+import google.generativeai as genai
 
 app = FastAPI(title="Tuto AI Professional Edition")
 
 GROQ_API_KEY = os.environ.get("GROQ_API_KEY", "")
+GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "")
+
+if GEMINI_API_KEY:
+    genai.configure(api_key=GEMINI_API_KEY)
 
 # In-memory chat store for sessions
 chat_sessions = {}
@@ -1001,11 +1006,6 @@ async def chat_endpoint(
 ):
     global chat_sessions
     try:
-        if not GROQ_API_KEY:
-            return {"status": "error", "message": "GROQ_API_KEY missing in Render environment."}
-        
-        client = Groq(api_key=GROQ_API_KEY)
-        
         if session_id not in chat_sessions:
             chat_sessions[session_id] = []
 
@@ -1029,7 +1029,12 @@ async def chat_endpoint(
             filename = file.filename.lower()
             contents = await file.read()
 
+            # 1. PDF HANDLING (GROQ)
             if filename.endswith(".pdf"):
+                if not GROQ_API_KEY:
+                    return {"status": "error", "message": "GROQ_API_KEY missing in environment."}
+                client = Groq(api_key=GROQ_API_KEY)
+
                 extracted_text = extract_pdf_text(contents)
                 pdf_prompt = f"User uploaded PDF document ('{file.filename}').\n\nPDF Text Content:\n{extracted_text[:6000]}\n\nUser Question: {question}"
                 
@@ -1044,32 +1049,32 @@ async def chat_endpoint(
                 chat_sessions[session_id].append({"role": "user", "content": f"[PDF File: {file.filename}] {question}"})
                 chat_sessions[session_id].append({"role": "assistant", "content": final_response})
 
+            # 2. IMAGE HANDLING (GEMINI 1.5 FLASH)
             else:
-                base64_image = base64.b64encode(contents).decode('utf-8')
+                if not GEMINI_API_KEY:
+                    return {"status": "error", "message": "GEMINI_API_KEY missing in Render environment."}
+
                 mime_type = file.content_type or "image/jpeg"
-                image_url = f"data:{mime_type};base64,{base64_image}"
-
-                current_user_msg = {
-                    "role": "user",
-                    "content": [
-                        {"type": "text", "text": question},
-                        {"type": "image_url", "image_url": {"url": image_url}}
-                    ]
+                image_data = {
+                    "mime_type": mime_type,
+                    "data": contents
                 }
-                messages_payload.append(current_user_msg)
 
-                # Groq-এর বর্তমানে চালু থাকা সচল Vision Model
-                completion = client.chat.completions.create(
-                    model="llama-3.2-11b-vision-preview",
-                    messages=messages_payload
-                )
-                
-                final_response = clean_ai_response(completion.choices[0].message.content)
+                prompt = f"{SMART_SYSTEM_PROMPT}\n\nUser Question: {question}"
+
+                gemini_model = genai.GenerativeModel('gemini-1.5-flash')
+                response = gemini_model.generate_content([prompt, image_data])
+                final_response = clean_ai_response(response.text)
 
                 chat_sessions[session_id].append({"role": "user", "content": f"[User sent image] {question}"})
                 chat_sessions[session_id].append({"role": "assistant", "content": final_response})
 
+        # 3. TEXT ONLY CHAT (GROQ)
         else:
+            if not GROQ_API_KEY:
+                return {"status": "error", "message": "GROQ_API_KEY missing in environment."}
+            client = Groq(api_key=GROQ_API_KEY)
+
             current_user_msg = {"role": "user", "content": question}
             messages_payload.append(current_user_msg)
 
