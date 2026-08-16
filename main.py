@@ -1052,25 +1052,39 @@ async def chat_endpoint(
             # 2. IMAGE HANDLING (GEMINI 1.5 FLASH)
                         # 2. IMAGE HANDLING (GEMINI 2.0 FLASH)
                         # 2. IMAGE HANDLING (GEMINI 2.5 FLASH)
+                        # 2. IMAGE HANDLING (GEMINI WITH AUTO-FALLBACK)
             else:
                 if not GEMINI_API_KEY:
-                    return {"status": "error", "message": "GEMINI_API_KEY missing in Render environment."}
+                    return {"status": "error", "message": "GEMINI_API_KEY missing in environment."}
 
+                genai.configure(api_key=GEMINI_API_KEY)
                 mime_type = file.content_type or "image/jpeg"
                 image_data = {
                     "mime_type": mime_type,
                     "data": contents
                 }
-
                 prompt = f"{SMART_SYSTEM_PROMPT}\n\nUser Question: {question}"
 
-                # মডেল আপডেট করা হয়েছে
-                gemini_model = genai.GenerativeModel('gemini-2.5-flash')
-                response = gemini_model.generate-content([prompt, image_data]) if hasattr(gemini_model, 'generate-content') else gemini_model.generate_content([prompt, image_data])
-                final_response = clean_ai_response(response.text)
+                # যে মডেলটি সচল থাকবে, ব্যাকএন্ড নিজে থেকেই সেটি বেছে নেবে
+                candidate_models = ['gemini-2.0-flash', 'gemini-1.5-flash-latest', 'gemini-1.5-flash-002', 'gemini-1.5-flash']
+                response = None
 
+                for model_name in candidate_models:
+                    try:
+                        gemini_model = genai.GenerativeModel(model_name)
+                        response = gemini_model.generate_content([prompt, image_data])
+                        if response and response.text:
+                            break
+                    except Exception:
+                        continue
+
+                if not response or not response.text:
+                    return {"status": "error", "message": "Gemini image service is temporary unavailable. Try again."}
+
+                final_response = clean_ai_response(response.text)
                 chat_sessions[session_id].append({"role": "user", "content": f"[User sent image] {question}"})
                 chat_sessions[session_id].append({"role": "assistant", "content": final_response})
+
 
 
 
