@@ -5,57 +5,242 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Tuto AI - Smart Learning Partner</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        body { background-color: #f4f6f9; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-        .chat-card { max-width: 750px; margin: 30px auto; border-radius: 15px; border: none; box-shadow: 0 8px 24px rgba(0,0,0,0.08); }
-        .chat-header { background: linear-gradient(135deg, #4f46e5, #7c3aed); color: white; border-radius: 15px 15px 0 0 !important; padding: 20px; }
-        .chat-box { height: 420px; overflow-y: auto; padding: 20px; background: #ffffff; }
-        .message { margin-bottom: 15px; display: flex; flex-direction: column; }
+        * { box-sizing: border-box; }
+        body { 
+            background-color: #131314; 
+            color: #e3e3e3; 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .app-container {
+            display: flex;
+            width: 100vw;
+            height: 100vh;
+            position: relative;
+        }
+
+        /* Sidebar Styling */
+        .sidebar {
+            width: 260px;
+            background-color: #1e1f20;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            transition: all 0.3s ease;
+            z-index: 10;
+            border-right: 1px solid #2d2f31;
+        }
+
+        .sidebar.collapsed {
+            margin-left: -260px;
+        }
+
+        .new-chat-btn {
+            background-color: #212529;
+            color: #e3e3e3;
+            border: 1px solid #444746;
+            border-radius: 20px;
+            padding: 10px 15px;
+            text-align: left;
+            margin-bottom: 20px;
+            cursor: pointer;
+            width: 100%;
+        }
+
+        /* Main Chat Area */
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            background-color: #131314;
+            transition: all 0.3s ease;
+        }
+
+        .chat-header {
+            padding: 15px 20px;
+            display: flex;
+            align-items: center;
+            border-bottom: 1px solid #2d2f31;
+        }
+
+        .toggle-btn {
+            background: none;
+            border: none;
+            color: #e3e3e3;
+            font-size: 20px;
+            cursor: pointer;
+            margin-right: 15px;
+            padding: 5px 10px;
+            border-radius: 5px;
+        }
+
+        .toggle-btn:hover { background-color: #2d2f31; }
+
+        .chat-box {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .chat-messages-container {
+            width: 100%;
+            max-width: 768px;
+        }
+
+        .message { margin-bottom: 20px; display: flex; flex-direction: column; }
         .user-msg { align-items: flex-end; }
         .ai-msg { align-items: flex-start; }
-        .bubble { max-width: 80%; padding: 12px 18px; border-radius: 18px; font-size: 15px; line-height: 1.5; }
-        .user-msg .bubble { background-color: #4f46e5; color: white; border-bottom-right-radius: 4px; }
-        .ai-msg .bubble { background-color: #f1f5f9; color: #1e293b; border-bottom-left-radius: 4px; border: 1px solid #e2e8f0; }
-        .input-area { background: #f8fafc; padding: 15px; border-radius: 0 0 15px 15px; border-top: 1px solid #e2e8f0; }
+        
+        .bubble { 
+            max-width: 85%; 
+            padding: 12px 18px; 
+            border-radius: 18px; 
+            font-size: 15px; 
+            line-height: 1.6; 
+        }
+
+        .user-msg .bubble { background-color: #282a2c; color: #e3e3e3; border-bottom-right-radius: 4px; }
+        .ai-msg .bubble { background-color: transparent; color: #e3e3e3; padding-left: 0; }
+
+        /* Input Wrapper (Gemini Style Center Input) */
+        .input-area-wrapper {
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            padding: 10px 20px 25px 20px;
+        }
+
+        .input-container {
+            width: 100%;
+            max-width: 768px;
+            background-color: #1e1f20;
+            border-radius: 28px;
+            padding: 8px 15px;
+            border: 1px solid #444746;
+        }
+
+        .input-container:focus-within {
+            border-color: #a8c7fa;
+        }
+
+        .chat-input {
+            background: transparent;
+            border: none;
+            color: #e3e3e3;
+            box-shadow: none !important;
+        }
+
+        .chat-input::placeholder { color: #8e918f; }
+        .chat-input:focus { background: transparent; color: #e3e3e3; }
+
+        /* Gemini Up-Arrow Button */
+        .send-btn {
+            background-color: #e3e3e3;
+            color: #131314;
+            border: none;
+            border-radius: 50%;
+            width: 38px;
+            height: 38px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+
+        .send-btn:disabled {
+            background-color: #444746;
+            color: #131314;
+            cursor: not-allowed;
+        }
+
+        @media (max-width: 768px) {
+            .sidebar {
+                position: absolute;
+                height: 100%;
+                left: 0;
+            }
+            .sidebar.collapsed {
+                left: -260px;
+                margin-left: 0;
+            }
+        }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <div class="card chat-card">
-        <div class="card-header chat-header text-center">
-            <h4 class="m-0 fw-bold">🎓 Tuto AI Tutor</h4>
-            <small>Created by Imran Hossen</small>
+<div class="app-container">
+    <!-- Left Sidebar -->
+    <div class="sidebar" id="sidebar">
+        <button class="new-chat-btn"><i class="fas fa-plus me-2"></i> New Chat</button>
+        <div class="text-muted small mb-2">RECENT CHATS</div>
+        <div class="p-2 rounded style-item" style="background: #282a2c;">
+            <i class="far fa-comment-alt me-2"></i> Current Session
         </div>
-        
+    </div>
+
+    <!-- Main Content Area -->
+    <div class="main-content" id="mainContent">
+        <!-- Top Header -->
+        <div class="chat-header">
+            <button class="toggle-btn" id="sidebarToggleBtn" onclick="toggleSidebar()">
+                <i class="fas fa-bars"></i>
+            </button>
+            <h5 class="m-0 fw-bold">🎓 Tuto AI</h5>
+        </div>
+
+        <!-- Chat Area -->
         <div class="chat-box" id="chatBox">
-            <div class="message ai-msg">
-                <div class="bubble">
-                    হ্যালো ইমরান ভাই! আমি তোমার AI টিউটর। পড়াশোনা সংক্রান্ত যেকোনো প্রশ্ন এখানে করতে পারো!
+            <div class="chat-messages-container" id="chatMessages">
+                <div class="message ai-msg">
+                    <div class="bubble">
+                        হ্যালো ইমরান ভাই! আমি তোমার AI টিউটর। পড়াশোনা সংক্রান্ত যেকোনো প্রশ্ন এখানে করতে পারো!
+                    </div>
                 </div>
             </div>
         </div>
 
-        <div class="input-area">
-            <form id="chatForm">
-                <div class="row g-2 mb-2">
-                    <div class="col-6">
-                        <input type="text" id="grade" class="form-control form-control-sm" placeholder="শ্রেণী (যেমন: Class 10)">
+        <!-- Input Area (Centered Bottom) -->
+        <div class="input-area-wrapper">
+            <div class="input-container">
+                <form id="chatForm">
+                    <div class="row g-2 mb-2 d-none"> <!-- প্রয়োজনে দৃশ্যমান করতে d-none সরিয়ে দিন -->
+                        <div class="col-6">
+                            <input type="text" id="grade" class="form-control form-control-sm bg-dark text-light border-secondary" placeholder="শ্রেণী">
+                        </div>
+                        <div class="col-6">
+                            <input type="text" id="subject" class="form-control form-control-sm bg-dark text-light border-secondary" placeholder="বিষয়">
+                        </div>
                     </div>
-                    <div class="col-6">
-                        <input type="text" id="subject" class="form-control form-control-sm" placeholder="বিষয় (যেমন: Physics)">
+                    <div class="d-flex align-items-center">
+                        <input type="text" id="question" class="form-control chat-input me-2" placeholder="Message Tuto AI..." required>
+                        <button class="send-btn" type="submit" id="sendBtn">
+                            <i class="fas fa-arrow-up"></i>
+                        </button>
                     </div>
-                </div>
-                <div class="input-group">
-                    <input type="text" id="question" class="form-control" placeholder="তোমার প্রশ্নটি এখানে লেখো..." required>
-                    <button class="btn btn-primary px-4" type="submit" id="sendBtn">পাঠান 🚀</button>
-                </div>
-            </form>
+                </form>
+            </div>
         </div>
     </div>
 </div>
 
 <script>
+    // Sidebar Toggle Function
+    function toggleSidebar() {
+        const sidebar = document.getElementById('sidebar');
+        sidebar.classList.toggle('collapsed');
+    }
+
+    // Chat Logic
     document.getElementById('chatForm').addEventListener('submit', async (e) => {
         e.preventDefault();
         
@@ -68,12 +253,10 @@
         const question = questionInput.value.trim();
         if (!question) return;
 
-        // User message append
         appendMessage(question, 'user-msg');
         questionInput.value = '';
         sendBtn.disabled = true;
 
-        // Loading message
         const loadingDiv = appendMessage('AI উত্তর চিন্তা করছে...', 'ai-msg');
 
         try {
@@ -82,7 +265,6 @@
             formData.append('grade', gradeInput.value || 'General');
             formData.append('subject', subjectInput.value || 'General Studies');
 
-            // Connecting directly to your active Render Backend
             const response = await fetch('https://tuto-ai-backend.onrender.com/api/chat', {
                 method: 'POST',
                 body: formData
@@ -104,11 +286,13 @@
     });
 
     function appendMessage(text, className) {
-        const chatBox = document.getElementById('chatBox');
+        const chatMessages = document.getElementById('chatMessages');
         const msgDiv = document.createElement('div');
         msgDiv.className = `message ${className}`;
         msgDiv.innerHTML = `<div class="bubble">${text}</div>`;
-        chatBox.appendChild(msgDiv);
+        chatMessages.appendChild(msgDiv);
+        
+        const chatBox = document.getElementById('chatBox');
         chatBox.scrollTop = chatBox.scrollHeight;
         return msgDiv;
     }
