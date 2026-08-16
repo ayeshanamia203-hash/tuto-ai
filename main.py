@@ -1051,6 +1051,7 @@ async def chat_endpoint(
 
             # 2. IMAGE HANDLING (GEMINI 1.5 FLASH)
                         # 2. IMAGE HANDLING (GEMINI 2.0 FLASH)
+                        # 2. IMAGE HANDLING (GEMINI 2.5 FLASH)
             else:
                 if not GEMINI_API_KEY:
                     return {"status": "error", "message": "GEMINI_API_KEY missing in Render environment."}
@@ -1063,13 +1064,14 @@ async def chat_endpoint(
 
                 prompt = f"{SMART_SYSTEM_PROMPT}\n\nUser Question: {question}"
 
-                # মডেল নাম gemini-2.0-flash এ আপডেট করা হয়েছে
-                gemini_model = genai.GenerativeModel('gemini-2.0-flash')
-                response = gemini_model.generate_content([prompt, image_data])
+                # মডেল আপডেট করা হয়েছে
+                gemini_model = genai.GenerativeModel('gemini-2.5-flash')
+                response = gemini_model.generate-content([prompt, image_data]) if hasattr(gemini_model, 'generate-content') else gemini_model.generate_content([prompt, image_data])
                 final_response = clean_ai_response(response.text)
 
                 chat_sessions[session_id].append({"role": "user", "content": f"[User sent image] {question}"})
                 chat_sessions[session_id].append({"role": "assistant", "content": final_response})
+
 
 
         # 3. TEXT ONLY CHAT (GROQ)
