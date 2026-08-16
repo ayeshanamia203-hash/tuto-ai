@@ -7,8 +7,8 @@ import base64
 import re
 import tempfile
 import io
-from groq import Groq
 import google.generativeai as genai
+from groq import Groq
 
 app = FastAPI(title="Tuto AI Professional Edition")
 
@@ -54,9 +54,7 @@ HTML_LAYOUT = """
             --text-color: #ffffff;
             --accent-color: #a8c7fa;
         }
-        * {
-            box-sizing: border-box;
-        }
+        * { box-sizing: border-box; }
         html, body {
             background-color: var(--bg-color);
             color: var(--text-color);
@@ -66,9 +64,7 @@ HTML_LAYOUT = """
             padding: 0;
             overflow: hidden;
         }
-        body {
-            display: flex;
-        }
+        body { display: flex; }
         .sidebar {
             width: 260px;
             background-color: var(--sidebar-bg);
@@ -88,9 +84,7 @@ HTML_LAYOUT = """
             font-weight: 500;
             transition: 0.2s;
         }
-        .new-chat-btn:hover {
-            background-color: #3b3a45;
-        }
+        .new-chat-btn:hover { background-color: #3b3a45; }
         .history-list {
             flex: 1;
             overflow-y: auto;
@@ -127,9 +121,7 @@ HTML_LAYOUT = """
             cursor: pointer;
             padding: 2px 5px;
         }
-        .delete-chat-btn:hover {
-            color: #e11d48;
-        }
+        .delete-chat-btn:hover { color: #e11d48; }
         .main-chat {
             flex: 1;
             display: flex;
@@ -212,7 +204,6 @@ HTML_LAYOUT = """
             gap: 8px;
             margin-bottom: 10px;
         }
-
         .tts-btn {
             background: none;
             border: none;
@@ -222,10 +213,7 @@ HTML_LAYOUT = """
             margin-left: 8px;
             transition: color 0.2s;
         }
-        .tts-btn:hover {
-            color: var(--accent-color);
-        }
-
+        .tts-btn:hover { color: var(--accent-color); }
         .code-container {
             position: relative;
             margin: 12px 0;
@@ -268,16 +256,12 @@ HTML_LAYOUT = """
             align-items: center;
             gap: 4px;
         }
-        .copy-code-btn:hover {
-            background: #4b5263;
-        }
-
+        .copy-code-btn:hover { background: #4b5263; }
         .input-container-box {
             padding: 10px 20px 20px 20px;
             background: var(--bg-color);
             flex-shrink: 0;
         }
-
         .input-wrapper {
             max-width: 850px;
             margin: 0 auto;
@@ -289,14 +273,12 @@ HTML_LAYOUT = """
             display: flex;
             flex-direction: column;
         }
-
         #filePreviewArea {
             display: none;
             position: relative;
             width: fit-content;
             margin-bottom: 8px;
         }
-
         #previewImgThumb {
             width: 70px;
             height: 70px;
@@ -304,7 +286,6 @@ HTML_LAYOUT = """
             border-radius: 12px;
             border: 1px solid #555;
         }
-        
         #pdfPreviewThumb {
             display: none;
             background: #2b2a33;
@@ -315,7 +296,6 @@ HTML_LAYOUT = """
             font-size: 13px;
             font-weight: 500;
         }
-
         .close-img-btn {
             position: absolute;
             top: -6px;
@@ -333,13 +313,11 @@ HTML_LAYOUT = """
             justify-content: center;
             box-shadow: 0 2px 4px rgba(0,0,0,0.5);
         }
-
         .input-row {
             display: flex;
             align-items: flex-end;
             gap: 10px;
         }
-
         .plus-btn, .mic-btn {
             background: none;
             border: none;
@@ -355,13 +333,11 @@ HTML_LAYOUT = """
             color: #ef4444 !important;
             animation: pulse 1.2s infinite;
         }
-
         @keyframes pulse {
             0% { transform: scale(1); }
             50% { transform: scale(1.2); }
             100% { transform: scale(1); }
         }
-
         .chat-textarea {
             background: none;
             border: none;
@@ -376,7 +352,6 @@ HTML_LAYOUT = """
             line-height: 1.4;
             font-family: inherit;
         }
-
         .send-btn {
             background: none;
             border: none;
@@ -386,7 +361,6 @@ HTML_LAYOUT = """
             padding: 5px;
             margin-bottom: 3px;
         }
-        
         .modal-content {
             background-color: #1e1e20;
             color: #fff;
@@ -407,7 +381,6 @@ HTML_LAYOUT = """
             background-color: #3b3a45;
             color: #a8c7fa;
         }
-
         @media (max-width: 768px) { .sidebar { display: none; } }
     </style>
 </head>
@@ -853,7 +826,7 @@ HTML_LAYOUT = """
         `;
         
         const formData = new FormData();
-        formData.append('question', question || "Analyze this file and explain naturally.");
+        formData.append('question', question || "Analyze this image/file and explain clearly.");
         formData.append('session_id', currentSessionId);
         if (selectedFile) {
             formData.append('file', selectedFile);
@@ -1029,7 +1002,7 @@ async def chat_endpoint(
             filename = file.filename.lower()
             contents = await file.read()
 
-            # 1. PDF HANDLING (GROQ)
+            # 1. PDF HANDLING (GROQ LLAMA-3.3)
             if filename.endswith(".pdf"):
                 if not GROQ_API_KEY:
                     return {"status": "error", "message": "GROQ_API_KEY missing in environment."}
@@ -1049,46 +1022,45 @@ async def chat_endpoint(
                 chat_sessions[session_id].append({"role": "user", "content": f"[PDF File: {file.filename}] {question}"})
                 chat_sessions[session_id].append({"role": "assistant", "content": final_response})
 
-            # 2. IMAGE HANDLING (GEMINI 1.5 FLASH)
-                        # 2. IMAGE HANDLING (GEMINI 2.0 FLASH)
-                        # 2. IMAGE HANDLING (GEMINI 2.5 FLASH)
-                        # 2. IMAGE HANDLING (GEMINI WITH AUTO-FALLBACK)
+            # 2. IMAGE HANDLING (GEMINI PROPER MODEL AUTO-FALLBACK)
             else:
                 if not GEMINI_API_KEY:
-                    return {"status": "error", "message": "GEMINI_API_KEY missing in environment."}
+                    return {"status": "error", "message": "GEMINI_API_KEY missing in Render environment variables."}
 
                 genai.configure(api_key=GEMINI_API_KEY)
                 mime_type = file.content_type or "image/jpeg"
-                image_data = {
-                    "mime_type": mime_type,
-                    "data": contents
-                }
+                image_parts = [{"mime_type": mime_type, "data": contents}]
                 prompt = f"{SMART_SYSTEM_PROMPT}\n\nUser Question: {question}"
 
-                # যে মডেলটি সচল থাকবে, ব্যাকএন্ড নিজে থেকেই সেটি বেছে নেবে
-                candidate_models = ['gemini-2.0-flash', 'gemini-1.5-flash-latest', 'gemini-1.5-flash-002', 'gemini-1.5-flash']
+                # গুগলের সাম্প্রতিক সঠিক মডেল নামের তালিকা
+                candidate_models = [
+                    'gemini-2.5-flash',
+                    'gemini-2.0-flash',
+                    'gemini-1.5-flash',
+                    'gemini-1.5-pro'
+                ]
+                
                 response = None
+                last_error = ""
 
                 for model_name in candidate_models:
                     try:
                         gemini_model = genai.GenerativeModel(model_name)
-                        response = gemini_model.generate_content([prompt, image_data])
+                        response = gemini_model.generate_content([prompt, image_parts[0]])
                         if response and response.text:
                             break
-                    except Exception:
+                    except Exception as err:
+                        last_error = str(err)
                         continue
 
                 if not response or not response.text:
-                    return {"status": "error", "message": "Gemini image service is temporary unavailable. Try again."}
+                    return {"status": "error", "message": f"Gemini error: {last_error or 'No active model found'}"}
 
                 final_response = clean_ai_response(response.text)
                 chat_sessions[session_id].append({"role": "user", "content": f"[User sent image] {question}"})
                 chat_sessions[session_id].append({"role": "assistant", "content": final_response})
 
-
-
-
-        # 3. TEXT ONLY CHAT (GROQ)
+        # 3. TEXT ONLY CHAT (GROQ LLAMA-3.3)
         else:
             if not GROQ_API_KEY:
                 return {"status": "error", "message": "GROQ_API_KEY missing in environment."}
