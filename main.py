@@ -74,6 +74,10 @@ HTML_LAYOUT = """
             border-right: 1px solid #2d2d30;
             flex-shrink: 0;
             height: 100%;
+            transition: all 0.3s ease;
+        }
+        .sidebar.collapsed {
+            margin-left: -260px;
         }
         .new-chat-btn {
             background-color: #2b2a33;
@@ -130,14 +134,28 @@ HTML_LAYOUT = """
             height: 100dvh;
             overflow: hidden;
             position: relative;
+            transition: all 0.3s ease;
         }
         .chat-header {
             padding: 15px 25px;
             border-bottom: 1px solid #2d2d30;
             display: flex;
-            justify-content: space-between;
             align-items: center;
             flex-shrink: 0;
+        }
+        .toggle-btn {
+            background: none;
+            border: none;
+            color: #ffffff;
+            font-size: 18px;
+            cursor: pointer;
+            margin-right: 15px;
+            padding: 5px 10px;
+            border-radius: 8px;
+            transition: background 0.2s;
+        }
+        .toggle-btn:hover {
+            background-color: #2b2a33;
         }
         .chat-container {
             flex: 1;
@@ -261,6 +279,7 @@ HTML_LAYOUT = """
             padding: 10px 20px 20px 20px;
             background: var(--bg-color);
             flex-shrink: 0;
+            width: 100%;
         }
         .input-wrapper {
             max-width: 850px;
@@ -268,7 +287,7 @@ HTML_LAYOUT = """
             width: 100%;
             background-color: #1e1e20;
             border: 1px solid #3c4043;
-            border-radius: 20px;
+            border-radius: 24px;
             padding: 8px 15px;
             display: flex;
             flex-direction: column;
@@ -315,7 +334,7 @@ HTML_LAYOUT = """
         }
         .input-row {
             display: flex;
-            align-items: flex-end;
+            align-items: center;
             gap: 10px;
         }
         .plus-btn, .mic-btn {
@@ -325,7 +344,6 @@ HTML_LAYOUT = """
             font-size: 18px;
             cursor: pointer;
             padding: 5px;
-            margin-bottom: 3px;
             transition: 0.2s;
         }
         .plus-btn:hover, .mic-btn:hover { color: #fff; }
@@ -352,14 +370,29 @@ HTML_LAYOUT = """
             line-height: 1.4;
             font-family: inherit;
         }
+        /* Gemini/ChatGPT Style Up-Arrow Send Button */
         .send-btn {
-            background: none;
+            background-color: #ffffff;
+            color: #131314;
             border: none;
-            color: var(--accent-color);
-            font-size: 18px;
+            border-radius: 50%;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             cursor: pointer;
-            padding: 5px;
-            margin-bottom: 3px;
+            transition: all 0.2s;
+            flex-shrink: 0;
+            font-size: 14px;
+        }
+        .send-btn:hover {
+            background-color: var(--accent-color);
+        }
+        .send-btn:disabled {
+            background-color: #444746;
+            color: #131314;
+            cursor: not-allowed;
         }
         .modal-content {
             background-color: #1e1e20;
@@ -381,11 +414,19 @@ HTML_LAYOUT = """
             background-color: #3b3a45;
             color: #a8c7fa;
         }
-        @media (max-width: 768px) { .sidebar { display: none; } }
+        @media (max-width: 768px) { 
+            .sidebar { 
+                position: absolute;
+                z-index: 100;
+            }
+            .sidebar.collapsed {
+                margin-left: -260px;
+            }
+        }
     </style>
 </head>
 <body>
-    <div class="sidebar">
+    <div class="sidebar" id="sidebar">
         <button class="new-chat-btn w-100 mb-2" onclick="startNewChat()">
             <i class="fa-solid fa-plus me-2"></i> New Chat
         </button>
@@ -395,6 +436,9 @@ HTML_LAYOUT = """
 
     <div class="main-chat">
         <div class="chat-header">
+            <button class="toggle-btn" onclick="toggleSidebar()" title="Toggle Sidebar">
+                <i class="fa-solid fa-bars"></i>
+            </button>
             <h5 class="m-0 fw-bold text-light"><i class="fa-solid fa-graduation-cap me-2 text-warning"></i>Tuto AI</h5>
         </div>
 
@@ -412,13 +456,13 @@ HTML_LAYOUT = """
                     <button type="button" class="plus-btn" data-bs-toggle="modal" data-bs-target="#uploadModal">
                         <i class="fa-solid fa-circle-plus"></i>
                     </button>
-                    <form id="chatForm" class="d-flex w-100 align-items-end gap-2">
+                    <form id="chatForm" class="d-flex w-100 align-items-center gap-2 m-0">
                         <textarea id="question" class="chat-textarea" rows="1" placeholder="Message Tuto AI, attach photo or PDF..."></textarea>
                         <button type="button" class="mic-btn" id="micBtn" onclick="toggleVoiceRecording()" title="Voice Input (Groq Whisper)">
                             <i class="fa-solid fa-microphone"></i>
                         </button>
-                        <button type="submit" class="send-btn" id="sendBtn">
-                            <i class="fa-solid fa-paper-plane"></i>
+                        <button type="submit" class="send-btn" id="sendBtn" title="Send Message">
+                            <i class="fa-solid fa-arrow-up"></i>
                         </button>
                     </form>
                 </div>
@@ -466,6 +510,11 @@ HTML_LAYOUT = """
     let mediaRecorder = null;
     let audioChunks = [];
     let isRecording = false;
+
+    function toggleSidebar() {
+        const sidebar = document.getElementById('sidebar');
+        sidebar.classList.toggle('collapsed');
+    }
 
     function speakText(btn) {
         if (!('speechSynthesis' in window)) {
@@ -1022,8 +1071,7 @@ async def chat_endpoint(
                 chat_sessions[session_id].append({"role": "user", "content": f"[PDF File: {file.filename}] {question}"})
                 chat_sessions[session_id].append({"role": "assistant", "content": final_response})
 
-            # 2. IMAGE HANDLING (GEMINI PROPER MODEL AUTO-FALLBACK)
-                        # 2. IMAGE HANDLING (DYNAMIC AUTO-DETECT GEMINI MODEL)
+            # 2. IMAGE HANDLING (DYNAMIC AUTO-DETECT GEMINI MODEL)
             else:
                 if not GEMINI_API_KEY:
                     return {"status": "error", "message": "GEMINI_API_KEY missing in environment variables."}
@@ -1036,13 +1084,12 @@ async def chat_endpoint(
                 response = None
                 last_error = ""
 
-                # গুগল এপিআই থেকে সরাসরি লাইভ সচল মডেলের নাম নিয়ে আসা
                 try:
                     active_models = [
                         m.name for m in genai.list_models() 
                         if 'generateContent' in m.supported_generation_methods
                     ]
-                except Exception as e:
+                except Exception:
                     active_models = ['models/gemini-1.5-flash', 'models/gemini-1.5-pro']
 
                 for model_name in active_models:
@@ -1061,7 +1108,6 @@ async def chat_endpoint(
                 final_response = clean_ai_response(response.text)
                 chat_sessions[session_id].append({"role": "user", "content": f"[User sent image] {question}"})
                 chat_sessions[session_id].append({"role": "assistant", "content": final_response})
-
 
         # 3. TEXT ONLY CHAT (GROQ LLAMA-3.3)
         else:
