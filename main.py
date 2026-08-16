@@ -1023,27 +1023,29 @@ async def chat_endpoint(
                 chat_sessions[session_id].append({"role": "assistant", "content": final_response})
 
             # 2. IMAGE HANDLING (GEMINI PROPER MODEL AUTO-FALLBACK)
+                        # 2. IMAGE HANDLING (DYNAMIC AUTO-DETECT GEMINI MODEL)
             else:
                 if not GEMINI_API_KEY:
-                    return {"status": "error", "message": "GEMINI_API_KEY missing in Render environment variables."}
+                    return {"status": "error", "message": "GEMINI_API_KEY missing in environment variables."}
 
                 genai.configure(api_key=GEMINI_API_KEY)
                 mime_type = file.content_type or "image/jpeg"
                 image_parts = [{"mime_type": mime_type, "data": contents}]
                 prompt = f"{SMART_SYSTEM_PROMPT}\n\nUser Question: {question}"
 
-                # গুগলের সাম্প্রতিক সঠিক মডেল নামের তালিকা
-                candidate_models = [
-                    'gemini-2.5-flash',
-                    'gemini-2.0-flash',
-                    'gemini-1.5-flash',
-                    'gemini-1.5-pro'
-                ]
-                
                 response = None
                 last_error = ""
 
-                for model_name in candidate_models:
+                # গুগল এপিআই থেকে সরাসরি লাইভ সচল মডেলের নাম নিয়ে আসা
+                try:
+                    active_models = [
+                        m.name for m in genai.list_models() 
+                        if 'generateContent' in m.supported_generation_methods
+                    ]
+                except Exception as e:
+                    active_models = ['models/gemini-1.5-flash', 'models/gemini-1.5-pro']
+
+                for model_name in active_models:
                     try:
                         gemini_model = genai.GenerativeModel(model_name)
                         response = gemini_model.generate_content([prompt, image_parts[0]])
@@ -1054,11 +1056,12 @@ async def chat_endpoint(
                         continue
 
                 if not response or not response.text:
-                    return {"status": "error", "message": f"Gemini error: {last_error or 'No active model found'}"}
+                    return {"status": "error", "message": f"Gemini error: {last_error or 'No active vision model found.'}"}
 
                 final_response = clean_ai_response(response.text)
                 chat_sessions[session_id].append({"role": "user", "content": f"[User sent image] {question}"})
                 chat_sessions[session_id].append({"role": "assistant", "content": final_response})
+
 
         # 3. TEXT ONLY CHAT (GROQ LLAMA-3.3)
         else:
