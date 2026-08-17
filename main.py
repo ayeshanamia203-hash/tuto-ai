@@ -1010,7 +1010,7 @@ async def generate_title(data: TitleRequest):
             "Output ONLY the title in plain text, with no quotes, no periods, and no conversation."
         )
         completion = client.chat.completions.create(
-            model="llama3-70b-8192",
+            model="llama-3.1-8b-instant",
             messages=[{"role": "user", "content": prompt}],
             max_tokens=15
         )
@@ -1063,7 +1063,7 @@ async def chat_endpoint(
                 messages_payload.append(current_user_msg)
 
                 completion = client.chat.completions.create(
-                    model="llama3-70b-8192",
+                    model="llama-3.1-8b-instant",
                     messages=messages_payload
                 )
                 final_response = clean_ai_response(completion.choices[0].message.content)
@@ -1118,7 +1118,7 @@ async def chat_endpoint(
             messages_payload.append(current_user_msg)
 
             completion = client.chat.completions.create(
-                model="llama3-70b-8192",
+                model="llama-3.1-8b-instant",
                 messages=messages_payload
             )
             final_response = clean_ai_response(completion.choices[0].message.content)
