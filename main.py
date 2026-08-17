@@ -24,6 +24,50 @@ chat_sessions = {}
 class TitleRequest(BaseModel):
     prompt: str
 
+# --- DYNAMIC MODEL SELECTORS ---
+
+PREFERRED_GROQ_MODELS = [
+    "llama-3.3-70b-versatile",
+    "llama-3.1-8b-instant",
+    "llama3-70b-8192",
+    "llama3-8b-8192",
+    "mixtral-8x7b-32768",
+    "gemma2-9b-it"
+]
+
+PREFERRED_GEMINI_MODELS = [
+    "gemini-1.5-flash",
+    "gemini-1.5-pro",
+    "gemini-pro"
+]
+
+def get_working_groq_model(client: Groq) -> str:
+    """Dynamically finds an active Groq model"""
+    try:
+        models_data = client.models.list()
+        active_models = [m.id for m in models_data.data]
+        for model in PREFERRED_GROQ_MODELS:
+            if model in active_models:
+                return model
+        return active_models[0] if active_models else "llama-3.1-8b-instant"
+    except Exception:
+        return "llama-3.1-8b-instant"
+
+def get_working_gemini_model() -> str:
+    """Dynamically finds an active Gemini vision/text model"""
+    try:
+        active_models = [
+            m.name.replace("models/", "") 
+            for m in genai.list_models() 
+            if 'generateContent' in m.supported_generation_methods
+        ]
+        for model in PREFERRED_GEMINI_MODELS:
+            if model in active_models:
+                return model
+        return active_models[0] if active_models else "gemini-1.5-flash"
+    except Exception:
+        return "gemini-1.5-flash"
+
 HTML_LAYOUT = """
 <!DOCTYPE html>
 <html lang="en">
@@ -1004,13 +1048,14 @@ async def generate_title(data: TitleRequest):
         if not GROQ_API_KEY:
             return {"status": "error", "title": "New Chat"}
         client = Groq(api_key=GROQ_API_KEY)
+        model_to_use = get_working_groq_model(client)
         
         prompt = (
             f"Generate a short, concise 2 to 4 word title representing this user prompt: '{data.prompt}'. "
             "Output ONLY the title in plain text, with no quotes, no periods, and no conversation."
         )
         completion = client.chat.completions.create(
-            model="llama-3.1-8b-instant",
+            model=model_to_use,
             messages=[{"role": "user", "content": prompt}],
             max_tokens=15
         )
@@ -1046,85 +1091,98 @@ async def chat_endpoint(
         messages_payload = [{"role": "system", "content": SMART_SYSTEM_PROMPT}]
         messages_payload.extend(chat_sessions[session_id][-10:])
 
+        final_response = ""
+
+        # 1. FILE UPLOADED (PDF OR IMAGE)
         if file and file.filename:
             filename = file.filename.lower()
             contents = await file.read()
 
-            # 1. PDF HANDLING (GROQ LLAMA)
+            # A. PDF HANDLING
             if filename.endswith(".pdf"):
-                if not GROQ_API_KEY:
-                    return {"status": "error", "message": "GROQ_API_KEY missing in environment."}
-                client = Groq(api_key=GROQ_API_KEY)
-
                 extracted_text = extract_pdf_text(contents)
                 pdf_prompt = f"User uploaded PDF document ('{file.filename}').\n\nPDF Text Content:\n{extracted_text[:6000]}\n\nUser Question: {question}"
                 
-                current_user_msg = {"role": "user", "content": pdf_prompt}
-                messages_payload.append(current_user_msg)
-
-                completion = client.chat.completions.create(
-                    model="llama-3.1-8b-instant",
-                    messages=messages_payload
-                )
-                final_response = clean_ai_response(completion.choices[0].message.content)
-                chat_sessions[session_id].append({"role": "user", "content": f"[PDF File: {file.filename}] {question}"})
-                chat_sessions[session_id].append({"role": "assistant", "content": final_response})
-
-            # 2. IMAGE HANDLING (GEMINI MODEL)
-            else:
-                if not GEMINI_API_KEY:
-                    return {"status": "error", "message": "GEMINI_API_KEY missing in environment variables."}
-
-                genai.configure(api_key=GEMINI_API_KEY)
-                mime_type = file.content_type or "image/jpeg"
-                image_parts = [{"mime_type": mime_type, "data": contents}]
-                prompt = f"{SMART_SYSTEM_PROMPT}\n\nUser Question: {question}"
-
-                response = None
-                last_error = ""
-
-                try:
-                    active_models = [
-                        m.name for m in genai.list_models() 
-                        if 'generateContent' in m.supported_generation_methods
-                    ]
-                except Exception:
-                    active_models = ['models/gemini-1.5-flash', 'models/gemini-1.5-pro']
-
-                for model_name in active_models:
+                # Try Groq First with auto-working model
+                if GROQ_API_KEY:
                     try:
-                        gemini_model = genai.GenerativeModel(model_name)
-                        response = gemini_model.generate_content([prompt, image_parts[0]])
-                        if response and response.text:
-                            break
+                        client = Groq(api_key=GROQ_API_KEY)
+                        model_to_use = get_working_groq_model(client)
+                        current_user_msg = {"role": "user", "content": pdf_prompt}
+                        messages_payload.append(current_user_msg)
+                        
+                        completion = client.chat.completions.create(
+                            model=model_to_use,
+                            messages=messages_payload
+                        )
+                        final_response = clean_ai_response(completion.choices[0].message.content)
+                    except Exception:
+                        final_response = ""
+
+                # Fallback to Gemini if Groq fails
+                if not final_response and GEMINI_API_KEY:
+                    try:
+                        gemini_model_name = get_working_gemini_model()
+                        gemini_model = genai.GenerativeModel(gemini_model_name)
+                        res = gemini_model.generate_content(f"{SMART_SYSTEM_PROMPT}\n\n{pdf_prompt}")
+                        final_response = clean_ai_response(res.text)
+                    except Exception:
+                        pass
+
+                chat_sessions[session_id].append({"role": "user", "content": f"[PDF File: {file.filename}] {question}"})
+
+            # B. IMAGE HANDLING
+            else:
+                if GEMINI_API_KEY:
+                    mime_type = file.content_type or "image/jpeg"
+                    image_parts = [{"mime_type": mime_type, "data": contents}]
+                    prompt = f"{SMART_SYSTEM_PROMPT}\n\nUser Question: {question}"
+
+                    gemini_model_name = get_working_gemini_model()
+                    try:
+                        gemini_model = genai.GenerativeModel(gemini_model_name)
+                        res = gemini_model.generate_content([prompt, image_parts[0]])
+                        final_response = clean_ai_response(res.text)
                     except Exception as err:
-                        last_error = str(err)
-                        continue
+                        final_response = ""
 
-                if not response or not response.text:
-                    return {"status": "error", "message": f"Gemini error: {last_error or 'No active vision model found.'}"}
-
-                final_response = clean_ai_response(response.text)
                 chat_sessions[session_id].append({"role": "user", "content": f"[User sent image] {question}"})
-                chat_sessions[session_id].append({"role": "assistant", "content": final_response})
 
-        # 3. TEXT ONLY CHAT (GROQ LLAMA)
+        # 2. TEXT ONLY CHAT
         else:
-            if not GROQ_API_KEY:
-                return {"status": "error", "message": "GROQ_API_KEY missing in environment."}
-            client = Groq(api_key=GROQ_API_KEY)
-
             current_user_msg = {"role": "user", "content": question}
             messages_payload.append(current_user_msg)
 
-            completion = client.chat.completions.create(
-                model="llama-3.1-8b-instant",
-                messages=messages_payload
-            )
-            final_response = clean_ai_response(completion.choices[0].message.content)
+            # Primary Attempt: GROQ Auto Model
+            if GROQ_API_KEY:
+                try:
+                    client = Groq(api_key=GROQ_API_KEY)
+                    model_to_use = get_working_groq_model(client)
+                    completion = client.chat.completions.create(
+                        model=model_to_use,
+                        messages=messages_payload
+                    )
+                    final_response = clean_ai_response(completion.choices[0].message.content)
+                except Exception:
+                    final_response = ""
+
+            # Secondary Fallback: GEMINI Auto Model
+            if not final_response and GEMINI_API_KEY:
+                try:
+                    gemini_model_name = get_working_gemini_model()
+                    gemini_model = genai.GenerativeModel(gemini_model_name)
+                    res = gemini_model.generate_content(f"{SMART_SYSTEM_PROMPT}\n\nUser Question: {question}")
+                    final_response = clean_ai_response(res.text)
+                except Exception:
+                    pass
 
             chat_sessions[session_id].append(current_user_msg)
-            chat_sessions[session_id].append({"role": "assistant", "content": final_response})
+
+        # Fallback User Message if both APIs fail
+        if not final_response:
+            final_response = "Sorry, all AI services are currently busy. Please try asking again in a moment."
+
+        chat_sessions[session_id].append({"role": "assistant", "content": final_response})
 
         return {
             "status": "success",
@@ -1134,7 +1192,7 @@ async def chat_endpoint(
     except Exception as e:
         return {
             "status": "error",
-            "message": str(e)
+            "message": "System temporarly busy. Please try again."
         }
 
 if __name__ == "__main__":
