@@ -370,7 +370,6 @@ HTML_LAYOUT = """
             line-height: 1.4;
             font-family: inherit;
         }
-        /* Gemini/ChatGPT Style Up-Arrow Send Button */
         .send-btn {
             background-color: #ffffff;
             color: #131314;
@@ -1011,7 +1010,7 @@ async def generate_title(data: TitleRequest):
             "Output ONLY the title in plain text, with no quotes, no periods, and no conversation."
         )
         completion = client.chat.completions.create(
-            model="llama-3.3-70b-versatile",
+            model="llama3-70b-8192",
             messages=[{"role": "user", "content": prompt}],
             max_tokens=15
         )
@@ -1051,7 +1050,7 @@ async def chat_endpoint(
             filename = file.filename.lower()
             contents = await file.read()
 
-            # 1. PDF HANDLING (GROQ LLAMA-3.3)
+            # 1. PDF HANDLING (GROQ LLAMA)
             if filename.endswith(".pdf"):
                 if not GROQ_API_KEY:
                     return {"status": "error", "message": "GROQ_API_KEY missing in environment."}
@@ -1064,14 +1063,14 @@ async def chat_endpoint(
                 messages_payload.append(current_user_msg)
 
                 completion = client.chat.completions.create(
-                    model="llama-3.3-70b-versatile",
+                    model="llama3-70b-8192",
                     messages=messages_payload
                 )
                 final_response = clean_ai_response(completion.choices[0].message.content)
                 chat_sessions[session_id].append({"role": "user", "content": f"[PDF File: {file.filename}] {question}"})
                 chat_sessions[session_id].append({"role": "assistant", "content": final_response})
 
-            # 2. IMAGE HANDLING (DYNAMIC AUTO-DETECT GEMINI MODEL)
+            # 2. IMAGE HANDLING (GEMINI MODEL)
             else:
                 if not GEMINI_API_KEY:
                     return {"status": "error", "message": "GEMINI_API_KEY missing in environment variables."}
@@ -1109,7 +1108,7 @@ async def chat_endpoint(
                 chat_sessions[session_id].append({"role": "user", "content": f"[User sent image] {question}"})
                 chat_sessions[session_id].append({"role": "assistant", "content": final_response})
 
-        # 3. TEXT ONLY CHAT (GROQ LLAMA-3.3)
+        # 3. TEXT ONLY CHAT (GROQ LLAMA)
         else:
             if not GROQ_API_KEY:
                 return {"status": "error", "message": "GROQ_API_KEY missing in environment."}
@@ -1119,7 +1118,7 @@ async def chat_endpoint(
             messages_payload.append(current_user_msg)
 
             completion = client.chat.completions.create(
-                model="llama-3.3-70b-versatile",
+                model="llama3-70b-8192",
                 messages=messages_payload
             )
             final_response = clean_ai_response(completion.choices[0].message.content)
