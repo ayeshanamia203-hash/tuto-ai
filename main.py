@@ -1132,19 +1132,30 @@ async def chat_endpoint(
                 chat_sessions[session_id].append({"role": "user", "content": f"[PDF File: {file.filename}] {question}"})
 
             # B. IMAGE HANDLING
+                        # B. IMAGE HANDLING
             else:
                 if GEMINI_API_KEY:
-                    mime_type = file.content_type or "image/jpeg"
-                    image_parts = [{"mime_type": mime_type, "data": contents}]
-                    prompt = f"{SMART_SYSTEM_PROMPT}\n\nUser Question: {question}"
-
-                    gemini_model_name = get_working_gemini_model()
                     try:
-                        gemini_model = genai.GenerativeModel(gemini_model_name)
-                        res = gemini_model.generate_content([prompt, image_parts[0]])
-                        final_response = clean_ai_response(res.text)
-                    except Exception as err:
-                        final_response = ""
+                        import google.generativeai as genai
+                        genai.configure(api_key=GEMINI_API_KEY)
+                        
+                        # Gemini 1.5 Flash ছবি ও টেক্সট দুটোতেই সবচেয়ে নির্ভরযোগ্য
+                        gemini_model = genai.GenerativeModel('gemini-1.5-flash')
+                        
+                        mime_type = file.content_type or "image/jpeg"
+                        image_data = {
+                            "mime_type": mime_type,
+                            "data": contents
+                        }
+                        
+                        prompt_text = f"{SMART_SYSTEM_PROMPT}\n\nUser Question: {question}"
+                        res = gemini_model.generate_content([prompt_text, image_data])
+                        
+                        if res and res.text:
+                            final_response = clean_ai_response(res.text)
+                    except Exception as img_err:
+                        print(f"Gemini Image Processing Error: {img_err}")
+                        final_response = "Image analysis failed. Please check Gemini API key or file format."
 
                 chat_sessions[session_id].append({"role": "user", "content": f"[User sent image] {question}"})
 
