@@ -1109,7 +1109,7 @@ async def chat_endpoint(
                 chat_sessions[session_id].append({"role": "user", "content": f"[User sent image] {question}"})
                 chat_sessions[session_id].append({"role": "assistant", "content": final_response})
 
-        # 3. TEXT ONLY CHAT (GROQ LLAMA-3.3)
+                # 3. TEXT ONLY CHAT (GROQ AUTO ACTIVE MODEL)
         else:
             if not GROQ_API_KEY:
                 return {"status": "error", "message": "GROQ_API_KEY missing in environment."}
@@ -1118,8 +1118,24 @@ async def chat_endpoint(
             current_user_msg = {"role": "user", "content": question}
             messages_payload.append(current_user_msg)
 
+            # পছন্দসই সেরা মডেলের লিস্ট (অগ্রাধিকার অনুযায়ী)
+            preferred_models = [
+                "llama-3.3-70b-versatile",
+                "llama-3.1-8b-instant",
+                "llama3-70b-8192",
+                "llama3-8b-8192",
+                "mixtral-8x7b-32768"
+            ]
+
+            # Groq থেকে সরাসরি রানিং/অ্যাক্টিভ মডেলের লিস্ট খুঁজে বের করা
+            try:
+                available_models = [m.id for m in client.models.list().data]
+                working_model = next((m for m in preferred_models if m in available_models), available_models[0])
+            except Exception:
+                working_model = "llama-3.3-70b-versatile"
+
             completion = client.chat.completions.create(
-                model="llama-3.3-70b-versatile",
+                model=working_model,
                 messages=messages_payload
             )
             final_response = clean_ai_response(completion.choices[0].message.content)
@@ -1127,16 +1143,17 @@ async def chat_endpoint(
             chat_sessions[session_id].append(current_user_msg)
             chat_sessions[session_id].append({"role": "assistant", "content": final_response})
 
-        return {
-            "status": "success",
-            "question": question,
-            "response": final_response
-        }
-    except Exception as e:
-        return {
-            "status": "error",
-            "message": str(e)
-        }
+            return {
+                "status": "success",
+                "question": question,
+                "response": final_response
+            }
+        except Exception as e:
+            return {
+                "status": "error",
+                "message": str(e)
+            }
+
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 8000))
