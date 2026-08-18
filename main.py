@@ -1109,6 +1109,7 @@ async def chat_endpoint(
                 chat_sessions[session_id].append({"role": "user", "content": f"[User sent image] {question}"})
                 chat_sessions[session_id].append({"role": "assistant", "content": final_response})
                # 3. TEXT ONLY CHAT (GROQ WITH LATEST UPDATED MODELS)
+                # 3. TEXT ONLY CHAT (GROQ WITH ACTIVE MODELS ONLY)
         else:
             if not GROQ_API_KEY:
                 return {"status": "error", "message": "GROQ_API_KEY missing in environment."}
@@ -1118,12 +1119,11 @@ async def chat_endpoint(
             current_user_msg = {"role": "user", "content": question}
             messages_payload.append(current_user_msg)
 
-            # Groq-এর ১০০% রানিং ও অফিশিয়াল মডেল লিস্ট
+            # Groq-এর অফিশিয়াল অ্যাক্টিভ মডেলসমূহ
             preferred_models = [
                 "llama-3.3-70b-versatile",
                 "llama-3.1-8b-instant",
-                "llama3-70b-8192",
-                "llama3-8b-8192"
+                "mixtral-8x7b-32768"
             ]
 
             completion = None
@@ -1165,6 +1165,3 @@ async def chat_endpoint(
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 8000))
     uvicorn.run(app, host="0.0.0.0", port=port)
- 
-                
-        
