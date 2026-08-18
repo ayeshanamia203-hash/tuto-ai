@@ -1108,17 +1108,16 @@ async def chat_endpoint(
                 final_response = clean_ai_response(response.text)
                 chat_sessions[session_id].append({"role": "user", "content": f"[User sent image] {question}"})
                 chat_sessions[session_id].append({"role": "assistant", "content": final_response})
-
-                # 3. TEXT ONLY CHAT (GROQ AUTO ACTIVE MODEL)
+        # 3. TEXT ONLY CHAT (GROQ WITH SAFE FALLBACK)
         else:
             if not GROQ_API_KEY:
                 return {"status": "error", "message": "GROQ_API_KEY missing in environment."}
+            
             client = Groq(api_key=GROQ_API_KEY)
 
             current_user_msg = {"role": "user", "content": question}
             messages_payload.append(current_user_msg)
 
-            # পছন্দসই সেরা মডেলের লিস্ট (অগ্রাধিকার অনুযায়ী)
             preferred_models = [
                 "llama-3.3-70b-versatile",
                 "llama-3.1-8b-instant",
@@ -1127,17 +1126,22 @@ async def chat_endpoint(
                 "mixtral-8x7b-32768"
             ]
 
-            # Groq থেকে সরাসরি রানিং/অ্যাক্টিভ মডেলের লিস্ট খুঁজে বের করা
-            try:
-                available_models = [m.id for m in client.models.list().data]
-                working_model = next((m for m in preferred_models if m in available_models), available_models[0])
-            except Exception:
-                working_model = "llama-3.3-70b-versatile"
+            completion = None
+            for model_name in preferred_models:
+                try:
+                    completion = client.chat.completions.create(
+                        model=model_name,
+                        messages=messages_payload
+                    )
+                    if completion:
+                        break
+                except Exception as model_err:
+                    print(f"Model {model_name} failed: {model_err}")
+                    continue
 
-            completion = client.chat.completions.create(
-                model=working_model,
-                messages=messages_payload
-            )
+            if not completion:
+                raise Exception("All Groq models failed to respond.")
+
             final_response = clean_ai_response(completion.choices[0].message.content)
 
             chat_sessions[session_id].append(current_user_msg)
@@ -1148,13 +1152,16 @@ async def chat_endpoint(
                 "question": question,
                 "response": final_response
             }
-        except Exception as e:
-            return {
-                "status": "error",
-                "message": str(e)
-            }
 
+    except Exception as e:
+        return {
+            "status": "error",
+            "message": str(e)
+        }
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 8000))
     uvicorn.run(app, host="0.0.0.0", port=port)
+
+                
+        
