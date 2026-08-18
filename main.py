@@ -1108,7 +1108,7 @@ async def chat_endpoint(
                 final_response = clean_ai_response(response.text)
                 chat_sessions[session_id].append({"role": "user", "content": f"[User sent image] {question}"})
                 chat_sessions[session_id].append({"role": "assistant", "content": final_response})
-        # 3. TEXT ONLY CHAT (GROQ WITH SAFE FALLBACK)
+               # 3. TEXT ONLY CHAT (GROQ WITH LATEST UPDATED MODELS)
         else:
             if not GROQ_API_KEY:
                 return {"status": "error", "message": "GROQ_API_KEY missing in environment."}
@@ -1118,29 +1118,32 @@ async def chat_endpoint(
             current_user_msg = {"role": "user", "content": question}
             messages_payload.append(current_user_msg)
 
+            # Groq-এর ১০০% রানিং ও অফিশিয়াল মডেল লিস্ট
             preferred_models = [
                 "llama-3.3-70b-versatile",
                 "llama-3.1-8b-instant",
                 "llama3-70b-8192",
-                "llama3-8b-8192",
-                "mixtral-8x7b-32768"
+                "llama3-8b-8192"
             ]
 
             completion = None
+            last_error = ""
+
             for model_name in preferred_models:
                 try:
                     completion = client.chat.completions.create(
                         model=model_name,
                         messages=messages_payload
                     )
-                    if completion:
+                    if completion and completion.choices:
                         break
                 except Exception as model_err:
+                    last_error = str(model_err)
                     print(f"Model {model_name} failed: {model_err}")
                     continue
 
-            if not completion:
-                raise Exception("All Groq models failed to respond.")
+            if not completion or not completion.choices:
+                raise Exception(f"Groq API Error: {last_error if last_error else 'No active models available'}")
 
             final_response = clean_ai_response(completion.choices[0].message.content)
 
@@ -1162,6 +1165,6 @@ async def chat_endpoint(
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 8000))
     uvicorn.run(app, host="0.0.0.0", port=port)
-
+ 
                 
         
