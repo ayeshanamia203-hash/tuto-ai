@@ -1110,6 +1110,7 @@ async def chat_endpoint(
                 chat_sessions[session_id].append({"role": "assistant", "content": final_response})
                # 3. TEXT ONLY CHAT (GROQ WITH LATEST UPDATED MODELS)
                 # 3. TEXT ONLY CHAT (GROQ WITH ACTIVE MODELS ONLY)
+               # 3. TEXT ONLY CHAT (DYNAMIC ACTIVE MODEL FETCHING)
         else:
             if not GROQ_API_KEY:
                 return {"status": "error", "message": "GROQ_API_KEY missing in environment."}
@@ -1119,17 +1120,28 @@ async def chat_endpoint(
             current_user_msg = {"role": "user", "content": question}
             messages_payload.append(current_user_msg)
 
-            # Groq-এর অফিশিয়াল অ্যাক্টিভ মডেলসমূহ
+            # পছন্দসই নির্ভরযোগ্য মডেলের তালিকা
             preferred_models = [
                 "llama-3.3-70b-versatile",
-                "llama-3.1-8b-instant",
-                "mixtral-8x7b-32768"
+                "llama-3.1-8b-instant"
             ]
 
             completion = None
             last_error = ""
 
-            for model_name in preferred_models:
+            # ১. সরাসরি Groq সার্ভার থেকে সক্রিয় মডেলগুলোর তালিকা নেওয়া
+            try:
+                active_models_resp = client.models.list()
+                active_ids = [m.id for m in active_models_resp.data]
+                # পছন্দসই মডেলগুলোর মধ্যে যেগুলো বর্তমানে আসলেই চালু আছে সেগুলো ফিল্টার করা
+                usable_models = [m for m in preferred_models if m in active_ids]
+                if not usable_models and active_ids:
+                    usable_models = active_ids
+            except Exception as e:
+                usable_models = preferred_models
+
+            # ২. শুধুমাত্র রানিং মডেলগুলোতে ট্রাই করা
+            for model_name in usable_models:
                 try:
                     completion = client.chat.completions.create(
                         model=model_name,
@@ -1165,3 +1177,4 @@ async def chat_endpoint(
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 8000))
     uvicorn.run(app, host="0.0.0.0", port=port)
+ 
