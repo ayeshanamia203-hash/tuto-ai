@@ -1038,11 +1038,22 @@ HTML_LAYOUT = """
 def clean_ai_response(text: str) -> str:
     if not text:
         return ""
+    # রিমুভ চিন্তাভাবনা/রিজনিং ব্লক (<think> tags and internal reasoning text)
     text = re.sub(r'<think>.*?</think>', '', text, flags=re.DOTALL)
+    
+    # যদি উত্তরটির মধ্যে বুলেট পয়েন্ট আকারে ইন্টারনাল থট দেওয়া থাকে তবে কেবল শেষ লাইনটি নেওয়া
+    if "\n\n" in text:
+        parts = [p.strip() for p in text.split("\n\n") if p.strip()]
+        # চিন্তার কোনো বুলেট তালিকা থাকলে তা ফিল্টার আউট করে মূল রেসপন্স বের করা
+        non_bullet_parts = [p for p in parts if not (p.startswith('* User') or p.startswith('* Style') or p.startswith('- User') or p.startswith('- Style'))]
+        if non_bullet_parts:
+            text = non_bullet_parts[-1]
+
     if "**Drafting the response:**" in text:
         text = text.split("**Drafting the response:**")[-1]
     elif "Drafting the response:" in text:
         text = text.split("Drafting the response:")[-1]
+        
     return text.strip()
 
 def extract_pdf_text(contents: bytes) -> str:
@@ -1123,13 +1134,9 @@ async def chat_endpoint(
             chat_sessions[session_id] = []
 
         SMART_SYSTEM_PROMPT = (
-            "You are Tuto AI, a friendly, intelligent AI tutor created solely by Imran Hossen. "
-            "CRITICAL RESPONSE STYLE INSTRUCTIONS:\n"
-            "- Be natural, conversational, friendly, and concise, just like ChatGPT and official Gemini app.\n"
-            "- DO NOT write long structural analysis, essays, or unnecessary headers unless explicitly asked by the user.\n"
-            "- If an image is sent without a prompt, simply acknowledge what you see warmly in 1-2 short sentences (e.g., complimenting the photo, or describing the scene briefly) and ask how you can help.\n"
-            "- If user asks in Bangla, reply in Bangla. Default to English otherwise.\n"
-            "- IF writing code, use markdown code blocks. IF solving Math, break into clear steps."
+            "You are Tuto AI, a friendly AI tutor created solely by Imran Hossen. "
+            "Respond directly and concisely to the user. "
+            "IMPORTANT: Output ONLY your final answer. Do NOT show your internal thoughts, checklist, planning, or reasoning."
         )
 
         messages_payload = [{"role": "system", "content": SMART_SYSTEM_PROMPT}]
@@ -1175,8 +1182,8 @@ async def chat_endpoint(
                 mime_type = file.content_type or "image/jpeg"
                 image_parts = [{"mime_type": mime_type, "data": contents}]
                 
-                user_q = question if question else "Acknowledge the image naturally and concisely like ChatGPT/Gemini."
-                prompt = f"{SMART_SYSTEM_PROMPT}\n\nUser Question/Prompt: {user_q}"
+                user_q = question if question else "Acknowledge the image naturally and concisely."
+                prompt = f"{SMART_SYSTEM_PROMPT}\n\nUser Question: {user_q}\n(Respond directly with the final answer only without showing any thinking steps)"
 
                 response = None
                 last_error = ""
