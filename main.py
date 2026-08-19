@@ -106,6 +106,9 @@ HTML_LAYOUT = """
             font-size: 14px;
             margin-bottom: 5px;
             transition: background 0.2s;
+            user-select: none;
+            -webkit-user-select: none;
+            position: relative;
         }
         .history-item:hover, .history-item.active {
             background-color: #2b2a33;
@@ -115,17 +118,40 @@ HTML_LAYOUT = """
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
-            max-width: 170px;
+            max-width: 150px;
         }
-        .delete-chat-btn {
-            color: #888;
+        .action-btns-group {
+            display: none; /* Initially hidden until long-pressed */
+            align-items: center;
+            gap: 6px;
+            animation: fadeIn 0.2s ease-in-out;
+        }
+        .history-item.show-actions .action-btns-group {
+            display: flex;
+        }
+        .action-icon-btn {
             border: none;
             background: none;
-            font-size: 12px;
+            font-size: 13px;
             cursor: pointer;
-            padding: 2px 5px;
+            padding: 2px 4px;
+            transition: transform 0.1s;
         }
-        .delete-chat-btn:hover { color: #e11d48; }
+        .action-icon-btn:hover {
+            transform: scale(1.2);
+        }
+        .delete-btn-icon { color: #e11d48; }
+        .star-btn-icon { color: #f59e0b; }
+        .is-pinned-icon {
+            color: #f59e0b;
+            font-size: 12px;
+            margin-left: 4px;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.8); }
+            to { opacity: 1; transform: scale(1); }
+        }
         .main-chat {
             flex: 1;
             display: flex;
@@ -429,7 +455,6 @@ HTML_LAYOUT = """
         <button class="new-chat-btn w-100 mb-2" onclick="startNewChat()">
             <i class="fa-solid fa-plus me-2"></i> New Chat
         </button>
-        <div class="text-secondary small fw-bold mt-2">RECENT CHATS</div>
         <div class="history-list" id="historyList"></div>
     </div>
 
@@ -509,6 +534,8 @@ HTML_LAYOUT = """
     let mediaRecorder = null;
     let audioChunks = [];
     let isRecording = false;
+
+    let pressTimer = null;
 
     function toggleSidebar() {
         const sidebar = document.getElementById('sidebar');
@@ -719,7 +746,8 @@ HTML_LAYOUT = """
         allSessions[currentSessionId] = {
             title: 'New Chat',
             html: DEFAULT_WELCOME,
-            messages: []
+            messages: [],
+            isPinned: false
         };
         saveSessionsToStorage();
         if (shouldRender) {
@@ -742,6 +770,9 @@ HTML_LAYOUT = """
 
     function deleteSession(e, sessionId) {
         e.stopPropagation();
+        if (!confirm("Are you sure you want to delete this chat history?")) {
+            return;
+        }
         delete allSessions[sessionId];
         if (currentSessionId === sessionId) {
             const keys = Object.keys(allSessions);
@@ -756,21 +787,83 @@ HTML_LAYOUT = """
         loadSession(currentSessionId);
     }
 
+    function togglePinSession(e, sessionId) {
+        e.stopPropagation();
+        if (allSessions[sessionId]) {
+            allSessions[sessionId].isPinned = !allSessions[sessionId].isPinned;
+            saveSessionsToStorage();
+            renderSidebarHistory();
+        }
+    }
+
+    // LONG PRESS (টিপে ধরে রাখা) প্রসেসিং লজিক
+    function startHold(sessionId) {
+        cancelHold();
+        pressTimer = window.setTimeout(() => {
+            document.querySelectorAll('.history-item').forEach(item => item.classList.remove('show-actions'));
+            const elem = document.getElementById('session-item-' + sessionId);
+            if (elem) {
+                elem.classList.add('show-actions');
+            }
+            if (navigator.vibrate) navigator.vibrate(50);
+        }, 500); // 0.5s Hold
+    }
+
+    function cancelHold() {
+        if (pressTimer) {
+            clearTimeout(pressTimer);
+            pressTimer = null;
+        }
+    }
+
     function renderSidebarHistory() {
         historyList.innerHTML = '';
         const keys = Object.keys(allSessions).reverse();
-        keys.forEach(id => {
-            const session = allSessions[id];
-            const isActive = id === currentSessionId ? 'active' : '';
-            historyList.innerHTML += `
-                <div class="history-item ${isActive}" onclick="loadSession('${id}')">
-                    <div class="history-title"><i class="fa-regular fa-message me-2"></i>${session.title}</div>
-                    <button class="delete-chat-btn" onclick="deleteSession(event, '${id}')" title="Delete Chat">
+
+        const pinnedKeys = keys.filter(id => allSessions[id].isPinned);
+        const unpinnedKeys = keys.filter(id => !allSessions[id].isPinned);
+
+        if (pinnedKeys.length > 0) {
+            historyList.innerHTML += `<div class="text-warning small fw-bold mt-2 mb-1"><i class="fa-solid fa-star me-1"></i>PINNED CHATS</div>`;
+            pinnedKeys.forEach(id => renderItemHTML(id));
+        }
+
+        if (unpinnedKeys.length > 0) {
+            historyList.innerHTML += `<div class="text-secondary small fw-bold mt-3 mb-1">RECENT CHATS</div>`;
+            unpinnedKeys.forEach(id => renderItemHTML(id));
+        }
+    }
+
+    function renderItemHTML(id) {
+        const session = allSessions[id];
+        const isActive = id === currentSessionId ? 'active' : '';
+        const starClass = session.isPinned ? 'fa-solid fa-star' : 'fa-regular fa-star';
+        const starTitle = session.isPinned ? 'Unpin Chat' : 'Pin to Top';
+
+        historyList.innerHTML += `
+            <div class="history-item ${isActive}" 
+                 id="session-item-${id}"
+                 onclick="loadSession('${id}')"
+                 onmousedown="startHold('${id}')"
+                 onmouseup="cancelHold()"
+                 onmouseleave="cancelHold()"
+                 ontouchstart="startHold('${id}')"
+                 ontouchend="cancelHold()"
+                 ontouchmove="cancelHold()">
+                <div class="history-title">
+                    <i class="fa-regular fa-message me-2"></i>${session.title}
+                    ${session.isPinned ? '<i class="fa-solid fa-star is-pinned-icon"></i>' : ''}
+                </div>
+                <div class="action-btns-group">
+                    <button class="action-icon-btn delete-btn-icon" onclick="deleteSession(event, '${id}')" title="Delete Chat">
                         <i class="fa-solid fa-trash-can"></i>
                     </button>
+                    <button class="action-icon-btn star-btn-icon" onclick="togglePinSession(event, '${id}')" title="${starTitle}">
+                        <i class="${starClass}"></i>
+                    </button>
                 </div>
-            `;
-        });
+            </div>
+        `;
     }
 
     async function generateSmartTitle(promptText, sessionId) {
