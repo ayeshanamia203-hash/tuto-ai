@@ -121,7 +121,7 @@ HTML_LAYOUT = """
             max-width: 150px;
         }
         .action-btns-group {
-            display: none; /* Initially hidden until long-pressed */
+            display: none;
             align-items: center;
             gap: 6px;
             animation: fadeIn 0.2s ease-in-out;
@@ -796,7 +796,6 @@ HTML_LAYOUT = """
         }
     }
 
-    // LONG PRESS (টিপে ধরে রাখা) প্রসেসিং লজিক
     function startHold(sessionId) {
         cancelHold();
         pressTimer = window.setTimeout(() => {
@@ -806,7 +805,7 @@ HTML_LAYOUT = """
                 elem.classList.add('show-actions');
             }
             if (navigator.vibrate) navigator.vibrate(50);
-        }, 500); // 0.5s Hold
+        }, 500);
     }
 
     function cancelHold() {
@@ -948,14 +947,14 @@ HTML_LAYOUT = """
             generateSmartTitle(titlePrompt, currentSessionId);
         }
 
-        let userContentHTML = `<strong>You</strong><br>${question.replace(/\\n/g, '<br>')}`;
+        let userContentHTML = question ? `<strong>You</strong><br>${question.replace(/\\n/g, '<br>')}` : '';
         
         if (selectedFile) {
             if (selectedFile.type === 'application/pdf') {
-                userContentHTML = `<div class="pdf-badge"><i class="fa-solid fa-file-pdf"></i> ${selectedFile.name}</div><br>` + userContentHTML;
+                userContentHTML = `<div class="pdf-badge"><i class="fa-solid fa-file-pdf"></i> ${selectedFile.name}</div>` + (userContentHTML ? `<br>${userContentHTML}` : '');
             } else {
                 const imgURL = URL.createObjectURL(selectedFile);
-                userContentHTML = `<img src="${imgURL}" class="uploaded-img-preview"><br>` + userContentHTML;
+                userContentHTML = `<img src="${imgURL}" class="uploaded-img-preview">` + (userContentHTML ? `<br>${userContentHTML}` : '');
             }
         }
 
@@ -967,7 +966,7 @@ HTML_LAYOUT = """
         `;
         
         const formData = new FormData();
-        formData.append('question', question || "Analyze this image/file and explain clearly.");
+        formData.append('question', question);
         formData.append('session_id', currentSessionId);
         if (selectedFile) {
             formData.append('file', selectedFile);
@@ -1114,7 +1113,7 @@ async def generate_title(data: TitleRequest):
 
 @app.post("/api/chat")
 async def chat_endpoint(
-    question: str = Form(...), 
+    question: str = Form(""), 
     session_id: str = Form("default"),
     file: UploadFile = File(None)
 ):
@@ -1124,16 +1123,13 @@ async def chat_endpoint(
             chat_sessions[session_id] = []
 
         SMART_SYSTEM_PROMPT = (
-            "You are Tuto AI, an advanced AI tutor created and developed solely by Imran Hossen. "
-            "CRITICAL IDENTITY INSTRUCTIONS:\n"
-            "- If anyone asks who created, built, developed, or programmed you, ALWAYS answer that you were created by Imran Hossen.\n"
-            "- Maintain this identity naturally regardless of language (English, Bangla, etc.).\n"
-            "GENERAL INSTRUCTIONS:\n"
-            "1. ALWAYS default to English. Switch to Bangla ONLY if the user asks in Bangla.\n"
-            "2. REMEMBER past conversation context provided in the chat history.\n"
-            "3. IF writing code (Python, HTML, JS, C++, etc.), ALWAYS wrap code snippets in markdown code blocks with language tags, e.g. ```python ... ```.\n"
-            "4. IF solving Math/Science: Break into clear steps and use LaTeX formulas ($...$).\n"
-            "5. Never output internal monologue, reasoning, or '<think>' tags."
+            "You are Tuto AI, a friendly, intelligent AI tutor created solely by Imran Hossen. "
+            "CRITICAL RESPONSE STYLE INSTRUCTIONS:\n"
+            "- Be natural, conversational, friendly, and concise, just like ChatGPT and official Gemini app.\n"
+            "- DO NOT write long structural analysis, essays, or unnecessary headers unless explicitly asked by the user.\n"
+            "- If an image is sent without a prompt, simply acknowledge what you see warmly in 1-2 short sentences (e.g., complimenting the photo, or describing the scene briefly) and ask how you can help.\n"
+            "- If user asks in Bangla, reply in Bangla. Default to English otherwise.\n"
+            "- IF writing code, use markdown code blocks. IF solving Math, break into clear steps."
         )
 
         messages_payload = [{"role": "system", "content": SMART_SYSTEM_PROMPT}]
@@ -1149,8 +1145,9 @@ async def chat_endpoint(
                     return {"status": "error", "message": "GROQ_API_KEY missing in environment."}
                 client = Groq(api_key=GROQ_API_KEY)
 
+                user_q = question if question else "Summarize key points from this document briefly."
                 extracted_text = extract_pdf_text(contents)
-                pdf_prompt = f"User uploaded PDF document ('{file.filename}').\n\nPDF Text Content:\n{extracted_text[:6000]}\n\nUser Question: {question}"
+                pdf_prompt = f"User uploaded PDF document ('{file.filename}').\n\nPDF Text Content:\n{extracted_text[:6000]}\n\nUser Question: {user_q}"
                 
                 current_user_msg = {"role": "user", "content": pdf_prompt}
                 messages_payload.append(current_user_msg)
@@ -1160,12 +1157,12 @@ async def chat_endpoint(
                     messages=messages_payload
                 )
                 final_response = clean_ai_response(completion.choices[0].message.content)
-                chat_sessions[session_id].append({"role": "user", "content": f"[PDF File: {file.filename}] {question}"})
+                chat_sessions[session_id].append({"role": "user", "content": f"[PDF File: {file.filename}] {user_q}"})
                 chat_sessions[session_id].append({"role": "assistant", "content": final_response})
 
                 return {
                     "status": "success",
-                    "question": question,
+                    "question": user_q,
                     "response": final_response
                 }
 
@@ -1177,7 +1174,9 @@ async def chat_endpoint(
                 genai.configure(api_key=GEMINI_API_KEY)
                 mime_type = file.content_type or "image/jpeg"
                 image_parts = [{"mime_type": mime_type, "data": contents}]
-                prompt = f"{SMART_SYSTEM_PROMPT}\n\nUser Question: {question}"
+                
+                user_q = question if question else "Acknowledge the image naturally and concisely like ChatGPT/Gemini."
+                prompt = f"{SMART_SYSTEM_PROMPT}\n\nUser Question/Prompt: {user_q}"
 
                 response = None
                 last_error = ""
@@ -1204,12 +1203,12 @@ async def chat_endpoint(
                     return {"status": "error", "message": f"Gemini error: {last_error or 'No active vision model found.'}"}
 
                 final_response = clean_ai_response(response.text)
-                chat_sessions[session_id].append({"role": "user", "content": f"[User sent image] {question}"})
+                chat_sessions[session_id].append({"role": "user", "content": f"[User sent image] {user_q}"})
                 chat_sessions[session_id].append({"role": "assistant", "content": final_response})
 
                 return {
                     "status": "success",
-                    "question": question,
+                    "question": user_q,
                     "response": final_response
                 }
 
