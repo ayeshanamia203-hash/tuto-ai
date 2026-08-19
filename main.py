@@ -1,14 +1,14 @@
-from fastapi import FastAPI, Form, File, UploadFile
-from fastapi.responses import HTMLResponse
-from pydantic import BaseModel
-import os
-import uvicorn
 import base64
+import io
+import os
 import re
 import tempfile
-import io
+from fastapi import FastAPI, File, Form, UploadFile
+from fastapi.responses import HTMLResponse
 import google.generativeai as genai
 from groq import Groq
+from pydantic import BaseModel
+import uvicorn
 
 app = FastAPI(title="Tuto AI Professional Edition")
 
@@ -370,7 +370,6 @@ HTML_LAYOUT = """
             line-height: 1.4;
             font-family: inherit;
         }
-        /* Gemini/ChatGPT Style Up-Arrow Send Button */
         .send-btn {
             background-color: #ffffff;
             color: #131314;
@@ -1051,7 +1050,7 @@ async def chat_endpoint(
             filename = file.filename.lower()
             contents = await file.read()
 
-            # 1. PDF HANDLING (GROQ LLAMA-3.3)
+            # ১. PDF প্রসেসিং (GROQ LLAMA-3.3)
             if filename.endswith(".pdf"):
                 if not GROQ_API_KEY:
                     return {"status": "error", "message": "GROQ_API_KEY missing in environment."}
@@ -1071,7 +1070,13 @@ async def chat_endpoint(
                 chat_sessions[session_id].append({"role": "user", "content": f"[PDF File: {file.filename}] {question}"})
                 chat_sessions[session_id].append({"role": "assistant", "content": final_response})
 
-            # 2. IMAGE HANDLING (DYNAMIC AUTO-DETECT GEMINI MODEL)
+                return {
+                    "status": "success",
+                    "question": question,
+                    "response": final_response
+                }
+
+            # ২. ইমেজ প্রসেসিং (GEMINI VISION)
             else:
                 if not GEMINI_API_KEY:
                     return {"status": "error", "message": "GEMINI_API_KEY missing in environment variables."}
@@ -1108,9 +1113,14 @@ async def chat_endpoint(
                 final_response = clean_ai_response(response.text)
                 chat_sessions[session_id].append({"role": "user", "content": f"[User sent image] {question}"})
                 chat_sessions[session_id].append({"role": "assistant", "content": final_response})
-               # 3. TEXT ONLY CHAT (GROQ WITH LATEST UPDATED MODELS)
-                # 3. TEXT ONLY CHAT (GROQ WITH ACTIVE MODELS ONLY)
-               # 3. TEXT ONLY CHAT (DYNAMIC ACTIVE MODEL FETCHING)
+
+                return {
+                    "status": "success",
+                    "question": question,
+                    "response": final_response
+                }
+
+        # ৩. টেক্সট অনলি চ্যাট (GROQ LLAMA)
         else:
             if not GROQ_API_KEY:
                 return {"status": "error", "message": "GROQ_API_KEY missing in environment."}
@@ -1120,7 +1130,6 @@ async def chat_endpoint(
             current_user_msg = {"role": "user", "content": question}
             messages_payload.append(current_user_msg)
 
-            # পছন্দসই নির্ভরযোগ্য মডেলের তালিকা
             preferred_models = [
                 "llama-3.3-70b-versatile",
                 "llama-3.1-8b-instant"
@@ -1129,18 +1138,15 @@ async def chat_endpoint(
             completion = None
             last_error = ""
 
-            # ১. সরাসরি Groq সার্ভার থেকে সক্রিয় মডেলগুলোর তালিকা নেওয়া
             try:
                 active_models_resp = client.models.list()
                 active_ids = [m.id for m in active_models_resp.data]
-                # পছন্দসই মডেলগুলোর মধ্যে যেগুলো বর্তমানে আসলেই চালু আছে সেগুলো ফিল্টার করা
                 usable_models = [m for m in preferred_models if m in active_ids]
                 if not usable_models and active_ids:
                     usable_models = active_ids
-            except Exception as e:
+            except Exception:
                 usable_models = preferred_models
 
-            # ২. শুধুমাত্র রানিং মডেলগুলোতে ট্রাই করা
             for model_name in usable_models:
                 try:
                     completion = client.chat.completions.create(
@@ -1151,11 +1157,10 @@ async def chat_endpoint(
                         break
                 except Exception as model_err:
                     last_error = str(model_err)
-                    print(f"Model {model_name} failed: {model_err}")
                     continue
 
             if not completion or not completion.choices:
-                raise Exception(f"Groq API Error: {last_error if last_error else 'No active models available'}")
+                return {"status": "error", "message": f"Groq Error: {last_error}"}
 
             final_response = clean_ai_response(completion.choices[0].message.content)
 
@@ -1177,4 +1182,3 @@ async def chat_endpoint(
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 8000))
     uvicorn.run(app, host="0.0.0.0", port=port)
- 
