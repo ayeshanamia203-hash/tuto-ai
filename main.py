@@ -75,6 +75,7 @@ HTML_LAYOUT = """
             flex-shrink: 0;
             height: 100%;
             transition: all 0.3s ease;
+            z-index: 1000;
         }
         .sidebar.collapsed {
             margin-left: -260px;
@@ -161,6 +162,7 @@ HTML_LAYOUT = """
             overflow: hidden;
             position: relative;
             transition: all 0.3s ease;
+            width: 100%;
         }
         .chat-header {
             padding: 15px 25px;
@@ -186,7 +188,7 @@ HTML_LAYOUT = """
         .chat-container {
             flex: 1;
             overflow-y: auto;
-            padding: 20px 30px;
+            padding: 20px 20px;
             max-width: 850px;
             margin: 0 auto;
             width: 100%;
@@ -211,11 +213,12 @@ HTML_LAYOUT = """
         .user-avatar { background-color: #5436da; color: #ffffff; }
         .ai-avatar { background: linear-gradient(135deg, #f59e0b, #d97706); color: #ffffff; }
         .bubble {
-            max-width: 85%;
+            max-width: 88%;
             font-size: 16px;
             line-height: 1.6;
             color: #ffffff !important;
             width: 100%;
+            word-wrap: break-word;
         }
         .bubble p { margin-bottom: 8px; }
         .bubble strong { color: #a8c7fa !important; }
@@ -302,7 +305,7 @@ HTML_LAYOUT = """
         }
         .copy-code-btn:hover { background: #4b5263; }
         .input-container-box {
-            padding: 10px 20px 20px 20px;
+            padding: 10px 15px 15px 15px;
             background: var(--bg-color);
             flex-shrink: 0;
             width: 100%;
@@ -442,10 +445,16 @@ HTML_LAYOUT = """
         @media (max-width: 768px) { 
             .sidebar { 
                 position: absolute;
-                z-index: 100;
+                top: 0;
+                bottom: 0;
+                left: 0;
+                box-shadow: 5px 0 15px rgba(0,0,0,0.5);
             }
             .sidebar.collapsed {
                 margin-left: -260px;
+            }
+            .chat-container {
+                padding: 15px 10px;
             }
         }
     </style>
@@ -540,6 +549,12 @@ HTML_LAYOUT = """
     function toggleSidebar() {
         const sidebar = document.getElementById('sidebar');
         sidebar.classList.toggle('collapsed');
+    }
+
+    function checkMobileSidebarAutoCollapse() {
+        if (window.innerWidth <= 768) {
+            document.getElementById('sidebar').classList.add('collapsed');
+        }
     }
 
     function speakText(btn) {
@@ -653,6 +668,7 @@ HTML_LAYOUT = """
     `;
 
     window.addEventListener('DOMContentLoaded', () => {
+        checkMobileSidebarAutoCollapse();
         if (!currentSessionId || !allSessions[currentSessionId]) {
             startNewChat(false);
         } else {
@@ -754,6 +770,7 @@ HTML_LAYOUT = """
             renderSidebarHistory();
             loadSession(currentSessionId);
         }
+        checkMobileSidebarAutoCollapse();
     }
 
     function loadSession(sessionId) {
@@ -766,6 +783,7 @@ HTML_LAYOUT = """
         });
         chatBox.scrollTop = chatBox.scrollHeight;
         renderSidebarHistory();
+        checkMobileSidebarAutoCollapse();
     }
 
     function deleteSession(e, sessionId) {
@@ -1038,13 +1056,10 @@ HTML_LAYOUT = """
 def clean_ai_response(text: str) -> str:
     if not text:
         return ""
-    # রিমুভ চিন্তাভাবনা/রিজনিং ব্লক (<think> tags and internal reasoning text)
     text = re.sub(r'<think>.*?</think>', '', text, flags=re.DOTALL)
     
-    # যদি উত্তরটির মধ্যে বুলেট পয়েন্ট আকারে ইন্টারনাল থট দেওয়া থাকে তবে কেবল শেষ লাইনটি নেওয়া
     if "\n\n" in text:
         parts = [p.strip() for p in text.split("\n\n") if p.strip()]
-        # চিন্তার কোনো বুলেট তালিকা থাকলে তা ফিল্টার আউট করে মূল রেসপন্স বের করা
         non_bullet_parts = [p for p in parts if not (p.startswith('* User') or p.startswith('* Style') or p.startswith('- User') or p.startswith('- Style'))]
         if non_bullet_parts:
             text = non_bullet_parts[-1]
@@ -1146,7 +1161,6 @@ async def chat_endpoint(
             filename = file.filename.lower()
             contents = await file.read()
 
-            # ১. PDF প্রসেসিং (GROQ LLAMA-3.3)
             if filename.endswith(".pdf"):
                 if not GROQ_API_KEY:
                     return {"status": "error", "message": "GROQ_API_KEY missing in environment."}
@@ -1173,7 +1187,6 @@ async def chat_endpoint(
                     "response": final_response
                 }
 
-            # ২. ইমেজ প্রসেসিং (GEMINI VISION)
             else:
                 if not GEMINI_API_KEY:
                     return {"status": "error", "message": "GEMINI_API_KEY missing in environment variables."}
@@ -1219,7 +1232,6 @@ async def chat_endpoint(
                     "response": final_response
                 }
 
-        # ৩. টেক্সট অনলি চ্যাট (GROQ LLAMA)
         else:
             if not GROQ_API_KEY:
                 return {"status": "error", "message": "GROQ_API_KEY missing in environment."}
