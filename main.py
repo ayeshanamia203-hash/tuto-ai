@@ -26,7 +26,7 @@ class TitleRequest(BaseModel):
 
 HTML_LAYOUT = """
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
@@ -47,13 +47,36 @@ HTML_LAYOUT = """
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
 
     <style>
-        :root {
+        :root[data-theme="dark"] {
             --bg-color: #131314;
             --sidebar-bg: #1e1e20;
-            --chat-bg: #131314;
             --text-color: #ffffff;
+            --text-muted: #ccc;
             --accent-color: #a8c7fa;
+            --border-color: #2d2d30;
+            --input-bg: #1e1e20;
+            --input-border: #3c4043;
+            --btn-hover: #2b2a33;
+            --bubble-text: #ffffff;
+            --strong-color: #a8c7fa;
+            --modal-bg: #1e1e20;
         }
+
+        :root[data-theme="light"] {
+            --bg-color: #ffffff;
+            --sidebar-bg: #f0f4f9;
+            --text-color: #1f1f1f;
+            --text-muted: #555555;
+            --accent-color: #0b57d0;
+            --border-color: #e1e3e1;
+            --input-bg: #f0f4f9;
+            --input-border: #c4c7c5;
+            --btn-hover: #e3e3e3;
+            --bubble-text: #1f1f1f;
+            --strong-color: #0b57d0;
+            --modal-bg: #ffffff;
+        }
+
         * { box-sizing: border-box; }
         html, body {
             background-color: var(--bg-color);
@@ -63,6 +86,7 @@ HTML_LAYOUT = """
             margin: 0;
             padding: 0;
             overflow: hidden;
+            transition: background-color 0.3s, color 0.3s;
         }
         body { display: flex; }
         .sidebar {
@@ -71,7 +95,7 @@ HTML_LAYOUT = """
             padding: 20px;
             display: flex;
             flex-direction: column;
-            border-right: 1px solid #2d2d30;
+            border-right: 1px solid var(--border-color);
             flex-shrink: 0;
             height: 100%;
             transition: all 0.3s ease;
@@ -84,19 +108,19 @@ HTML_LAYOUT = """
             display: none;
             position: fixed;
             top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(0, 0, 0, 0.6);
+            background: rgba(0, 0, 0, 0.5);
             z-index: 999;
         }
         .new-chat-btn {
-            background-color: #2b2a33;
+            background-color: var(--input-bg);
             color: var(--text-color);
-            border: 1px solid #444;
+            border: 1px solid var(--border-color);
             border-radius: 30px;
             padding: 10px 15px;
             font-weight: 500;
             transition: 0.2s;
         }
-        .new-chat-btn:hover { background-color: #3b3a45; }
+        .new-chat-btn:hover { background-color: var(--btn-hover); }
         .history-list {
             flex: 1;
             overflow-y: auto;
@@ -109,18 +133,18 @@ HTML_LAYOUT = """
             justify-content: space-between;
             padding: 8px 12px;
             border-radius: 10px;
-            color: #ccc;
+            color: var(--text-muted);
             cursor: pointer;
             font-size: 14px;
             margin-bottom: 5px;
-            transition: background 0.2s;
+            transition: background 0.2s, color 0.2s;
             user-select: none;
             -webkit-user-select: none;
             position: relative;
         }
         .history-item:hover, .history-item.active {
-            background-color: #2b2a33;
-            color: #fff;
+            background-color: var(--btn-hover);
+            color: var(--text-color);
         }
         .history-title {
             white-space: nowrap;
@@ -173,24 +197,36 @@ HTML_LAYOUT = """
         }
         .chat-header {
             padding: 15px 25px;
-            border-bottom: 1px solid #2d2d30;
+            border-bottom: 1px solid var(--border-color);
             display: flex;
             align-items: center;
+            justify-content: space-between;
             flex-shrink: 0;
         }
-        .toggle-btn {
+        .header-left {
+            display: flex;
+            align-items: center;
+        }
+        .toggle-btn, .theme-btn {
             background: none;
             border: none;
-            color: #ffffff;
+            color: var(--text-color);
             font-size: 18px;
             cursor: pointer;
-            margin-right: 15px;
-            padding: 5px 10px;
-            border-radius: 8px;
-            transition: background 0.2s;
+            padding: 6px 12px;
+            border-radius: 20px;
+            transition: background 0.2s, color 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 6px;
         }
-        .toggle-btn:hover {
-            background-color: #2b2a33;
+        .toggle-btn:hover, .theme-btn:hover {
+            background-color: var(--btn-hover);
+        }
+        .theme-btn {
+            font-size: 14px;
+            font-weight: 500;
+            border: 1px solid var(--border-color);
         }
         .chat-container {
             flex: 1;
@@ -223,31 +259,31 @@ HTML_LAYOUT = """
             max-width: 88%;
             font-size: 16px;
             line-height: 1.6;
-            color: #ffffff !important;
+            color: var(--bubble-text) !important;
             width: 100%;
             word-wrap: break-word;
         }
         .bubble p { margin-bottom: 8px; }
-        .bubble strong { color: #a8c7fa !important; }
+        .bubble strong { color: var(--strong-color) !important; }
         .bubble table {
             width: 100%;
             border-collapse: collapse;
             margin: 10px 0;
-            color: #fff;
+            color: var(--text-color);
         }
         .bubble table, .bubble th, .bubble td {
-            border: 1px solid #444;
+            border: 1px solid var(--border-color);
             padding: 8px;
         }
-        .bubble th { background-color: #2b2a33; }
+        .bubble th { background-color: var(--btn-hover); }
         .uploaded-img-preview {
             max-width: 200px;
             border-radius: 10px;
             margin-bottom: 10px;
-            border: 1px solid #444;
+            border: 1px solid var(--border-color);
         }
         .pdf-badge {
-            background-color: #2b2a33;
+            background-color: var(--btn-hover);
             border: 1px solid #e11d48;
             color: #ff4d4d;
             padding: 6px 12px;
@@ -261,7 +297,7 @@ HTML_LAYOUT = """
         .tts-btn {
             background: none;
             border: none;
-            color: #888;
+            color: var(--text-muted);
             cursor: pointer;
             font-size: 14px;
             margin-left: 8px;
@@ -296,6 +332,7 @@ HTML_LAYOUT = """
         pre code {
             font-family: 'Consolas', 'Fira Code', 'Courier New', monospace;
             font-size: 14px;
+            color: #abb2bf;
         }
         .copy-code-btn {
             background: #3e4451;
@@ -321,8 +358,8 @@ HTML_LAYOUT = """
             max-width: 850px;
             margin: 0 auto;
             width: 100%;
-            background-color: #1e1e20;
-            border: 1px solid #3c4043;
+            background-color: var(--input-bg);
+            border: 1px solid var(--input-border);
             border-radius: 24px;
             padding: 8px 15px;
             display: flex;
@@ -339,11 +376,11 @@ HTML_LAYOUT = """
             height: 70px;
             object-fit: cover;
             border-radius: 12px;
-            border: 1px solid #555;
+            border: 1px solid var(--border-color);
         }
         #pdfPreviewThumb {
             display: none;
-            background: #2b2a33;
+            background: var(--btn-hover);
             border: 1px solid #e11d48;
             color: #ff4d4d;
             padding: 8px 12px;
@@ -366,7 +403,7 @@ HTML_LAYOUT = """
             display: flex;
             align-items: center;
             justify-content: center;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.5);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.3);
         }
         .input-row {
             display: flex;
@@ -382,7 +419,7 @@ HTML_LAYOUT = """
             padding: 5px;
             transition: 0.2s;
         }
-        .plus-btn:hover, .mic-btn:hover { color: #fff; }
+        .plus-btn:hover, .mic-btn:hover { opacity: 0.8; }
         .mic-btn.recording {
             color: #ef4444 !important;
             animation: pulse 1.2s infinite;
@@ -395,7 +432,7 @@ HTML_LAYOUT = """
         .chat-textarea {
             background: none;
             border: none;
-            color: #ffffff;
+            color: var(--text-color);
             padding: 6px 0;
             width: 100%;
             outline: none;
@@ -407,8 +444,8 @@ HTML_LAYOUT = """
             font-family: inherit;
         }
         .send-btn {
-            background-color: #ffffff;
-            color: #131314;
+            background-color: var(--text-color);
+            color: var(--bg-color);
             border: none;
             border-radius: 50%;
             width: 32px;
@@ -423,21 +460,22 @@ HTML_LAYOUT = """
         }
         .send-btn:hover {
             background-color: var(--accent-color);
+            color: #ffffff;
         }
         .send-btn:disabled {
-            background-color: #444746;
-            color: #131314;
+            background-color: var(--border-color);
+            color: var(--text-muted);
             cursor: not-allowed;
         }
         .modal-content {
-            background-color: #1e1e20;
-            color: #fff;
-            border: 1px solid #444;
+            background-color: var(--modal-bg);
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
         }
         .modal-btn {
-            background-color: #2b2a33;
-            color: #fff;
-            border: 1px solid #444;
+            background-color: var(--input-bg);
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
             border-radius: 15px;
             padding: 15px;
             width: 100%;
@@ -446,8 +484,8 @@ HTML_LAYOUT = """
             transition: 0.2s;
         }
         .modal-btn:hover {
-            background-color: #3b3a45;
-            color: #a8c7fa;
+            background-color: var(--btn-hover);
+            color: var(--accent-color);
         }
         @media (max-width: 768px) { 
             .sidebar { 
@@ -455,7 +493,7 @@ HTML_LAYOUT = """
                 top: 0;
                 bottom: 0;
                 left: 0;
-                box-shadow: 5px 0 15px rgba(0,0,0,0.5);
+                box-shadow: 5px 0 15px rgba(0,0,0,0.3);
             }
             .sidebar.collapsed {
                 margin-left: -260px;
@@ -476,7 +514,7 @@ HTML_LAYOUT = """
     <div class="sidebar" id="sidebar">
         <!-- Close button visible only on mobile screens -->
         <div class="d-flex justify-content-between align-items-center mb-3 d-md-none">
-            <span class="text-light fw-bold">Menu</span>
+            <span class="fw-bold">Menu</span>
             <button class="btn btn-sm text-secondary" onclick="toggleSidebar()">
                 <i class="fa-solid fa-xmark fa-xl"></i>
             </button>
@@ -490,10 +528,18 @@ HTML_LAYOUT = """
 
     <div class="main-chat">
         <div class="chat-header">
-            <button class="toggle-btn" onclick="toggleSidebar()" title="Toggle Sidebar">
-                <i class="fa-solid fa-bars"></i>
+            <div class="header-left">
+                <button class="toggle-btn" onclick="toggleSidebar()" title="Toggle Sidebar">
+                    <i class="fa-solid fa-bars"></i>
+                </button>
+                <h5 class="m-0 fw-bold"><i class="fa-solid fa-graduation-cap me-2 text-warning"></i>Tuto AI</h5>
+            </div>
+            
+            <!-- Light/Dark Mode Toggle Button -->
+            <button class="theme-btn" id="themeToggleBtn" onclick="toggleTheme()" title="Toggle Light/Dark Mode">
+                <i class="fa-solid fa-sun" id="themeIcon"></i>
+                <span id="themeText">Light</span>
             </button>
-            <h5 class="m-0 fw-bold text-light"><i class="fa-solid fa-graduation-cap me-2 text-warning"></i>Tuto AI</h5>
         </div>
 
         <div class="chat-container" id="chatBox"></div>
@@ -533,7 +579,7 @@ HTML_LAYOUT = """
             <div class="modal-content">
                 <div class="modal-header border-0">
                     <h5 class="modal-title fw-bold"><i class="fa-solid fa-paperclip me-2 text-primary"></i>Attach File</h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
                     <button class="modal-btn" onclick="triggerCamera()">
@@ -566,6 +612,34 @@ HTML_LAYOUT = """
     let isRecording = false;
 
     let pressTimer = null;
+
+    // Theme Toggle Functionality
+    function initTheme() {
+        const savedTheme = localStorage.getItem('tuto_theme') || 'dark';
+        setTheme(savedTheme);
+    }
+
+    function toggleTheme() {
+        const currentTheme = document.documentElement.getAttribute('data-theme');
+        const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+        setTheme(newTheme);
+    }
+
+    function setTheme(theme) {
+        document.documentElement.setAttribute('data-theme', theme);
+        localStorage.setItem('tuto_theme', theme);
+
+        const themeIcon = document.getElementById('themeIcon');
+        const themeText = document.getElementById('themeText');
+
+        if (theme === 'light') {
+            themeIcon.className = 'fa-solid fa-moon';
+            themeText.innerText = 'Dark';
+        } else {
+            themeIcon.className = 'fa-solid fa-sun';
+            themeText.innerText = 'Light';
+        }
+    }
 
     function toggleSidebar() {
         const sidebar = document.getElementById('sidebar');
@@ -700,6 +774,7 @@ HTML_LAYOUT = """
     `;
 
     window.addEventListener('DOMContentLoaded', () => {
+        initTheme();
         checkMobileSidebarAutoCollapse();
         if (!currentSessionId || !allSessions[currentSessionId]) {
             startNewChat(false);
