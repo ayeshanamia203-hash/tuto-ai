@@ -18,7 +18,6 @@ GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "")
 if GEMINI_API_KEY:
     genai.configure(api_key=GEMINI_API_KEY)
 
-# In-memory chat store for sessions
 chat_sessions = {}
 
 class TitleRequest(BaseModel):
@@ -34,15 +33,15 @@ HTML_LAYOUT = """
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
-    <!-- KaTeX Math Rendering CSS & JS -->
+    <!-- KaTeX Math Rendering -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
     <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js"></script>
     
-    <!-- Marked.js for Markdown Rendering -->
+    <!-- Marked.js -->
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 
-    <!-- Highlight.js for Syntax Highlighting -->
+    <!-- Highlight.js -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/atom-one-dark.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
 
@@ -101,9 +100,7 @@ HTML_LAYOUT = """
             transition: all 0.3s ease;
             z-index: 1000;
         }
-        .sidebar.collapsed {
-            margin-left: -260px;
-        }
+        .sidebar.collapsed { margin-left: -260px; }
         .sidebar-overlay {
             display: none;
             position: fixed;
@@ -139,8 +136,6 @@ HTML_LAYOUT = """
             margin-bottom: 5px;
             transition: background 0.2s, color 0.2s;
             user-select: none;
-            -webkit-user-select: none;
-            position: relative;
         }
         .history-item:hover, .history-item.active {
             background-color: var(--btn-hover);
@@ -152,38 +147,7 @@ HTML_LAYOUT = """
             text-overflow: ellipsis;
             max-width: 150px;
         }
-        .action-btns-group {
-            display: none;
-            align-items: center;
-            gap: 6px;
-            animation: fadeIn 0.2s ease-in-out;
-        }
-        .history-item.show-actions .action-btns-group {
-            display: flex;
-        }
-        .action-icon-btn {
-            border: none;
-            background: none;
-            font-size: 13px;
-            cursor: pointer;
-            padding: 2px 4px;
-            transition: transform 0.1s;
-        }
-        .action-icon-btn:hover {
-            transform: scale(1.2);
-        }
-        .delete-btn-icon { color: #e11d48; }
-        .star-btn-icon { color: #f59e0b; }
-        .is-pinned-icon {
-            color: #f59e0b;
-            font-size: 12px;
-            margin-left: 4px;
-        }
 
-        @keyframes fadeIn {
-            from { opacity: 0; transform: scale(0.8); }
-            to { opacity: 1; transform: scale(1); }
-        }
         .main-chat {
             flex: 1;
             display: flex;
@@ -203,10 +167,6 @@ HTML_LAYOUT = """
             justify-content: space-between;
             flex-shrink: 0;
         }
-        .header-left {
-            display: flex;
-            align-items: center;
-        }
         .toggle-btn, .theme-btn {
             background: none;
             border: none;
@@ -215,19 +175,11 @@ HTML_LAYOUT = """
             cursor: pointer;
             padding: 6px 12px;
             border-radius: 20px;
-            transition: background 0.2s, color 0.2s;
             display: flex;
             align-items: center;
             gap: 6px;
         }
-        .toggle-btn:hover, .theme-btn:hover {
-            background-color: var(--btn-hover);
-        }
-        .theme-btn {
-            font-size: 14px;
-            font-weight: 500;
-            border: 1px solid var(--border-color);
-        }
+        .theme-btn { font-size: 14px; font-weight: 500; border: 1px solid var(--border-color); }
         .chat-container {
             flex: 1;
             overflow-y: auto;
@@ -238,8 +190,6 @@ HTML_LAYOUT = """
             display: flex;
             flex-direction: column;
         }
-        
-        /* Centered Welcome Screen Style */
         .welcome-screen {
             margin: auto 0;
             display: flex;
@@ -248,7 +198,6 @@ HTML_LAYOUT = """
             justify-content: center;
             text-align: center;
             padding: 40px 20px;
-            animation: fadeIn 0.4s ease-out;
         }
         .welcome-avatar {
             width: 54px;
@@ -261,15 +210,8 @@ HTML_LAYOUT = """
             display: flex;
             align-items: center;
             justify-content: center;
-            box-shadow: 0 4px 12px rgba(245, 158, 11, 0.2);
         }
-
-        .message {
-            display: flex;
-            gap: 15px;
-            margin-bottom: 25px;
-            position: relative;
-        }
+        .message { display: flex; gap: 15px; margin-bottom: 25px; position: relative; }
         .avatar {
             width: 35px;
             height: 35px;
@@ -291,25 +233,10 @@ HTML_LAYOUT = """
             width: 100%;
             word-wrap: break-word;
         }
-        .bubble p { margin-bottom: 8px; }
         .bubble strong { color: var(--strong-color) !important; }
-        .bubble table {
-            width: 100%;
-            border-collapse: collapse;
-            margin: 10px 0;
-            color: var(--text-color);
-        }
-        .bubble table, .bubble th, .bubble td {
-            border: 1px solid var(--border-color);
-            padding: 8px;
-        }
-        .bubble th { background-color: var(--btn-hover); }
-        .uploaded-img-preview {
-            max-width: 200px;
-            border-radius: 10px;
-            margin-bottom: 10px;
-            border: 1px solid var(--border-color);
-        }
+        .bubble table { width: 100%; border-collapse: collapse; margin: 10px 0; color: var(--text-color); }
+        .bubble table, .bubble th, .bubble td { border: 1px solid var(--border-color); padding: 8px; }
+        .uploaded-img-preview { max-width: 200px; border-radius: 10px; margin-bottom: 10px; border: 1px solid var(--border-color); }
         .pdf-badge {
             background-color: var(--btn-hover);
             border: 1px solid #e11d48;
@@ -329,59 +256,8 @@ HTML_LAYOUT = """
             cursor: pointer;
             font-size: 14px;
             margin-left: 8px;
-            transition: color 0.2s;
         }
-        .tts-btn:hover { color: var(--accent-color); }
-        .code-container {
-            position: relative;
-            margin: 12px 0;
-            border-radius: 8px;
-            overflow: hidden;
-            border: 1px solid #3e4451;
-            background: #282c34;
-        }
-        .code-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            background: #21252b;
-            padding: 6px 12px;
-            font-size: 12px;
-            color: #abb2bf;
-            font-family: monospace;
-            border-bottom: 1px solid #3e4451;
-        }
-        pre {
-            margin: 0 !important;
-            padding: 12px !important;
-            background: transparent !important;
-            overflow-x: auto;
-        }
-        pre code {
-            font-family: 'Consolas', 'Fira Code', 'Courier New', monospace;
-            font-size: 14px;
-            color: #abb2bf;
-        }
-        .copy-code-btn {
-            background: #3e4451;
-            color: #ffffff;
-            border: none;
-            border-radius: 4px;
-            padding: 2px 8px;
-            font-size: 12px;
-            cursor: pointer;
-            transition: 0.2s;
-            display: flex;
-            align-items: center;
-            gap: 4px;
-        }
-        .copy-code-btn:hover { background: #4b5263; }
-        .input-container-box {
-            padding: 10px 15px 15px 15px;
-            background: var(--bg-color);
-            flex-shrink: 0;
-            width: 100%;
-        }
+        .input-container-box { padding: 10px 15px 15px 15px; background: var(--bg-color); flex-shrink: 0; width: 100%; }
         .input-wrapper {
             max-width: 850px;
             margin: 0 auto;
@@ -393,85 +269,23 @@ HTML_LAYOUT = """
             display: flex;
             flex-direction: column;
         }
-        #filePreviewArea {
-            display: none;
-            position: relative;
-            width: fit-content;
-            margin-bottom: 8px;
-        }
-        #previewImgThumb {
-            width: 70px;
-            height: 70px;
-            object-fit: cover;
-            border-radius: 12px;
-            border: 1px solid var(--border-color);
-        }
-        #pdfPreviewThumb {
-            display: none;
-            background: var(--btn-hover);
-            border: 1px solid #e11d48;
-            color: #ff4d4d;
-            padding: 8px 12px;
-            border-radius: 10px;
-            font-size: 13px;
-            font-weight: 500;
-        }
+        #filePreviewArea { display: none; position: relative; width: fit-content; margin-bottom: 8px; }
+        #previewImgThumb { width: 70px; height: 70px; object-fit: cover; border-radius: 12px; border: 1px solid var(--border-color); }
+        #pdfPreviewThumb { display: none; background: var(--btn-hover); border: 1px solid #e11d48; color: #ff4d4d; padding: 8px 12px; border-radius: 10px; font-size: 13px; }
         .close-img-btn {
-            position: absolute;
-            top: -6px;
-            right: -6px;
-            background: #e11d48;
-            color: #fff;
-            border: none;
-            border-radius: 50%;
-            width: 22px;
-            height: 22px;
-            font-size: 12px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+            position: absolute; top: -6px; right: -6px; background: #e11d48; color: #fff;
+            border: none; border-radius: 50%; width: 22px; height: 22px; font-size: 12px; cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
         }
-        .input-row {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-        .plus-btn, .mic-btn {
-            background: none;
-            border: none;
-            color: var(--accent-color);
-            font-size: 18px;
-            cursor: pointer;
-            padding: 5px;
-            transition: 0.2s;
-        }
-        .plus-btn:hover, .mic-btn:hover { opacity: 0.8; }
-        .mic-btn.recording {
-            color: #ef4444 !important;
-            animation: pulse 1.2s infinite;
-        }
-        @keyframes pulse {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.2); }
-            100% { transform: scale(1); }
-        }
+        .input-row { display: flex; align-items: center; gap: 10px; }
+        .plus-btn { background: none; border: none; color: var(--accent-color); font-size: 18px; cursor: pointer; padding: 5px; }
         .chat-textarea {
-            background: none;
-            border: none;
-            color: var(--text-color);
-            padding: 6px 0;
-            width: 100%;
-            outline: none;
-            font-size: 15px;
-            resize: none;
-            max-height: 120px;
-            min-height: 28px;
-            line-height: 1.4;
-            font-family: inherit;
+            background: none; border: none; color: var(--text-color); padding: 6px 0; width: 100%;
+            outline: none; font-size: 15px; resize: none; max-height: 120px; min-height: 28px; line-height: 1.4;
         }
-        .send-btn {
+
+        /* Soundwave Voice / Send Button */
+        .action-btn {
             background-color: var(--text-color);
             color: var(--bg-color);
             border: none;
@@ -486,88 +300,88 @@ HTML_LAYOUT = """
             flex-shrink: 0;
             font-size: 14px;
         }
-        .send-btn:hover {
-            background-color: var(--accent-color);
-            color: #ffffff;
-        }
-        .send-btn:disabled {
-            background-color: var(--border-color);
-            color: var(--text-muted);
-            cursor: not-allowed;
-        }
-        .modal-content {
-            background-color: var(--modal-bg);
-            color: var(--text-color);
-            border: 1px solid var(--border-color);
-        }
+        .action-btn:hover { background-color: var(--accent-color); color: #ffffff; }
+
+        .modal-content { background-color: var(--modal-bg); color: var(--text-color); border: 1px solid var(--border-color); }
         .modal-btn {
-            background-color: var(--input-bg);
-            color: var(--text-color);
+            background-color: var(--input-bg); color: var(--text-color); border: 1px solid var(--border-color);
+            border-radius: 15px; padding: 15px; width: 100%; text-align: left; margin-bottom: 10px;
+        }
+        .modal-btn:hover { background-color: var(--btn-hover); color: var(--accent-color); }
+
+        /* Voice Assistant Overlay Modal */
+        .voice-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            background: rgba(19, 19, 20, 0.95);
+            z-index: 2000;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: #ffffff;
+            backdrop-filter: blur(10px);
+        }
+        .voice-overlay.active { display: flex; }
+        .voice-orb {
+            width: 140px;
+            height: 140px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #3b82f6, #8b5cf6, #ec4899);
+            background-size: 200% 200%;
+            animation: orbGlow 3s infinite ease-in-out;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 46px;
+            box-shadow: 0 0 50px rgba(139, 92, 246, 0.5);
+            margin-bottom: 30px;
+        }
+        .voice-orb.speaking { animation: orbPulse 0.8s infinite ease-in-out; }
+        @keyframes orbGlow {
+            0% { background-position: 0% 50%; transform: scale(1); }
+            50% { background-position: 100% 50%; transform: scale(1.05); }
+            100% { background-position: 0% 50%; transform: scale(1); }
+        }
+        @keyframes orbPulse {
+            0% { transform: scale(1); box-shadow: 0 0 30px rgba(236, 72, 153, 0.6); }
+            50% { transform: scale(1.2); box-shadow: 0 0 70px rgba(236, 72, 153, 0.9); }
+            100% { transform: scale(1); box-shadow: 0 0 30px rgba(236, 72, 153, 0.6); }
+        }
+        .close-voice-btn {
+            position: absolute;
+            top: 30px;
+            right: 30px;
+            background: var(--btn-hover);
             border: 1px solid var(--border-color);
-            border-radius: 15px;
-            padding: 15px;
-            width: 100%;
-            text-align: left;
-            margin-bottom: 10px;
-            transition: 0.2s;
-        }
-        .modal-btn:hover {
-            background-color: var(--btn-hover);
-            color: var(--accent-color);
-        }
-        @media (max-width: 768px) { 
-            .sidebar { 
-                position: absolute;
-                top: 0;
-                bottom: 0;
-                left: 0;
-                box-shadow: 5px 0 15px rgba(0,0,0,0.3);
-            }
-            .sidebar.collapsed {
-                margin-left: -260px;
-            }
-            .sidebar-overlay.active {
-                display: block;
-            }
-            .chat-container {
-                padding: 15px 10px;
-            }
+            color: #ffffff;
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            font-size: 20px;
+            cursor: pointer;
         }
     </style>
 </head>
 <body>
-    <!-- Dark overlay for mobile sidebar -->
     <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
 
     <div class="sidebar" id="sidebar">
-        <!-- Close button visible only on mobile screens -->
         <div class="d-flex justify-content-between align-items-center mb-3 d-md-none">
             <span class="fw-bold">Menu</span>
-            <button class="btn btn-sm text-secondary" onclick="toggleSidebar()">
-                <i class="fa-solid fa-xmark fa-xl"></i>
-            </button>
+            <button class="btn btn-sm text-secondary" onclick="toggleSidebar()"><i class="fa-solid fa-xmark fa-xl"></i></button>
         </div>
-
-        <button class="new-chat-btn w-100 mb-2" onclick="startNewChat()">
-            <i class="fa-solid fa-plus me-2"></i> New Chat
-        </button>
+        <button class="new-chat-btn w-100 mb-2" onclick="startNewChat()"><i class="fa-solid fa-plus me-2"></i> New Chat</button>
         <div class="history-list" id="historyList"></div>
     </div>
 
     <div class="main-chat">
         <div class="chat-header">
-            <div class="header-left">
-                <button class="toggle-btn" onclick="toggleSidebar()" title="Toggle Sidebar">
-                    <i class="fa-solid fa-bars"></i>
-                </button>
-                <h5 class="m-0 fw-bold"><i class="fa-solid fa-graduation-cap me-2 text-warning"></i>Tuto AI</h5>
+            <div class="d-flex align-items-center">
+                <button class="toggle-btn" onclick="toggleSidebar()"><i class="fa-solid fa-bars"></i></button>
+                <h5 class="m-0 fw-bold ms-2"><i class="fa-solid fa-graduation-cap me-2 text-warning"></i>Tuto AI</h5>
             </div>
-            
-            <!-- Light/Dark Mode Toggle Button -->
-            <button class="theme-btn" id="themeToggleBtn" onclick="toggleTheme()" title="Toggle Light/Dark Mode">
-                <i class="fa-solid fa-sun" id="themeIcon"></i>
-                <span id="themeText">Light</span>
-            </button>
+            <button class="theme-btn" id="themeToggleBtn" onclick="toggleTheme()"><i class="fa-solid fa-sun" id="themeIcon"></i> <span id="themeText">Light</span></button>
         </div>
 
         <div class="chat-container" id="chatBox"></div>
@@ -586,16 +400,23 @@ HTML_LAYOUT = """
                     </button>
                     <form id="chatForm" class="d-flex w-100 align-items-center gap-2 m-0">
                         <textarea id="question" class="chat-textarea" rows="1" placeholder="Message Tuto AI, attach photo or PDF..."></textarea>
-                        <button type="button" class="mic-btn" id="micBtn" onclick="toggleVoiceRecording()" title="Voice Input (Groq Whisper)">
-                            <i class="fa-solid fa-microphone"></i>
-                        </button>
-                        <button type="submit" class="send-btn" id="sendBtn" title="Send Message">
-                            <i class="fa-solid fa-arrow-up"></i>
+                        
+                        <!-- Dynamic Button: Soundwave Icon (fa-wave-square) / Send Arrow (↑) -->
+                        <button type="button" class="action-btn" id="actionBtn" onclick="handleActionClick()" title="Voice Assistant / Send">
+                            <i class="fa-solid fa-wave-square" id="actionIcon"></i>
                         </button>
                     </form>
                 </div>
             </div>
         </div>
+    </div>
+
+    <!-- Live Voice Assistant Overlay -->
+    <div class="voice-overlay" id="voiceOverlay">
+        <button class="close-voice-btn" onclick="stopVoiceAssistant()"><i class="fa-solid fa-xmark"></i></button>
+        <div class="voice-orb" id="voiceOrb"><i class="fa-solid fa-wave-square"></i></div>
+        <h4 class="fw-bold mb-2" id="voiceStatus">Listening...</h4>
+        <p class="text-secondary fs-6" id="voiceSubtext">Speak in any language</p>
     </div>
 
     <input type="file" id="galleryInput" accept="image/*" style="display: none;" onchange="handleFileSelect(this)">
@@ -610,15 +431,9 @@ HTML_LAYOUT = """
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
-                    <button class="modal-btn" onclick="triggerCamera()">
-                        <i class="fa-solid fa-camera fa-lg me-3 text-warning"></i> <strong>Take Photo</strong> (Open Camera)
-                    </button>
-                    <button class="modal-btn" onclick="triggerGallery()">
-                        <i class="fa-solid fa-images fa-lg me-3 text-info"></i> <strong>Upload Photo</strong> (From Gallery)
-                    </button>
-                    <button class="modal-btn" onclick="triggerPDF()">
-                        <i class="fa-solid fa-file-pdf fa-lg me-3 text-danger"></i> <strong>Upload PDF Document</strong> (Books / Notes)
-                    </button>
+                    <button class="modal-btn" onclick="triggerCamera()"><i class="fa-solid fa-camera fa-lg me-3 text-warning"></i> <strong>Take Photo</strong></button>
+                    <button class="modal-btn" onclick="triggerGallery()"><i class="fa-solid fa-images fa-lg me-3 text-info"></i> <strong>Upload Photo</strong></button>
+                    <button class="modal-btn" onclick="triggerPDF()"><i class="fa-solid fa-file-pdf fa-lg me-3 text-danger"></i> <strong>Upload PDF Document</strong></button>
                 </div>
             </div>
         </div>
@@ -630,18 +445,127 @@ HTML_LAYOUT = """
     const questionInput = document.getElementById('question');
     const chatBox = document.getElementById('chatBox');
     const historyList = document.getElementById('historyList');
-    const micBtn = document.getElementById('micBtn');
+    const actionBtn = document.getElementById('actionBtn');
+    const actionIcon = document.getElementById('actionIcon');
+    const voiceOverlay = document.getElementById('voiceOverlay');
+    const voiceOrb = document.getElementById('voiceOrb');
+    const voiceStatus = document.getElementById('voiceStatus');
 
     let allSessions = JSON.parse(localStorage.getItem('tuto_all_sessions')) || {};
     let currentSessionId = localStorage.getItem('tuto_current_session_id') || null;
 
-    let mediaRecorder = null;
-    let audioChunks = [];
-    let isRecording = false;
+    let recognition = null;
+    let isVoiceAssistantActive = false;
 
-    let pressTimer = null;
+    // Toggle Soundwave Icon (fa-wave-square) and Send Arrow (↑)
+    function updateActionButtonState() {
+        const hasContent = questionInput.value.trim().length > 0 || selectedFile !== null;
+        if (hasContent) {
+            actionIcon.className = "fa-solid fa-arrow-up";
+            actionBtn.title = "Send Message";
+        } else {
+            actionIcon.className = "fa-solid fa-wave-square";
+            actionBtn.title = "Voice Assistant";
+        }
+    }
 
-    // Theme Toggle Functionality
+    function handleActionClick() {
+        const hasContent = questionInput.value.trim().length > 0 || selectedFile !== null;
+        if (hasContent) {
+            submitChatMessage();
+        } else {
+            startVoiceAssistant();
+        }
+    }
+
+    /* Live Interactive Voice Assistant Mode */
+    function startVoiceAssistant() {
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (!SpeechRecognition) {
+            alert("Your browser does not support Speech Recognition. Please use Chrome/Edge.");
+            return;
+        }
+
+        recognition = new SpeechRecognition();
+        recognition.continuous = false;
+        recognition.interimResults = false;
+        recognition.lang = ''; // Auto-detect language
+
+        isVoiceAssistantActive = true;
+        voiceOverlay.classList.add('active');
+        voiceStatus.innerText = "Listening...";
+        voiceOrb.classList.remove('speaking');
+
+        recognition.start();
+
+        recognition.onresult = async (event) => {
+            const userSpeech = event.results[0][0].transcript;
+            voiceStatus.innerText = "Thinking...";
+            questionInput.value = userSpeech;
+            
+            // Send user speech to AI backend
+            const aiResponse = await submitChatMessage(true);
+            
+            if (aiResponse && isVoiceAssistantActive) {
+                speakVoiceAssistantResponse(aiResponse);
+            } else {
+                stopVoiceAssistant();
+            }
+        };
+
+        recognition.onerror = () => {
+            if (isVoiceAssistantActive) stopVoiceAssistant();
+        };
+
+        recognition.onend = () => {
+            if (isVoiceAssistantActive && voiceStatus.innerText === "Listening...") {
+                stopVoiceAssistant();
+            }
+        };
+    }
+
+    function speakVoiceAssistantResponse(text) {
+        if (!('speechSynthesis' in window)) {
+            stopVoiceAssistant();
+            return;
+        }
+
+        window.speechSynthesis.cancel();
+        let cleanText = text.replace(/<[^>]*>?/gm, '').replace(/[*#]/g, '');
+        const utterance = new SpeechSynthesisUtterance(cleanText);
+
+        if (/[\u0980-\u09FF]/.test(cleanText)) {
+            utterance.lang = 'bn-BD';
+        } else {
+            utterance.lang = 'en-US';
+        }
+
+        voiceStatus.innerText = "Tuto AI Speaking...";
+        voiceOrb.classList.add('speaking');
+
+        utterance.onend = () => {
+            if (isVoiceAssistantActive) {
+                startVoiceAssistant();
+            }
+        };
+
+        utterance.onerror = () => { stopVoiceAssistant(); };
+
+        window.speechSynthesis.speak(utterance);
+    }
+
+    function stopVoiceAssistant() {
+        isVoiceAssistantActive = false;
+        if (recognition) {
+            try { recognition.stop(); } catch(e){}
+        }
+        if (window.speechSynthesis) {
+            window.speechSynthesis.cancel();
+        }
+        voiceOverlay.classList.remove('active');
+        voiceOrb.classList.remove('speaking');
+    }
+
     function initTheme() {
         const savedTheme = localStorage.getItem('tuto_theme') || 'dark';
         setTheme(savedTheme);
@@ -649,38 +573,22 @@ HTML_LAYOUT = """
 
     function toggleTheme() {
         const currentTheme = document.documentElement.getAttribute('data-theme');
-        const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
-        setTheme(newTheme);
+        setTheme(currentTheme === 'dark' ? 'light' : 'dark');
     }
 
     function setTheme(theme) {
         document.documentElement.setAttribute('data-theme', theme);
         localStorage.setItem('tuto_theme', theme);
-
-        const themeIcon = document.getElementById('themeIcon');
-        const themeText = document.getElementById('themeText');
-
-        if (theme === 'light') {
-            themeIcon.className = 'fa-solid fa-moon';
-            themeText.innerText = 'Dark';
-        } else {
-            themeIcon.className = 'fa-solid fa-sun';
-            themeText.innerText = 'Light';
-        }
+        document.getElementById('themeIcon').className = theme === 'light' ? 'fa-solid fa-moon' : 'fa-solid fa-sun';
+        document.getElementById('themeText').innerText = theme === 'light' ? 'Dark' : 'Light';
     }
 
     function toggleSidebar() {
         const sidebar = document.getElementById('sidebar');
         const overlay = document.getElementById('sidebarOverlay');
-        
         sidebar.classList.toggle('collapsed');
-        
         if (window.innerWidth <= 768) {
-            if (!sidebar.classList.contains('collapsed')) {
-                overlay.classList.add('active');
-            } else {
-                overlay.classList.remove('active');
-            }
+            overlay.classList.toggle('active', !sidebar.classList.contains('collapsed'));
         }
     }
 
@@ -692,15 +600,10 @@ HTML_LAYOUT = """
     }
 
     function speakText(btn) {
-        if (!('speechSynthesis' in window)) {
-            alert("Sorry, your browser doesn't support Voice Output!");
-            return;
-        }
-
+        if (!('speechSynthesis' in window)) return;
         const bubbleElem = btn.closest('.bubble');
         let textToSpeak = bubbleElem ? bubbleElem.innerText.replace(/^Tuto AI/i, '').trim() : '';
-        textToSpeak = textToSpeak.replace(/Copy/g, '');
-
+        
         if (window.speechSynthesis.speaking) {
             window.speechSynthesis.cancel();
             btn.innerHTML = '<i class="fa-solid fa-volume-high"></i>';
@@ -708,90 +611,13 @@ HTML_LAYOUT = """
         }
 
         const utterance = new SpeechSynthesisUtterance(textToSpeak);
-        utterance.rate = 1.0;
-        
-        if (/[\u0980-\u09FF]/.test(textToSpeak)) {
-            utterance.lang = 'bn-BD';
-        } else {
-            utterance.lang = 'en-US';
-        }
-
+        utterance.lang = /[\u0980-\u09FF]/.test(textToSpeak) ? 'bn-BD' : 'en-US';
         btn.innerHTML = '<i class="fa-solid fa-volume-xmark text-warning"></i>';
-
         utterance.onend = () => { btn.innerHTML = '<i class="fa-solid fa-volume-high"></i>'; };
         utterance.onerror = () => { btn.innerHTML = '<i class="fa-solid fa-volume-high"></i>'; };
-
         window.speechSynthesis.speak(utterance);
     }
 
-    async function toggleVoiceRecording() {
-        if (isRecording) {
-            stopRecordingAndTranscribe();
-        } else {
-            startRecording();
-        }
-    }
-
-    async function startRecording() {
-        try {
-            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-            mediaRecorder = new MediaRecorder(stream);
-            audioChunks = [];
-
-            mediaRecorder.ondataavailable = (event) => {
-                if (event.data.size > 0) audioChunks.push(event.data);
-            };
-
-            mediaRecorder.onstop = async () => {
-                const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
-                stream.getTracks().forEach(track => track.stop());
-                await transcribeAudio(audioBlob);
-            };
-
-            mediaRecorder.start();
-            isRecording = true;
-            micBtn.classList.add('recording');
-            questionInput.placeholder = "Recording... Click mic again to stop";
-        } catch (err) {
-            alert("Microphone permission denied or not supported by browser!");
-        }
-    }
-
-    function stopRecordingAndTranscribe() {
-        if (mediaRecorder && isRecording) {
-            mediaRecorder.stop();
-            isRecording = false;
-            micBtn.classList.remove('recording');
-            questionInput.placeholder = "Processing voice with Groq AI...";
-        }
-    }
-
-    async function transcribeAudio(audioBlob) {
-        const formData = new FormData();
-        formData.append('audio', audioBlob, 'audio.webm');
-
-        try {
-            const response = await fetch('/api/transcribe', {
-                method: 'POST',
-                body: formData
-            });
-
-            const data = await response.json();
-            if (data.status === 'success' && data.text) {
-                questionInput.value = data.text;
-                questionInput.style.height = 'auto';
-                questionInput.style.height = (questionInput.scrollHeight) + 'px';
-            } else {
-                alert("Voice recognition error: " + (data.message || "Could not recognize audio"));
-            }
-        } catch (err) {
-            alert("Error connecting to Groq Whisper API");
-        } finally {
-            questionInput.placeholder = "Message Tuto AI, attach photo or PDF...";
-        }
-    }
-
-    // Centered Gemini/ChatGPT Style Greeting Screen
     const DEFAULT_WELCOME = `
         <div id="welcomeScreen" class="welcome-screen">
             <div class="welcome-avatar mb-3">AI</div>
@@ -809,82 +635,21 @@ HTML_LAYOUT = """
             renderSidebarHistory();
             loadSession(currentSessionId);
         }
+        updateActionButtonState();
     });
 
     questionInput.addEventListener('input', function() {
         this.style.height = 'auto';
         this.style.height = (this.scrollHeight) + 'px';
+        updateActionButtonState();
     });
 
     questionInput.addEventListener('keydown', function(e) {
         if (e.key === 'Enter' && !e.shiftKey) {
             e.preventDefault();
-            document.getElementById('chatForm').dispatchEvent(new Event('submit'));
+            submitChatMessage();
         }
     });
-
-    function renderMathInElem(element) {
-        if (window.renderMathInElement) {
-            try {
-                window.renderMathInElement(element, {
-                    delimiters: [
-                        {left: '$$', right: '$$', display: true},
-                        {left: '$', right: '$', display: false},
-                        {left: '\\(', right: '\\)', display: false},
-                        {left: '\\[', right: '\\]', display: true}
-                    ],
-                    throwOnError : false
-                });
-            } catch(e) {}
-        }
-    }
-
-    function processCodeBlocks(element) {
-        if (!element) return;
-        element.querySelectorAll('pre').forEach((pre) => {
-            if (pre.closest('.code-container')) return;
-
-            const codeBlock = pre.querySelector('code');
-            const codeText = codeBlock ? codeBlock.innerText : pre.innerText;
-            
-            let lang = 'code';
-            if (codeBlock && codeBlock.className) {
-                const match = codeBlock.className.match(/language-(\\w+)/);
-                if (match) lang = match[1];
-            }
-
-            const container = document.createElement('div');
-            container.className = 'code-container';
-
-            const header = document.createElement('div');
-            header.className = 'code-header';
-            header.innerHTML = `<span>${lang}</span>`;
-
-            const copyBtn = document.createElement('button');
-            copyBtn.className = 'copy-code-btn';
-            copyBtn.type = 'button';
-            copyBtn.innerHTML = '<i class="fa-regular fa-copy me-1"></i>Copy';
-            
-            copyBtn.addEventListener('click', async () => {
-                try {
-                    await navigator.clipboard.writeText(codeText.trim());
-                    copyBtn.innerHTML = '<i class="fa-solid fa-check me-1"></i>Copied!';
-                    setTimeout(() => {
-                        copyBtn.innerHTML = '<i class="fa-regular fa-copy me-1"></i>Copy';
-                    }, 2000);
-                } catch (err) {}
-            });
-
-            header.appendChild(copyBtn);
-            pre.parentNode.insertBefore(container, pre);
-            container.appendChild(header);
-            container.appendChild(pre);
-
-            if (window.hljs && codeBlock) {
-                try { hljs.highlightElement(codeBlock); } catch(e) {}
-            }
-        });
-    }
 
     function saveSessionsToStorage() {
         localStorage.setItem('tuto_all_sessions', JSON.stringify(allSessions));
@@ -893,12 +658,7 @@ HTML_LAYOUT = """
 
     function startNewChat(shouldRender = true) {
         currentSessionId = 'session_' + Date.now();
-        allSessions[currentSessionId] = {
-            title: 'New Chat',
-            html: DEFAULT_WELCOME,
-            messages: [],
-            isPinned: false
-        };
+        allSessions[currentSessionId] = { title: 'New Chat', html: DEFAULT_WELCOME, messages: [], isPinned: false };
         saveSessionsToStorage();
         if (shouldRender) {
             renderSidebarHistory();
@@ -911,151 +671,32 @@ HTML_LAYOUT = """
         currentSessionId = sessionId;
         saveSessionsToStorage();
         chatBox.innerHTML = allSessions[sessionId].html || DEFAULT_WELCOME;
-        document.querySelectorAll('.bubble').forEach(elem => {
-            renderMathInElem(elem);
-            processCodeBlocks(elem);
-        });
         chatBox.scrollTop = chatBox.scrollHeight;
         renderSidebarHistory();
         checkMobileSidebarAutoCollapse();
     }
 
-    function deleteSession(e, sessionId) {
-        e.stopPropagation();
-        if (!confirm("Are you sure you want to delete this chat history?")) {
-            return;
-        }
-        delete allSessions[sessionId];
-        if (currentSessionId === sessionId) {
-            const keys = Object.keys(allSessions);
-            if (keys.length > 0) {
-                currentSessionId = keys[keys.length - 1];
-            } else {
-                startNewChat(false);
-            }
-        }
-        saveSessionsToStorage();
-        renderSidebarHistory();
-        loadSession(currentSessionId);
-    }
-
-    function togglePinSession(e, sessionId) {
-        e.stopPropagation();
-        if (allSessions[sessionId]) {
-            allSessions[sessionId].isPinned = !allSessions[sessionId].isPinned;
-            saveSessionsToStorage();
-            renderSidebarHistory();
-        }
-    }
-
-    function startHold(sessionId) {
-        cancelHold();
-        pressTimer = window.setTimeout(() => {
-            document.querySelectorAll('.history-item').forEach(item => item.classList.remove('show-actions'));
-            const elem = document.getElementById('session-item-' + sessionId);
-            if (elem) {
-                elem.classList.add('show-actions');
-            }
-            if (navigator.vibrate) navigator.vibrate(50);
-        }, 500);
-    }
-
-    function cancelHold() {
-        if (pressTimer) {
-            clearTimeout(pressTimer);
-            pressTimer = null;
-        }
-    }
-
     function renderSidebarHistory() {
         historyList.innerHTML = '';
         const keys = Object.keys(allSessions).reverse();
-
-        const pinnedKeys = keys.filter(id => allSessions[id].isPinned);
-        const unpinnedKeys = keys.filter(id => !allSessions[id].isPinned);
-
-        if (pinnedKeys.length > 0) {
-            historyList.innerHTML += `<div class="text-warning small fw-bold mt-2 mb-1"><i class="fa-solid fa-star me-1"></i>PINNED CHATS</div>`;
-            pinnedKeys.forEach(id => renderItemHTML(id));
-        }
-
-        if (unpinnedKeys.length > 0) {
-            historyList.innerHTML += `<div class="text-secondary small fw-bold mt-3 mb-1">RECENT CHATS</div>`;
-            unpinnedKeys.forEach(id => renderItemHTML(id));
-        }
-    }
-
-    function renderItemHTML(id) {
-        const session = allSessions[id];
-        const isActive = id === currentSessionId ? 'active' : '';
-        const starClass = session.isPinned ? 'fa-solid fa-star' : 'fa-regular fa-star';
-        const starTitle = session.isPinned ? 'Unpin Chat' : 'Pin to Top';
-
-        historyList.innerHTML += `
-            <div class="history-item ${isActive}" 
-                 id="session-item-${id}"
-                 onclick="loadSession('${id}')"
-                 onmousedown="startHold('${id}')"
-                 onmouseup="cancelHold()"
-                 onmouseleave="cancelHold()"
-                 ontouchstart="startHold('${id}')"
-                 ontouchend="cancelHold()"
-                 ontouchmove="cancelHold()">
-                <div class="history-title">
-                    <i class="fa-regular fa-message me-2"></i>${session.title}
-                    ${session.isPinned ? '<i class="fa-solid fa-star is-pinned-icon"></i>' : ''}
+        keys.forEach(id => {
+            const session = allSessions[id];
+            const isActive = id === currentSessionId ? 'active' : '';
+            historyList.innerHTML += `
+                <div class="history-item ${isActive}" onclick="loadSession('${id}')">
+                    <div class="history-title"><i class="fa-regular fa-message me-2"></i>${session.title}</div>
                 </div>
-                <div class="action-btns-group">
-                    <button class="action-icon-btn delete-btn-icon" onclick="deleteSession(event, '${id}')" title="Delete Chat">
-                        <i class="fa-solid fa-trash-can"></i>
-                    </button>
-                    <button class="action-icon-btn star-btn-icon" onclick="togglePinSession(event, '${id}')" title="${starTitle}">
-                        <i class="${starClass}"></i>
-                    </button>
-                </div>
-            </div>
-        `;
+            `;
+        });
     }
 
-    async function generateSmartTitle(promptText, sessionId) {
-        try {
-            const res = await fetch('/api/generate-title', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ prompt: promptText })
-            });
-            const data = await res.json();
-            if (data.status === 'success' && data.title) {
-                if (allSessions[sessionId]) {
-                    allSessions[sessionId].title = data.title;
-                    saveSessionsToStorage();
-                    renderSidebarHistory();
-                }
-            }
-        } catch (e) {}
-    }
-
+    function triggerGallery() { closeModal(); document.getElementById('galleryInput').click(); }
+    function triggerCamera() { closeModal(); document.getElementById('cameraInput').click(); }
+    function triggerPDF() { closeModal(); document.getElementById('pdfInput').click(); }
     function closeModal() {
         const modalElem = document.getElementById('uploadModal');
         const modalInstance = bootstrap.Modal.getInstance(modalElem);
-        if (modalInstance) {
-            modalInstance.hide();
-        }
-    }
-
-    function triggerGallery() {
-        closeModal();
-        document.getElementById('galleryInput').click();
-    }
-
-    function triggerCamera() {
-        closeModal();
-        document.getElementById('cameraInput').click();
-    }
-
-    function triggerPDF() {
-        closeModal();
-        document.getElementById('pdfInput').click();
+        if (modalInstance) modalInstance.hide();
     }
 
     function handleFileSelect(input) {
@@ -1075,38 +716,29 @@ HTML_LAYOUT = """
                 imgThumb.src = URL.createObjectURL(selectedFile);
             }
             previewArea.style.display = 'block';
+            updateActionButtonState();
         }
     }
 
     function clearSelectedFile() {
         selectedFile = null;
-        document.getElementById('galleryInput').value = '';
-        document.getElementById('cameraInput').value = '';
-        document.getElementById('pdfInput').value = '';
         document.getElementById('filePreviewArea').style.display = 'none';
-        document.getElementById('previewImgThumb').src = '';
+        updateActionButtonState();
     }
 
-    document.getElementById('chatForm').addEventListener('submit', async (e) => {
+    document.getElementById('chatForm').addEventListener('submit', (e) => {
         e.preventDefault();
+        submitChatMessage();
+    });
 
-        const sendBtn = document.getElementById('sendBtn');
+    async function submitChatMessage(isVoiceMode = false) {
         const question = questionInput.value.trim();
-        if (!question && !selectedFile) return;
+        if (!question && !selectedFile) return null;
 
-        // Clear centered welcome screen on first message submission
         const welcomeElem = document.getElementById('welcomeScreen');
-        if (welcomeElem) {
-            chatBox.innerHTML = '';
-        }
+        if (welcomeElem) chatBox.innerHTML = '';
 
-        if (allSessions[currentSessionId].title === 'New Chat') {
-            const titlePrompt = question || (selectedFile ? selectedFile.name : "New Conversation");
-            generateSmartTitle(titlePrompt, currentSessionId);
-        }
-
-        let userContentHTML = question ? `<strong>You</strong><br>${question.replace(/\\n/g, '<br>')}` : '';
-        
+        let userContentHTML = question ? `<strong>You</strong><br>${question.replace(/\n/g, '<br>')}` : '';
         if (selectedFile) {
             if (selectedFile.type === 'application/pdf') {
                 userContentHTML = `<div class="pdf-badge"><i class="fa-solid fa-file-pdf"></i> ${selectedFile.name}</div>` + (userContentHTML ? `<br>${userContentHTML}` : '');
@@ -1126,14 +758,12 @@ HTML_LAYOUT = """
         const formData = new FormData();
         formData.append('question', question);
         formData.append('session_id', currentSessionId);
-        if (selectedFile) {
-            formData.append('file', selectedFile);
-        }
+        if (selectedFile) formData.append('file', selectedFile);
 
         questionInput.value = '';
         questionInput.style.height = 'auto';
         clearSelectedFile();
-        sendBtn.disabled = true;
+        updateActionButtonState();
         chatBox.scrollTop = chatBox.scrollHeight;
 
         const loadingId = 'loading-' + Date.now();
@@ -1146,69 +776,42 @@ HTML_LAYOUT = """
         chatBox.scrollTop = chatBox.scrollHeight;
 
         try {
-            const response = await fetch('/api/chat', {
-                method: 'POST',
-                body: formData
-            });
-
+            const response = await fetch('/api/chat', { method: 'POST', body: formData });
             const data = await response.json();
             const loadingElem = document.getElementById(loadingId);
             
             if (data.status === 'success') {
-                let htmlContent = "";
-                try {
-                    htmlContent = typeof marked !== 'undefined' ? marked.parse(data.response) : data.response;
-                } catch(mErr) {
-                    htmlContent = data.response.replace(/\\n/g, '<br>');
-                }
-
+                let htmlContent = typeof marked !== 'undefined' ? marked.parse(data.response) : data.response;
                 const bubbleElem = loadingElem.querySelector('.bubble');
                 bubbleElem.innerHTML = `
                     <div class="d-flex justify-content-between align-items-center mb-1">
                         <strong>Tuto AI</strong>
-                        <button type="button" class="tts-btn" onclick="speakText(this)" title="Read Aloud (Voice Output)">
-                            <i class="fa-solid fa-volume-high"></i>
-                        </button>
+                        <button type="button" class="tts-btn" onclick="speakText(this)"><i class="fa-solid fa-volume-high"></i></button>
                     </div>
                     <div>${htmlContent}</div>
                 `;
-                
-                processCodeBlocks(bubbleElem);
-                renderMathInElem(bubbleElem);
-
                 allSessions[currentSessionId].html = chatBox.innerHTML;
                 saveSessionsToStorage();
+                return data.response;
             } else {
                 loadingElem.querySelector('.bubble').innerHTML = `<span class="text-danger">Error: ${data.message}</span>`;
+                return null;
             }
         } catch (error) {
             document.getElementById(loadingId).querySelector('.bubble').innerHTML = `<span class="text-danger">Server connection error.</span>`;
+            return null;
         } finally {
-            sendBtn.disabled = false;
             chatBox.scrollTop = chatBox.scrollHeight;
         }
-    });
+    }
 </script>
 </body>
 </html>
 """
 
 def clean_ai_response(text: str) -> str:
-    if not text:
-        return ""
+    if not text: return ""
     text = re.sub(r'<think>.*?</think>', '', text, flags=re.DOTALL)
-    
-    if "\n\n" in text:
-        parts = [p.strip() for p in text.split("\n\n") if p.strip()]
-        non_bullet_parts = [p for p in parts if not (p.startswith('* User') or p.startswith('* Style') or p.startswith('- User') or p.startswith('- Style'))]
-        if non_bullet_parts:
-            text = non_bullet_parts[-1]
-
-    if "**Drafting the response:**" in text:
-        text = text.split("**Drafting the response:**")[-1]
-    elif "Drafting the response:" in text:
-        text = text.split("Drafting the response:")[-1]
-        
     return text.strip()
 
 def extract_pdf_text(contents: bytes) -> str:
@@ -1218,8 +821,7 @@ def extract_pdf_text(contents: bytes) -> str:
         reader = pypdf.PdfReader(io.BytesIO(contents))
         for page in reader.pages:
             t = page.extract_text()
-            if t:
-                pdf_text += t + "\n"
+            if t: pdf_text += t + "\n"
     except Exception:
         raw_matches = re.findall(rb'\((.*?)\)', contents)
         extracted_strings = [m.decode('utf-8', errors='ignore') for m in raw_matches if len(m) > 3]
@@ -1229,53 +831,6 @@ def extract_pdf_text(contents: bytes) -> str:
 @app.get("/", response_class=HTMLResponse)
 def home():
     return HTML_LAYOUT
-
-@app.post("/api/transcribe")
-async def transcribe_audio(audio: UploadFile = File(...)):
-    try:
-        if not GROQ_API_KEY:
-            return {"status": "error", "message": "GROQ_API_KEY missing."}
-        
-        client = Groq(api_key=GROQ_API_KEY)
-        
-        with tempfile.NamedTemporaryFile(delete=False, suffix=".webm") as temp_audio:
-            content = await audio.read()
-            temp_audio.write(content)
-            temp_audio_path = temp_audio.name
-
-        with open(temp_audio_path, "rb") as file_to_transcribe:
-            transcription = client.audio.transcriptions.create(
-                file=(os.path.basename(temp_audio_path), file_to_transcribe.read()),
-                model="whisper-large-v3",
-                response_format="json"
-            )
-
-        os.remove(temp_audio_path)
-
-        return {"status": "success", "text": transcription.text}
-    except Exception as e:
-        return {"status": "error", "message": str(e)}
-
-@app.post("/api/generate-title")
-async def generate_title(data: TitleRequest):
-    try:
-        if not GROQ_API_KEY:
-            return {"status": "error", "title": "New Chat"}
-        client = Groq(api_key=GROQ_API_KEY)
-        
-        prompt = (
-            f"Generate a short, concise 2 to 4 word title representing this user prompt: '{data.prompt}'. "
-            "Output ONLY the title in plain text, with no quotes, no periods, and no conversation."
-        )
-        completion = client.chat.completions.create(
-            model="llama-3.3-70b-versatile",
-            messages=[{"role": "user", "content": prompt}],
-            max_tokens=15
-        )
-        title = completion.choices[0].message.content.strip().replace('"', '').replace("'", "")
-        return {"status": "success", "title": title}
-    except Exception:
-        return {"status": "error", "title": "New Chat"}
 
 @app.post("/api/chat")
 async def chat_endpoint(
@@ -1289,9 +844,8 @@ async def chat_endpoint(
             chat_sessions[session_id] = []
 
         SMART_SYSTEM_PROMPT = (
-            "You are Tuto AI, a friendly AI tutor created solely by Imran Hossen. "
-            "Respond directly and concisely to the user. "
-            "IMPORTANT: Output ONLY your final answer. Do NOT show your internal thoughts, checklist, planning, or reasoning."
+            "You are Tuto AI, an interactive, friendly AI tutor created solely by Imran Hossen. "
+            "Answer concisely and naturally in whatever language the user speaks to you."
         )
 
         messages_payload = [{"role": "system", "content": SMART_SYSTEM_PROMPT}]
@@ -1303,132 +857,52 @@ async def chat_endpoint(
 
             if filename.endswith(".pdf"):
                 if not GROQ_API_KEY:
-                    return {"status": "error", "message": "GROQ_API_KEY missing in environment."}
+                    return {"status": "error", "message": "GROQ_API_KEY missing."}
                 client = Groq(api_key=GROQ_API_KEY)
-
-                user_q = question if question else "Summarize key points from this document briefly."
+                user_q = question if question else "Summarize key points from this document."
                 extracted_text = extract_pdf_text(contents)
-                pdf_prompt = f"User uploaded PDF document ('{file.filename}').\n\nPDF Text Content:\n{extracted_text[:6000]}\n\nUser Question: {user_q}"
+                pdf_prompt = f"PDF Text:\n{extracted_text[:6000]}\n\nUser Question: {user_q}"
                 
-                current_user_msg = {"role": "user", "content": pdf_prompt}
-                messages_payload.append(current_user_msg)
-
+                messages_payload.append({"role": "user", "content": pdf_prompt})
                 completion = client.chat.completions.create(
                     model="llama-3.3-70b-versatile",
                     messages=messages_payload
                 )
                 final_response = clean_ai_response(completion.choices[0].message.content)
-                chat_sessions[session_id].append({"role": "user", "content": f"[PDF File: {file.filename}] {user_q}"})
-                chat_sessions[session_id].append({"role": "assistant", "content": final_response})
-
-                return {
-                    "status": "success",
-                    "question": user_q,
-                    "response": final_response
-                }
+                return {"status": "success", "question": user_q, "response": final_response}
 
             else:
                 if not GEMINI_API_KEY:
-                    return {"status": "error", "message": "GEMINI_API_KEY missing in environment variables."}
+                    return {"status": "error", "message": "GEMINI_API_KEY missing."}
 
                 genai.configure(api_key=GEMINI_API_KEY)
                 mime_type = file.content_type or "image/jpeg"
                 image_parts = [{"mime_type": mime_type, "data": contents}]
+                user_q = question if question else "Acknowledge image."
+
+                gemini_model = genai.GenerativeModel('models/gemini-1.5-flash')
+                response = gemini_model.generate_content([f"{SMART_SYSTEM_PROMPT}\n{user_q}", image_parts[0]])
                 
-                user_q = question if question else "Acknowledge the image naturally and concisely."
-                prompt = f"{SMART_SYSTEM_PROMPT}\n\nUser Question: {user_q}\n(Respond directly with the final answer only without showing any thinking steps)"
-
-                response = None
-                last_error = ""
-
-                try:
-                    active_models = [
-                        m.name for m in genai.list_models() 
-                        if 'generateContent' in m.supported_generation_methods
-                    ]
-                except Exception:
-                    active_models = ['models/gemini-1.5-flash', 'models/gemini-1.5-pro']
-
-                for model_name in active_models:
-                    try:
-                        gemini_model = genai.GenerativeModel(model_name)
-                        response = gemini_model.generate_content([prompt, image_parts[0]])
-                        if response and response.text:
-                            break
-                    except Exception as err:
-                        last_error = str(err)
-                        continue
-
-                if not response or not response.text:
-                    return {"status": "error", "message": f"Gemini error: {last_error or 'No active vision model found.'}"}
-
                 final_response = clean_ai_response(response.text)
-                chat_sessions[session_id].append({"role": "user", "content": f"[User sent image] {user_q}"})
-                chat_sessions[session_id].append({"role": "assistant", "content": final_response})
-
-                return {
-                    "status": "success",
-                    "question": user_q,
-                    "response": final_response
-                }
+                return {"status": "success", "question": user_q, "response": final_response}
 
         else:
             if not GROQ_API_KEY:
-                return {"status": "error", "message": "GROQ_API_KEY missing in environment."}
+                return {"status": "error", "message": "GROQ_API_KEY missing."}
             
             client = Groq(api_key=GROQ_API_KEY)
+            messages_payload.append({"role": "user", "content": question})
 
-            current_user_msg = {"role": "user", "content": question}
-            messages_payload.append(current_user_msg)
-
-            preferred_models = [
-                "llama-3.3-70b-versatile",
-                "llama-3.1-8b-instant"
-            ]
-
-            completion = None
-            last_error = ""
-
-            try:
-                active_models_resp = client.models.list()
-                active_ids = [m.id for m in active_models_resp.data]
-                usable_models = [m for m in preferred_models if m in active_ids]
-                if not usable_models and active_ids:
-                    usable_models = active_ids
-            except Exception:
-                usable_models = preferred_models
-
-            for model_name in usable_models:
-                try:
-                    completion = client.chat.completions.create(
-                        model=model_name,
-                        messages=messages_payload
-                    )
-                    if completion and completion.choices:
-                        break
-                except Exception as model_err:
-                    last_error = str(model_err)
-                    continue
-
-            if not completion or not completion.choices:
-                return {"status": "error", "message": f"Groq Error: {last_error}"}
+            completion = client.chat.completions.create(
+                model="llama-3.3-70b-versatile",
+                messages=messages_payload
+            )
 
             final_response = clean_ai_response(completion.choices[0].message.content)
-
-            chat_sessions[session_id].append(current_user_msg)
-            chat_sessions[session_id].append({"role": "assistant", "content": final_response})
-
-            return {
-                "status": "success",
-                "question": question,
-                "response": final_response
-            }
+            return {"status": "success", "question": question, "response": final_response}
 
     except Exception as e:
-        return {
-            "status": "error",
-            "message": str(e)
-        }
+        return {"status": "error", "message": str(e)}
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 8000))
