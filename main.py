@@ -235,7 +235,35 @@ HTML_LAYOUT = """
             max-width: 850px;
             margin: 0 auto;
             width: 100%;
+            display: flex;
+            flex-direction: column;
         }
+        
+        /* Centered Welcome Screen Style */
+        .welcome-screen {
+            margin: auto 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 40px 20px;
+            animation: fadeIn 0.4s ease-out;
+        }
+        .welcome-avatar {
+            width: 54px;
+            height: 54px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #f59e0b, #d97706);
+            color: #ffffff;
+            font-size: 22px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 12px rgba(245, 158, 11, 0.2);
+        }
+
         .message {
             display: flex;
             gap: 15px;
@@ -763,13 +791,12 @@ HTML_LAYOUT = """
         }
     }
 
+    // Centered Gemini/ChatGPT Style Greeting Screen
     const DEFAULT_WELCOME = `
-        <div class="message">
-            <div class="avatar ai-avatar">AI</div>
-            <div class="bubble">
-                <strong>Hello!</strong><br>
-                I am Tuto AI. Send me your Math, Physics, or Chemistry problems, share any photo, or upload a PDF document!
-            </div>
+        <div id="welcomeScreen" class="welcome-screen">
+            <div class="welcome-avatar mb-3">AI</div>
+            <h2 class="fw-bold mb-2">Hello there!</h2>
+            <p class="text-secondary fs-5 m-0">How can I assist you today?</p>
         </div>
     `;
 
@@ -1066,6 +1093,12 @@ HTML_LAYOUT = """
         const sendBtn = document.getElementById('sendBtn');
         const question = questionInput.value.trim();
         if (!question && !selectedFile) return;
+
+        // Clear centered welcome screen on first message submission
+        const welcomeElem = document.getElementById('welcomeScreen');
+        if (welcomeElem) {
+            chatBox.innerHTML = '';
+        }
 
         if (allSessions[currentSessionId].title === 'New Chat') {
             const titlePrompt = question || (selectedFile ? selectedFile.name : "New Conversation");
