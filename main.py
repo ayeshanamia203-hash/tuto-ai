@@ -80,6 +80,13 @@ HTML_LAYOUT = """
         .sidebar.collapsed {
             margin-left: -260px;
         }
+        .sidebar-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0, 0, 0, 0.6);
+            z-index: 999;
+        }
         .new-chat-btn {
             background-color: #2b2a33;
             color: var(--text-color);
@@ -453,6 +460,9 @@ HTML_LAYOUT = """
             .sidebar.collapsed {
                 margin-left: -260px;
             }
+            .sidebar-overlay.active {
+                display: block;
+            }
             .chat-container {
                 padding: 15px 10px;
             }
@@ -460,7 +470,18 @@ HTML_LAYOUT = """
     </style>
 </head>
 <body>
+    <!-- Dark overlay for mobile sidebar -->
+    <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
+
     <div class="sidebar" id="sidebar">
+        <!-- Close button visible only on mobile screens -->
+        <div class="d-flex justify-content-between align-items-center mb-3 d-md-none">
+            <span class="text-light fw-bold">Menu</span>
+            <button class="btn btn-sm text-secondary" onclick="toggleSidebar()">
+                <i class="fa-solid fa-xmark fa-xl"></i>
+            </button>
+        </div>
+
         <button class="new-chat-btn w-100 mb-2" onclick="startNewChat()">
             <i class="fa-solid fa-plus me-2"></i> New Chat
         </button>
@@ -548,12 +569,23 @@ HTML_LAYOUT = """
 
     function toggleSidebar() {
         const sidebar = document.getElementById('sidebar');
+        const overlay = document.getElementById('sidebarOverlay');
+        
         sidebar.classList.toggle('collapsed');
+        
+        if (window.innerWidth <= 768) {
+            if (!sidebar.classList.contains('collapsed')) {
+                overlay.classList.add('active');
+            } else {
+                overlay.classList.remove('active');
+            }
+        }
     }
 
     function checkMobileSidebarAutoCollapse() {
         if (window.innerWidth <= 768) {
             document.getElementById('sidebar').classList.add('collapsed');
+            document.getElementById('sidebarOverlay').classList.remove('active');
         }
     }
 
