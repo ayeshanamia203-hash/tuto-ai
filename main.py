@@ -1,1435 +1,631 @@
-import base64
+# main.py
+# Tuto AI - Horizontal AI Backend
+
 import io
 import os
-import re
 import tempfile
+import re
+
 from fastapi import FastAPI, File, Form, UploadFile
 from fastapi.responses import HTMLResponse
-import google.generativeai as genai
 from groq import Groq
-from pydantic import BaseModel
+import google.generativeai as genai
 import uvicorn
 
-app = FastAPI(title="Tuto AI Professional Edition")
+from ai_brain import ask_ai
+from config import GROQ_API_KEY, GEMINI_API_KEY
 
-GROQ_API_KEY = os.environ.get("GROQ_API_KEY", "")
-GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "")
+
+# ============================================================
+# APP CONFIGURATION
+# ============================================================
+
+app = FastAPI(
+    title="Tuto AI",
+    description="Tuto AI - General Purpose Horizontal AI",
+    version="2.0.0"
+)
+
+
+# ============================================================
+# API CLIENTS
+# ============================================================
+
+groq_client = None
+
+if GROQ_API_KEY:
+    groq_client = Groq(api_key=GROQ_API_KEY)
+
 
 if GEMINI_API_KEY:
     genai.configure(api_key=GEMINI_API_KEY)
 
-# In-memory chat store for sessions
+
+# ============================================================
+# IN-MEMORY CHAT MEMORY
+# ============================================================
+
 chat_sessions = {}
 
-class TitleRequest(BaseModel):
-    prompt: str
 
-HTML_LAYOUT = """
-<!DOCTYPE html>
-<html lang="en" data-theme="dark">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Tuto AI</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
-    <!-- KaTeX Math Rendering CSS & JS -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
-    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
-    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js"></script>
-    
-    <!-- Marked.js for Markdown Rendering -->
-    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-
-    <!-- Highlight.js for Syntax Highlighting -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/atom-one-dark.min.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
-
-    <style>
-        :root[data-theme="dark"] {
-            --bg-color: #131314;
-            --sidebar-bg: #1e1e20;
-            --text-color: #ffffff;
-            --text-muted: #ccc;
-            --accent-color: #a8c7fa;
-            --border-color: #2d2d30;
-            --input-bg: #1e1e20;
-            --input-border: #3c4043;
-            --btn-hover: #2b2a33;
-            --bubble-text: #ffffff;
-            --strong-color: #a8c7fa;
-            --modal-bg: #1e1e20;
-        }
-
-        :root[data-theme="light"] {
-            --bg-color: #ffffff;
-            --sidebar-bg: #f0f4f9;
-            --text-color: #1f1f1f;
-            --text-muted: #555555;
-            --accent-color: #0b57d0;
-            --border-color: #e1e3e1;
-            --input-bg: #f0f4f9;
-            --input-border: #c4c7c5;
-            --btn-hover: #e3e3e3;
-            --bubble-text: #1f1f1f;
-            --strong-color: #0b57d0;
-            --modal-bg: #ffffff;
-        }
-
-        * { box-sizing: border-box; }
-        html, body {
-            background-color: var(--bg-color);
-            color: var(--text-color);
-            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
-            height: 100%;
-            margin: 0;
-            padding: 0;
-            overflow: hidden;
-            transition: background-color 0.3s, color 0.3s;
-        }
-        body { display: flex; }
-        .sidebar {
-            width: 260px;
-            background-color: var(--sidebar-bg);
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-            border-right: 1px solid var(--border-color);
-            flex-shrink: 0;
-            height: 100%;
-            transition: all 0.3s ease;
-            z-index: 1000;
-        }
-        .sidebar.collapsed {
-            margin-left: -260px;
-        }
-        .sidebar-overlay {
-            display: none;
-            position: fixed;
-            top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(0, 0, 0, 0.5);
-            z-index: 999;
-        }
-        .new-chat-btn {
-            background-color: var(--input-bg);
-            color: var(--text-color);
-            border: 1px solid var(--border-color);
-            border-radius: 30px;
-            padding: 10px 15px;
-            font-weight: 500;
-            transition: 0.2s;
-        }
-        .new-chat-btn:hover { background-color: var(--btn-hover); }
-        .history-list {
-            flex: 1;
-            overflow-y: auto;
-            margin-top: 15px;
-            margin-bottom: 15px;
-        }
-        .history-item {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 8px 12px;
-            border-radius: 10px;
-            color: var(--text-muted);
-            cursor: pointer;
-            font-size: 14px;
-            margin-bottom: 5px;
-            transition: background 0.2s, color 0.2s;
-            user-select: none;
-            -webkit-user-select: none;
-            position: relative;
-        }
-        .history-item:hover, .history-item.active {
-            background-color: var(--btn-hover);
-            color: var(--text-color);
-        }
-        .history-title {
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            max-width: 150px;
-        }
-        .action-btns-group {
-            display: none;
-            align-items: center;
-            gap: 6px;
-            animation: fadeIn 0.2s ease-in-out;
-        }
-        .history-item.show-actions .action-btns-group {
-            display: flex;
-        }
-        .action-icon-btn {
-            border: none;
-            background: none;
-            font-size: 13px;
-            cursor: pointer;
-            padding: 2px 4px;
-            transition: transform 0.1s;
-        }
-        .action-icon-btn:hover {
-            transform: scale(1.2);
-        }
-        .delete-btn-icon { color: #e11d48; }
-        .star-btn-icon { color: #f59e0b; }
-        .is-pinned-icon {
-            color: #f59e0b;
-            font-size: 12px;
-            margin-left: 4px;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: scale(0.8); }
-            to { opacity: 1; transform: scale(1); }
-        }
-        .main-chat {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            height: 100vh;
-            height: 100dvh;
-            overflow: hidden;
-            position: relative;
-            transition: all 0.3s ease;
-            width: 100%;
-        }
-        .chat-header {
-            padding: 15px 25px;
-            border-bottom: 1px solid var(--border-color);
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            flex-shrink: 0;
-        }
-        .header-left {
-            display: flex;
-            align-items: center;
-        }
-        .toggle-btn, .theme-btn {
-            background: none;
-            border: none;
-            color: var(--text-color);
-            font-size: 18px;
-            cursor: pointer;
-            padding: 6px 12px;
-            border-radius: 20px;
-            transition: background 0.2s, color 0.2s;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-        .toggle-btn:hover, .theme-btn:hover {
-            background-color: var(--btn-hover);
-        }
-        .theme-btn {
-            font-size: 14px;
-            font-weight: 500;
-            border: 1px solid var(--border-color);
-        }
-        .chat-container {
-            flex: 1;
-            overflow-y: auto;
-            padding: 20px 20px;
-            max-width: 850px;
-            margin: 0 auto;
-            width: 100%;
-            display: flex;
-            flex-direction: column;
-        }
-        
-        /* Centered Welcome Screen Style */
-        .welcome-screen {
-            margin: auto 0;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            text-align: center;
-            padding: 40px 20px;
-            animation: fadeIn 0.4s ease-out;
-        }
-        .welcome-avatar {
-            width: 54px;
-            height: 54px;
-            border-radius: 50%;
-            background: linear-gradient(135deg, #f59e0b, #d97706);
-            color: #ffffff;
-            font-size: 22px;
-            font-weight: bold;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            box-shadow: 0 4px 12px rgba(245, 158, 11, 0.2);
-        }
-
-        .message {
-            display: flex;
-            gap: 15px;
-            margin-bottom: 25px;
-            position: relative;
-        }
-        .avatar {
-            width: 35px;
-            height: 35px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 14px;
-            font-weight: bold;
-            flex-shrink: 0;
-        }
-        .user-avatar { background-color: #5436da; color: #ffffff; }
-        .ai-avatar { background: linear-gradient(135deg, #f59e0b, #d97706); color: #ffffff; }
-        .bubble {
-            max-width: 88%;
-            font-size: 16px;
-            line-height: 1.6;
-            color: var(--bubble-text) !important;
-            width: 100%;
-            word-wrap: break-word;
-        }
-        .bubble p { margin-bottom: 8px; }
-        .bubble strong { color: var(--strong-color) !important; }
-        .bubble table {
-            width: 100%;
-            border-collapse: collapse;
-            margin: 10px 0;
-            color: var(--text-color);
-        }
-        .bubble table, .bubble th, .bubble td {
-            border: 1px solid var(--border-color);
-            padding: 8px;
-        }
-        .bubble th { background-color: var(--btn-hover); }
-        .uploaded-img-preview {
-            max-width: 200px;
-            border-radius: 10px;
-            margin-bottom: 10px;
-            border: 1px solid var(--border-color);
-        }
-        .pdf-badge {
-            background-color: var(--btn-hover);
-            border: 1px solid #e11d48;
-            color: #ff4d4d;
-            padding: 6px 12px;
-            border-radius: 8px;
-            font-size: 14px;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            margin-bottom: 10px;
-        }
-        .tts-btn {
-            background: none;
-            border: none;
-            color: var(--text-muted);
-            cursor: pointer;
-            font-size: 14px;
-            margin-left: 8px;
-            transition: color 0.2s;
-        }
-        .tts-btn:hover { color: var(--accent-color); }
-        .code-container {
-            position: relative;
-            margin: 12px 0;
-            border-radius: 8px;
-            overflow: hidden;
-            border: 1px solid #3e4451;
-            background: #282c34;
-        }
-        .code-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            background: #21252b;
-            padding: 6px 12px;
-            font-size: 12px;
-            color: #abb2bf;
-            font-family: monospace;
-            border-bottom: 1px solid #3e4451;
-        }
-        pre {
-            margin: 0 !important;
-            padding: 12px !important;
-            background: transparent !important;
-            overflow-x: auto;
-        }
-        pre code {
-            font-family: 'Consolas', 'Fira Code', 'Courier New', monospace;
-            font-size: 14px;
-            color: #abb2bf;
-        }
-        .copy-code-btn {
-            background: #3e4451;
-            color: #ffffff;
-            border: none;
-            border-radius: 4px;
-            padding: 2px 8px;
-            font-size: 12px;
-            cursor: pointer;
-            transition: 0.2s;
-            display: flex;
-            align-items: center;
-            gap: 4px;
-        }
-        .copy-code-btn:hover { background: #4b5263; }
-        .input-container-box {
-            padding: 10px 15px 15px 15px;
-            background: var(--bg-color);
-            flex-shrink: 0;
-            width: 100%;
-        }
-        .input-wrapper {
-            max-width: 850px;
-            margin: 0 auto;
-            width: 100%;
-            background-color: var(--input-bg);
-            border: 1px solid var(--input-border);
-            border-radius: 24px;
-            padding: 8px 15px;
-            display: flex;
-            flex-direction: column;
-        }
-        #filePreviewArea {
-            display: none;
-            position: relative;
-            width: fit-content;
-            margin-bottom: 8px;
-        }
-        #previewImgThumb {
-            width: 70px;
-            height: 70px;
-            object-fit: cover;
-            border-radius: 12px;
-            border: 1px solid var(--border-color);
-        }
-        #pdfPreviewThumb {
-            display: none;
-            background: var(--btn-hover);
-            border: 1px solid #e11d48;
-            color: #ff4d4d;
-            padding: 8px 12px;
-            border-radius: 10px;
-            font-size: 13px;
-            font-weight: 500;
-        }
-        .close-img-btn {
-            position: absolute;
-            top: -6px;
-            right: -6px;
-            background: #e11d48;
-            color: #fff;
-            border: none;
-            border-radius: 50%;
-            width: 22px;
-            height: 22px;
-            font-size: 12px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.3);
-        }
-        .input-row {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-        .plus-btn, .mic-btn {
-            background: none;
-            border: none;
-            color: var(--accent-color);
-            font-size: 18px;
-            cursor: pointer;
-            padding: 5px;
-            transition: 0.2s;
-        }
-        .plus-btn:hover, .mic-btn:hover { opacity: 0.8; }
-        .mic-btn.recording {
-            color: #ef4444 !important;
-            animation: pulse 1.2s infinite;
-        }
-        @keyframes pulse {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.2); }
-            100% { transform: scale(1); }
-        }
-        .chat-textarea {
-            background: none;
-            border: none;
-            color: var(--text-color);
-            padding: 6px 0;
-            width: 100%;
-            outline: none;
-            font-size: 15px;
-            resize: none;
-            max-height: 120px;
-            min-height: 28px;
-            line-height: 1.4;
-            font-family: inherit;
-        }
-        .send-btn {
-            background-color: var(--text-color);
-            color: var(--bg-color);
-            border: none;
-            border-radius: 50%;
-            width: 32px;
-            height: 32px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            transition: all 0.2s;
-            flex-shrink: 0;
-            font-size: 14px;
-        }
-        .send-btn:hover {
-            background-color: var(--accent-color);
-            color: #ffffff;
-        }
-        .send-btn:disabled {
-            background-color: var(--border-color);
-            color: var(--text-muted);
-            cursor: not-allowed;
-        }
-        .modal-content {
-            background-color: var(--modal-bg);
-            color: var(--text-color);
-            border: 1px solid var(--border-color);
-        }
-        .modal-btn {
-            background-color: var(--input-bg);
-            color: var(--text-color);
-            border: 1px solid var(--border-color);
-            border-radius: 15px;
-            padding: 15px;
-            width: 100%;
-            text-align: left;
-            margin-bottom: 10px;
-            transition: 0.2s;
-        }
-        .modal-btn:hover {
-            background-color: var(--btn-hover);
-            color: var(--accent-color);
-        }
-        @media (max-width: 768px) { 
-            .sidebar { 
-                position: absolute;
-                top: 0;
-                bottom: 0;
-                left: 0;
-                box-shadow: 5px 0 15px rgba(0,0,0,0.3);
-            }
-            .sidebar.collapsed {
-                margin-left: -260px;
-            }
-            .sidebar-overlay.active {
-                display: block;
-            }
-            .chat-container {
-                padding: 15px 10px;
-            }
-        }
-    </style>
-</head>
-<body>
-    <!-- Dark overlay for mobile sidebar -->
-    <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
-
-    <div class="sidebar" id="sidebar">
-        <!-- Close button visible only on mobile screens -->
-        <div class="d-flex justify-content-between align-items-center mb-3 d-md-none">
-            <span class="fw-bold">Menu</span>
-            <button class="btn btn-sm text-secondary" onclick="toggleSidebar()">
-                <i class="fa-solid fa-xmark fa-xl"></i>
-            </button>
-        </div>
-
-        <button class="new-chat-btn w-100 mb-2" onclick="startNewChat()">
-            <i class="fa-solid fa-plus me-2"></i> New Chat
-        </button>
-        <div class="history-list" id="historyList"></div>
-    </div>
-
-    <div class="main-chat">
-        <div class="chat-header">
-            <div class="header-left">
-                <button class="toggle-btn" onclick="toggleSidebar()" title="Toggle Sidebar">
-                    <i class="fa-solid fa-bars"></i>
-                </button>
-                <h5 class="m-0 fw-bold"><i class="fa-solid fa-graduation-cap me-2 text-warning"></i>Tuto AI</h5>
-            </div>
-            
-            <!-- Light/Dark Mode Toggle Button -->
-            <button class="theme-btn" id="themeToggleBtn" onclick="toggleTheme()" title="Toggle Light/Dark Mode">
-                <i class="fa-solid fa-sun" id="themeIcon"></i>
-                <span id="themeText">Light</span>
-            </button>
-        </div>
-
-        <div class="chat-container" id="chatBox"></div>
-
-        <div class="input-container-box">
-            <div class="input-wrapper">
-                <div id="filePreviewArea">
-                    <img id="previewImgThumb" src="" alt="Thumbnail" style="display: none;">
-                    <div id="pdfPreviewThumb"><i class="fa-solid fa-file-pdf me-2"></i><span id="pdfFileName">document.pdf</span></div>
-                    <button type="button" class="close-img-btn" onclick="clearSelectedFile()"><i class="fa-solid fa-xmark"></i></button>
-                </div>
-
-                <div class="input-row">
-                    <button type="button" class="plus-btn" data-bs-toggle="modal" data-bs-target="#uploadModal">
-                        <i class="fa-solid fa-circle-plus"></i>
-                    </button>
-                    <form id="chatForm" class="d-flex w-100 align-items-center gap-2 m-0">
-                        <textarea id="question" class="chat-textarea" rows="1" placeholder="Message Tuto AI, attach photo or PDF..."></textarea>
-                        <button type="button" class="mic-btn" id="micBtn" onclick="toggleVoiceRecording()" title="Voice Input (Groq Whisper)">
-                            <i class="fa-solid fa-microphone"></i>
-                        </button>
-                        <button type="submit" class="send-btn" id="sendBtn" title="Send Message">
-                            <i class="fa-solid fa-arrow-up"></i>
-                        </button>
-                    </form>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <input type="file" id="galleryInput" accept="image/*" style="display: none;" onchange="handleFileSelect(this)">
-    <input type="file" id="cameraInput" accept="image/*" capture="environment" style="display: none;" onchange="handleFileSelect(this)">
-    <input type="file" id="pdfInput" accept="application/pdf" style="display: none;" onchange="handleFileSelect(this)">
-
-    <div class="modal fade" id="uploadModal" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content">
-                <div class="modal-header border-0">
-                    <h5 class="modal-title fw-bold"><i class="fa-solid fa-paperclip me-2 text-primary"></i>Attach File</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <button class="modal-btn" onclick="triggerCamera()">
-                        <i class="fa-solid fa-camera fa-lg me-3 text-warning"></i> <strong>Take Photo</strong> (Open Camera)
-                    </button>
-                    <button class="modal-btn" onclick="triggerGallery()">
-                        <i class="fa-solid fa-images fa-lg me-3 text-info"></i> <strong>Upload Photo</strong> (From Gallery)
-                    </button>
-                    <button class="modal-btn" onclick="triggerPDF()">
-                        <i class="fa-solid fa-file-pdf fa-lg me-3 text-danger"></i> <strong>Upload PDF Document</strong> (Books / Notes)
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-<script>
-    let selectedFile = null;
-    const questionInput = document.getElementById('question');
-    const chatBox = document.getElementById('chatBox');
-    const historyList = document.getElementById('historyList');
-    const micBtn = document.getElementById('micBtn');
-
-    let allSessions = JSON.parse(localStorage.getItem('tuto_all_sessions')) || {};
-    let currentSessionId = localStorage.getItem('tuto_current_session_id') || null;
-
-    let mediaRecorder = null;
-    let audioChunks = [];
-    let isRecording = false;
-
-    let pressTimer = null;
-
-    // Theme Toggle Functionality
-    function initTheme() {
-        const savedTheme = localStorage.getItem('tuto_theme') || 'dark';
-        setTheme(savedTheme);
-    }
-
-    function toggleTheme() {
-        const currentTheme = document.documentElement.getAttribute('data-theme');
-        const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
-        setTheme(newTheme);
-    }
-
-    function setTheme(theme) {
-        document.documentElement.setAttribute('data-theme', theme);
-        localStorage.setItem('tuto_theme', theme);
-
-        const themeIcon = document.getElementById('themeIcon');
-        const themeText = document.getElementById('themeText');
-
-        if (theme === 'light') {
-            themeIcon.className = 'fa-solid fa-moon';
-            themeText.innerText = 'Dark';
-        } else {
-            themeIcon.className = 'fa-solid fa-sun';
-            themeText.innerText = 'Light';
-        }
-    }
-
-    function toggleSidebar() {
-        const sidebar = document.getElementById('sidebar');
-        const overlay = document.getElementById('sidebarOverlay');
-        
-        sidebar.classList.toggle('collapsed');
-        
-        if (window.innerWidth <= 768) {
-            if (!sidebar.classList.contains('collapsed')) {
-                overlay.classList.add('active');
-            } else {
-                overlay.classList.remove('active');
-            }
-        }
-    }
-
-    function checkMobileSidebarAutoCollapse() {
-        if (window.innerWidth <= 768) {
-            document.getElementById('sidebar').classList.add('collapsed');
-            document.getElementById('sidebarOverlay').classList.remove('active');
-        }
-    }
-
-    function speakText(btn) {
-        if (!('speechSynthesis' in window)) {
-            alert("Sorry, your browser doesn't support Voice Output!");
-            return;
-        }
-
-        const bubbleElem = btn.closest('.bubble');
-        let textToSpeak = bubbleElem ? bubbleElem.innerText.replace(/^Tuto AI/i, '').trim() : '';
-        textToSpeak = textToSpeak.replace(/Copy/g, '');
-
-        if (window.speechSynthesis.speaking) {
-            window.speechSynthesis.cancel();
-            btn.innerHTML = '<i class="fa-solid fa-volume-high"></i>';
-            return;
-        }
-
-        const utterance = new SpeechSynthesisUtterance(textToSpeak);
-        utterance.rate = 1.0;
-        
-        if (/[\u0980-\u09FF]/.test(textToSpeak)) {
-            utterance.lang = 'bn-BD';
-        } else {
-            utterance.lang = 'en-US';
-        }
-
-        btn.innerHTML = '<i class="fa-solid fa-volume-xmark text-warning"></i>';
-
-        utterance.onend = () => { btn.innerHTML = '<i class="fa-solid fa-volume-high"></i>'; };
-        utterance.onerror = () => { btn.innerHTML = '<i class="fa-solid fa-volume-high"></i>'; };
-
-        window.speechSynthesis.speak(utterance);
-    }
-
-    async function toggleVoiceRecording() {
-        if (isRecording) {
-            stopRecordingAndTranscribe();
-        } else {
-            startRecording();
-        }
-    }
-
-    async function startRecording() {
-        try {
-            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-            mediaRecorder = new MediaRecorder(stream);
-            audioChunks = [];
-
-            mediaRecorder.ondataavailable = (event) => {
-                if (event.data.size > 0) audioChunks.push(event.data);
-            };
-
-            mediaRecorder.onstop = async () => {
-                const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
-                stream.getTracks().forEach(track => track.stop());
-                await transcribeAudio(audioBlob);
-            };
-
-            mediaRecorder.start();
-            isRecording = true;
-            micBtn.classList.add('recording');
-            questionInput.placeholder = "Recording... Click mic again to stop";
-        } catch (err) {
-            alert("Microphone permission denied or not supported by browser!");
-        }
-    }
-
-    function stopRecordingAndTranscribe() {
-        if (mediaRecorder && isRecording) {
-            mediaRecorder.stop();
-            isRecording = false;
-            micBtn.classList.remove('recording');
-            questionInput.placeholder = "Processing voice with Groq AI...";
-        }
-    }
-
-    async function transcribeAudio(audioBlob) {
-        const formData = new FormData();
-        formData.append('audio', audioBlob, 'audio.webm');
-
-        try {
-            const response = await fetch('/api/transcribe', {
-                method: 'POST',
-                body: formData
-            });
-
-            const data = await response.json();
-            if (data.status === 'success' && data.text) {
-                questionInput.value = data.text;
-                questionInput.style.height = 'auto';
-                questionInput.style.height = (questionInput.scrollHeight) + 'px';
-            } else {
-                alert("Voice recognition error: " + (data.message || "Could not recognize audio"));
-            }
-        } catch (err) {
-            alert("Error connecting to Groq Whisper API");
-        } finally {
-            questionInput.placeholder = "Message Tuto AI, attach photo or PDF...";
-        }
-    }
-
-    // Centered Gemini/ChatGPT Style Greeting Screen
-    const DEFAULT_WELCOME = `
-        <div id="welcomeScreen" class="welcome-screen">
-            <div class="welcome-avatar mb-3">AI</div>
-            <h2 class="fw-bold mb-2">Hello there!</h2>
-            <p class="text-secondary fs-5 m-0">How can I assist you today?</p>
-        </div>
-    `;
-
-    window.addEventListener('DOMContentLoaded', () => {
-        initTheme();
-        checkMobileSidebarAutoCollapse();
-        if (!currentSessionId || !allSessions[currentSessionId]) {
-            startNewChat(false);
-        } else {
-            renderSidebarHistory();
-            loadSession(currentSessionId);
-        }
-    });
-
-    questionInput.addEventListener('input', function() {
-        this.style.height = 'auto';
-        this.style.height = (this.scrollHeight) + 'px';
-    });
-
-    questionInput.addEventListener('keydown', function(e) {
-        if (e.key === 'Enter' && !e.shiftKey) {
-            e.preventDefault();
-            document.getElementById('chatForm').dispatchEvent(new Event('submit'));
-        }
-    });
-
-    function renderMathInElem(element) {
-        if (window.renderMathInElement) {
-            try {
-                window.renderMathInElement(element, {
-                    delimiters: [
-                        {left: '$$', right: '$$', display: true},
-                        {left: '$', right: '$', display: false},
-                        {left: '\\(', right: '\\)', display: false},
-                        {left: '\\[', right: '\\]', display: true}
-                    ],
-                    throwOnError : false
-                });
-            } catch(e) {}
-        }
-    }
-
-    function processCodeBlocks(element) {
-        if (!element) return;
-        element.querySelectorAll('pre').forEach((pre) => {
-            if (pre.closest('.code-container')) return;
-
-            const codeBlock = pre.querySelector('code');
-            const codeText = codeBlock ? codeBlock.innerText : pre.innerText;
-            
-            let lang = 'code';
-            if (codeBlock && codeBlock.className) {
-                const match = codeBlock.className.match(/language-(\\w+)/);
-                if (match) lang = match[1];
-            }
-
-            const container = document.createElement('div');
-            container.className = 'code-container';
-
-            const header = document.createElement('div');
-            header.className = 'code-header';
-            header.innerHTML = `<span>${lang}</span>`;
-
-            const copyBtn = document.createElement('button');
-            copyBtn.className = 'copy-code-btn';
-            copyBtn.type = 'button';
-            copyBtn.innerHTML = '<i class="fa-regular fa-copy me-1"></i>Copy';
-            
-            copyBtn.addEventListener('click', async () => {
-                try {
-                    await navigator.clipboard.writeText(codeText.trim());
-                    copyBtn.innerHTML = '<i class="fa-solid fa-check me-1"></i>Copied!';
-                    setTimeout(() => {
-                        copyBtn.innerHTML = '<i class="fa-regular fa-copy me-1"></i>Copy';
-                    }, 2000);
-                } catch (err) {}
-            });
-
-            header.appendChild(copyBtn);
-            pre.parentNode.insertBefore(container, pre);
-            container.appendChild(header);
-            container.appendChild(pre);
-
-            if (window.hljs && codeBlock) {
-                try { hljs.highlightElement(codeBlock); } catch(e) {}
-            }
-        });
-    }
-
-    function saveSessionsToStorage() {
-        localStorage.setItem('tuto_all_sessions', JSON.stringify(allSessions));
-        localStorage.setItem('tuto_current_session_id', currentSessionId);
-    }
-
-    function startNewChat(shouldRender = true) {
-        currentSessionId = 'session_' + Date.now();
-        allSessions[currentSessionId] = {
-            title: 'New Chat',
-            html: DEFAULT_WELCOME,
-            messages: [],
-            isPinned: false
-        };
-        saveSessionsToStorage();
-        if (shouldRender) {
-            renderSidebarHistory();
-            loadSession(currentSessionId);
-        }
-        checkMobileSidebarAutoCollapse();
-    }
-
-    function loadSession(sessionId) {
-        currentSessionId = sessionId;
-        saveSessionsToStorage();
-        chatBox.innerHTML = allSessions[sessionId].html || DEFAULT_WELCOME;
-        document.querySelectorAll('.bubble').forEach(elem => {
-            renderMathInElem(elem);
-            processCodeBlocks(elem);
-        });
-        chatBox.scrollTop = chatBox.scrollHeight;
-        renderSidebarHistory();
-        checkMobileSidebarAutoCollapse();
-    }
-
-    function deleteSession(e, sessionId) {
-        e.stopPropagation();
-        if (!confirm("Are you sure you want to delete this chat history?")) {
-            return;
-        }
-        delete allSessions[sessionId];
-        if (currentSessionId === sessionId) {
-            const keys = Object.keys(allSessions);
-            if (keys.length > 0) {
-                currentSessionId = keys[keys.length - 1];
-            } else {
-                startNewChat(false);
-            }
-        }
-        saveSessionsToStorage();
-        renderSidebarHistory();
-        loadSession(currentSessionId);
-    }
-
-    function togglePinSession(e, sessionId) {
-        e.stopPropagation();
-        if (allSessions[sessionId]) {
-            allSessions[sessionId].isPinned = !allSessions[sessionId].isPinned;
-            saveSessionsToStorage();
-            renderSidebarHistory();
-        }
-    }
-
-    function startHold(sessionId) {
-        cancelHold();
-        pressTimer = window.setTimeout(() => {
-            document.querySelectorAll('.history-item').forEach(item => item.classList.remove('show-actions'));
-            const elem = document.getElementById('session-item-' + sessionId);
-            if (elem) {
-                elem.classList.add('show-actions');
-            }
-            if (navigator.vibrate) navigator.vibrate(50);
-        }, 500);
-    }
-
-    function cancelHold() {
-        if (pressTimer) {
-            clearTimeout(pressTimer);
-            pressTimer = null;
-        }
-    }
-
-    function renderSidebarHistory() {
-        historyList.innerHTML = '';
-        const keys = Object.keys(allSessions).reverse();
-
-        const pinnedKeys = keys.filter(id => allSessions[id].isPinned);
-        const unpinnedKeys = keys.filter(id => !allSessions[id].isPinned);
-
-        if (pinnedKeys.length > 0) {
-            historyList.innerHTML += `<div class="text-warning small fw-bold mt-2 mb-1"><i class="fa-solid fa-star me-1"></i>PINNED CHATS</div>`;
-            pinnedKeys.forEach(id => renderItemHTML(id));
-        }
-
-        if (unpinnedKeys.length > 0) {
-            historyList.innerHTML += `<div class="text-secondary small fw-bold mt-3 mb-1">RECENT CHATS</div>`;
-            unpinnedKeys.forEach(id => renderItemHTML(id));
-        }
-    }
-
-    function renderItemHTML(id) {
-        const session = allSessions[id];
-        const isActive = id === currentSessionId ? 'active' : '';
-        const starClass = session.isPinned ? 'fa-solid fa-star' : 'fa-regular fa-star';
-        const starTitle = session.isPinned ? 'Unpin Chat' : 'Pin to Top';
-
-        historyList.innerHTML += `
-            <div class="history-item ${isActive}" 
-                 id="session-item-${id}"
-                 onclick="loadSession('${id}')"
-                 onmousedown="startHold('${id}')"
-                 onmouseup="cancelHold()"
-                 onmouseleave="cancelHold()"
-                 ontouchstart="startHold('${id}')"
-                 ontouchend="cancelHold()"
-                 ontouchmove="cancelHold()">
-                <div class="history-title">
-                    <i class="fa-regular fa-message me-2"></i>${session.title}
-                    ${session.isPinned ? '<i class="fa-solid fa-star is-pinned-icon"></i>' : ''}
-                </div>
-                <div class="action-btns-group">
-                    <button class="action-icon-btn delete-btn-icon" onclick="deleteSession(event, '${id}')" title="Delete Chat">
-                        <i class="fa-solid fa-trash-can"></i>
-                    </button>
-                    <button class="action-icon-btn star-btn-icon" onclick="togglePinSession(event, '${id}')" title="${starTitle}">
-                        <i class="${starClass}"></i>
-                    </button>
-                </div>
-            </div>
-        `;
-    }
-
-    async function generateSmartTitle(promptText, sessionId) {
-        try {
-            const res = await fetch('/api/generate-title', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ prompt: promptText })
-            });
-            const data = await res.json();
-            if (data.status === 'success' && data.title) {
-                if (allSessions[sessionId]) {
-                    allSessions[sessionId].title = data.title;
-                    saveSessionsToStorage();
-                    renderSidebarHistory();
-                }
-            }
-        } catch (e) {}
-    }
-
-    function closeModal() {
-        const modalElem = document.getElementById('uploadModal');
-        const modalInstance = bootstrap.Modal.getInstance(modalElem);
-        if (modalInstance) {
-            modalInstance.hide();
-        }
-    }
-
-    function triggerGallery() {
-        closeModal();
-        document.getElementById('galleryInput').click();
-    }
-
-    function triggerCamera() {
-        closeModal();
-        document.getElementById('cameraInput').click();
-    }
-
-    function triggerPDF() {
-        closeModal();
-        document.getElementById('pdfInput').click();
-    }
-
-    function handleFileSelect(input) {
-        if (input.files && input.files[0]) {
-            selectedFile = input.files[0];
-            const previewArea = document.getElementById('filePreviewArea');
-            const imgThumb = document.getElementById('previewImgThumb');
-            const pdfThumb = document.getElementById('pdfPreviewThumb');
-
-            if (selectedFile.type === 'application/pdf') {
-                imgThumb.style.display = 'none';
-                pdfThumb.style.display = 'inline-block';
-                document.getElementById('pdfFileName').innerText = selectedFile.name;
-            } else {
-                pdfThumb.style.display = 'none';
-                imgThumb.style.display = 'block';
-                imgThumb.src = URL.createObjectURL(selectedFile);
-            }
-            previewArea.style.display = 'block';
-        }
-    }
-
-    function clearSelectedFile() {
-        selectedFile = null;
-        document.getElementById('galleryInput').value = '';
-        document.getElementById('cameraInput').value = '';
-        document.getElementById('pdfInput').value = '';
-        document.getElementById('filePreviewArea').style.display = 'none';
-        document.getElementById('previewImgThumb').src = '';
-    }
-
-    document.getElementById('chatForm').addEventListener('submit', async (e) => {
-        e.preventDefault();
-
-        const sendBtn = document.getElementById('sendBtn');
-        const question = questionInput.value.trim();
-        if (!question && !selectedFile) return;
-
-        // Clear centered welcome screen on first message submission
-        const welcomeElem = document.getElementById('welcomeScreen');
-        if (welcomeElem) {
-            chatBox.innerHTML = '';
-        }
-
-        if (allSessions[currentSessionId].title === 'New Chat') {
-            const titlePrompt = question || (selectedFile ? selectedFile.name : "New Conversation");
-            generateSmartTitle(titlePrompt, currentSessionId);
-        }
-
-        let userContentHTML = question ? `<strong>You</strong><br>${question.replace(/\\n/g, '<br>')}` : '';
-        
-        if (selectedFile) {
-            if (selectedFile.type === 'application/pdf') {
-                userContentHTML = `<div class="pdf-badge"><i class="fa-solid fa-file-pdf"></i> ${selectedFile.name}</div>` + (userContentHTML ? `<br>${userContentHTML}` : '');
-            } else {
-                const imgURL = URL.createObjectURL(selectedFile);
-                userContentHTML = `<img src="${imgURL}" class="uploaded-img-preview">` + (userContentHTML ? `<br>${userContentHTML}` : '');
-            }
-        }
-
-        chatBox.innerHTML += `
-            <div class="message">
-                <div class="avatar user-avatar">You</div>
-                <div class="bubble">${userContentHTML}</div>
-            </div>
-        `;
-        
-        const formData = new FormData();
-        formData.append('question', question);
-        formData.append('session_id', currentSessionId);
-        if (selectedFile) {
-            formData.append('file', selectedFile);
-        }
-
-        questionInput.value = '';
-        questionInput.style.height = 'auto';
-        clearSelectedFile();
-        sendBtn.disabled = true;
-        chatBox.scrollTop = chatBox.scrollHeight;
-
-        const loadingId = 'loading-' + Date.now();
-        chatBox.innerHTML += `
-            <div class="message" id="${loadingId}">
-                <div class="avatar ai-avatar">AI</div>
-                <div class="bubble text-secondary"><i class="fa-solid fa-circle-notch fa-spin me-2"></i>Thinking...</div>
-            </div>
-        `;
-        chatBox.scrollTop = chatBox.scrollHeight;
-
-        try {
-            const response = await fetch('/api/chat', {
-                method: 'POST',
-                body: formData
-            });
-
-            const data = await response.json();
-            const loadingElem = document.getElementById(loadingId);
-            
-            if (data.status === 'success') {
-                let htmlContent = "";
-                try {
-                    htmlContent = typeof marked !== 'undefined' ? marked.parse(data.response) : data.response;
-                } catch(mErr) {
-                    htmlContent = data.response.replace(/\\n/g, '<br>');
-                }
-
-                const bubbleElem = loadingElem.querySelector('.bubble');
-                bubbleElem.innerHTML = `
-                    <div class="d-flex justify-content-between align-items-center mb-1">
-                        <strong>Tuto AI</strong>
-                        <button type="button" class="tts-btn" onclick="speakText(this)" title="Read Aloud (Voice Output)">
-                            <i class="fa-solid fa-volume-high"></i>
-                        </button>
-                    </div>
-                    <div>${htmlContent}</div>
-                `;
-                
-                processCodeBlocks(bubbleElem);
-                renderMathInElem(bubbleElem);
-
-                allSessions[currentSessionId].html = chatBox.innerHTML;
-                saveSessionsToStorage();
-            } else {
-                loadingElem.querySelector('.bubble').innerHTML = `<span class="text-danger">Error: ${data.message}</span>`;
-            }
-        } catch (error) {
-            document.getElementById(loadingId).querySelector('.bubble').innerHTML = `<span class="text-danger">Server connection error.</span>`;
-        } finally {
-            sendBtn.disabled = false;
-            chatBox.scrollTop = chatBox.scrollHeight;
-        }
-    });
-</script>
-</body>
-</html>
-"""
+# ============================================================
+# UTILITY FUNCTIONS
+# ============================================================
 
 def clean_ai_response(text: str) -> str:
+    """
+    Removes accidental internal-thinking tags and unnecessary output.
+    """
+
     if not text:
         return ""
-    text = re.sub(r'<think>.*?</think>', '', text, flags=re.DOTALL)
-    
-    if "\n\n" in text:
-        parts = [p.strip() for p in text.split("\n\n") if p.strip()]
-        non_bullet_parts = [p for p in parts if not (p.startswith('* User') or p.startswith('* Style') or p.startswith('- User') or p.startswith('- Style'))]
-        if non_bullet_parts:
-            text = non_bullet_parts[-1]
 
-    if "**Drafting the response:**" in text:
-        text = text.split("**Drafting the response:**")[-1]
-    elif "Drafting the response:" in text:
-        text = text.split("Drafting the response:")[-1]
-        
+    text = re.sub(
+        r"<think>.*?</think>",
+        "",
+        text,
+        flags=re.DOTALL | re.IGNORECASE
+    )
+
     return text.strip()
 
+
 def extract_pdf_text(contents: bytes) -> str:
-    pdf_text = ""
+    """
+    Extract text from uploaded PDF.
+    """
+
     try:
         import pypdf
+
         reader = pypdf.PdfReader(io.BytesIO(contents))
+
+        pages = []
+
         for page in reader.pages:
-            t = page.extract_text()
-            if t:
-                pdf_text += t + "\n"
-    except Exception:
-        raw_matches = re.findall(rb'\((.*?)\)', contents)
-        extracted_strings = [m.decode('utf-8', errors='ignore') for m in raw_matches if len(m) > 3]
-        pdf_text = " ".join(extracted_strings)
-    return pdf_text.strip()
+            text = page.extract_text()
+
+            if text:
+                pages.append(text)
+
+        return "\n\n".join(pages).strip()
+
+    except Exception as e:
+        return f"Unable to extract PDF text: {str(e)}"
+
+
+def get_session_history(session_id: str):
+    """
+    Get conversation history for a session.
+    """
+
+    if session_id not in chat_sessions:
+        chat_sessions[session_id] = []
+
+    return chat_sessions[session_id]
+
+
+def save_message(session_id: str, role: str, content: str):
+    """
+    Save a message into conversation memory.
+    """
+
+    if session_id not in chat_sessions:
+        chat_sessions[session_id] = []
+
+    chat_sessions[session_id].append({
+        "role": role,
+        "content": content
+    })
+
+    # Keep memory under control.
+    # 40 messages = approximately 20 user/AI turns.
+    chat_sessions[session_id] = chat_sessions[session_id][-40:]
+
+
+# ============================================================
+# FRONTEND
+# ============================================================
 
 @app.get("/", response_class=HTMLResponse)
-def home():
-    return HTML_LAYOUT
+async def home():
 
-@app.post("/api/transcribe")
-async def transcribe_audio(audio: UploadFile = File(...)):
+    """
+    Serve the existing index.html.
+
+    This means your current UI remains separate from
+    the backend and does not need to be redesigned.
+    """
+
     try:
-        if not GROQ_API_KEY:
-            return {"status": "error", "message": "GROQ_API_KEY missing."}
-        
-        client = Groq(api_key=GROQ_API_KEY)
-        
-        with tempfile.NamedTemporaryFile(delete=False, suffix=".webm") as temp_audio:
-            content = await audio.read()
-            temp_audio.write(content)
-            temp_audio_path = temp_audio.name
 
-        with open(temp_audio_path, "rb") as file_to_transcribe:
-            transcription = client.audio.transcriptions.create(
-                file=(os.path.basename(temp_audio_path), file_to_transcribe.read()),
-                model="whisper-large-v3",
-                response_format="json"
+        possible_paths = [
+            "index.html",
+            os.path.join(os.path.dirname(__file__), "index.html")
+        ]
+
+        html = None
+
+        for path in possible_paths:
+
+            if os.path.exists(path):
+
+                with open(
+                    path,
+                    "r",
+                    encoding="utf-8"
+                ) as file:
+
+                    html = file.read()
+
+                break
+
+        if html is None:
+
+            return HTMLResponse(
+                content="<h2>Tuto AI frontend (index.html) not found.</h2>",
+                status_code=500
             )
 
-        os.remove(temp_audio_path)
+        return HTMLResponse(content=html)
 
-        return {"status": "success", "text": transcription.text}
     except Exception as e:
-        return {"status": "error", "message": str(e)}
 
-@app.post("/api/generate-title")
-async def generate_title(data: TitleRequest):
-    try:
-        if not GROQ_API_KEY:
-            return {"status": "error", "title": "New Chat"}
-        client = Groq(api_key=GROQ_API_KEY)
-        
-        prompt = (
-            f"Generate a short, concise 2 to 4 word title representing this user prompt: '{data.prompt}'. "
-            "Output ONLY the title in plain text, with no quotes, no periods, and no conversation."
+        return HTMLResponse(
+            content=f"<h2>Frontend error: {str(e)}</h2>",
+            status_code=500
         )
-        completion = client.chat.completions.create(
-            model="llama-3.3-70b-versatile",
-            messages=[{"role": "user", "content": prompt}],
-            max_tokens=15
-        )
-        title = completion.choices[0].message.content.strip().replace('"', '').replace("'", "")
-        return {"status": "success", "title": title}
-    except Exception:
-        return {"status": "error", "title": "New Chat"}
 
-@app.post("/api/chat")
-async def chat_endpoint(
-    question: str = Form(""), 
-    session_id: str = Form("default"),
-    file: UploadFile = File(None)
+
+# ============================================================
+# HEALTH CHECK
+# ============================================================
+
+@app.get("/health")
+async def health():
+
+    return {
+        "status": "ok",
+        "service": "Tuto AI",
+        "type": "horizontal_ai"
+    }
+
+
+# ============================================================
+# VOICE TRANSCRIPTION
+# ============================================================
+
+@app.post("/api/transcribe")
+async def transcribe_audio(
+    audio: UploadFile = File(...)
 ):
-    global chat_sessions
+
     try:
-        if session_id not in chat_sessions:
-            chat_sessions[session_id] = []
 
-        SMART_SYSTEM_PROMPT = (
-            "You are Tuto AI, a friendly AI tutor created solely by Imran Hossen. "
-            "Respond directly and concisely to the user. "
-            "IMPORTANT: Output ONLY your final answer. Do NOT show your internal thoughts, checklist, planning, or reasoning."
-        )
+        if not GROQ_API_KEY or not groq_client:
 
-        messages_payload = [{"role": "system", "content": SMART_SYSTEM_PROMPT}]
-        messages_payload.extend(chat_sessions[session_id][-10:])
+            return {
+                "status": "error",
+                "message": "GROQ_API_KEY missing."
+            }
 
-        if file and file.filename:
-            filename = file.filename.lower()
-            contents = await file.read()
+        audio_content = await audio.read()
 
-            if filename.endswith(".pdf"):
-                if not GROQ_API_KEY:
-                    return {"status": "error", "message": "GROQ_API_KEY missing in environment."}
-                client = Groq(api_key=GROQ_API_KEY)
+        with tempfile.NamedTemporaryFile(
+            delete=False,
+            suffix=".webm"
+        ) as temp_audio:
 
-                user_q = question if question else "Summarize key points from this document briefly."
-                extracted_text = extract_pdf_text(contents)
-                pdf_prompt = f"User uploaded PDF document ('{file.filename}').\n\nPDF Text Content:\n{extracted_text[:6000]}\n\nUser Question: {user_q}"
-                
-                current_user_msg = {"role": "user", "content": pdf_prompt}
-                messages_payload.append(current_user_msg)
+            temp_audio.write(audio_content)
+            temp_audio_path = temp_audio.name
 
-                completion = client.chat.completions.create(
-                    model="llama-3.3-70b-versatile",
-                    messages=messages_payload
+        try:
+
+            with open(
+                temp_audio_path,
+                "rb"
+            ) as audio_file:
+
+                transcription = groq_client.audio.transcriptions.create(
+                    file=(
+                        os.path.basename(temp_audio_path),
+                        audio_file.read()
+                    ),
+                    model="whisper-large-v3",
+                    response_format="json"
                 )
-                final_response = clean_ai_response(completion.choices[0].message.content)
-                chat_sessions[session_id].append({"role": "user", "content": f"[PDF File: {file.filename}] {user_q}"})
-                chat_sessions[session_id].append({"role": "assistant", "content": final_response})
-
-                return {
-                    "status": "success",
-                    "question": user_q,
-                    "response": final_response
-                }
-
-            else:
-                if not GEMINI_API_KEY:
-                    return {"status": "error", "message": "GEMINI_API_KEY missing in environment variables."}
-
-                genai.configure(api_key=GEMINI_API_KEY)
-                mime_type = file.content_type or "image/jpeg"
-                image_parts = [{"mime_type": mime_type, "data": contents}]
-                
-                user_q = question if question else "Acknowledge the image naturally and concisely."
-                prompt = f"{SMART_SYSTEM_PROMPT}\n\nUser Question: {user_q}\n(Respond directly with the final answer only without showing any thinking steps)"
-
-                response = None
-                last_error = ""
-
-                try:
-                    active_models = [
-                        m.name for m in genai.list_models() 
-                        if 'generateContent' in m.supported_generation_methods
-                    ]
-                except Exception:
-                    active_models = ['models/gemini-1.5-flash', 'models/gemini-1.5-pro']
-
-                for model_name in active_models:
-                    try:
-                        gemini_model = genai.GenerativeModel(model_name)
-                        response = gemini_model.generate_content([prompt, image_parts[0]])
-                        if response and response.text:
-                            break
-                    except Exception as err:
-                        last_error = str(err)
-                        continue
-
-                if not response or not response.text:
-                    return {"status": "error", "message": f"Gemini error: {last_error or 'No active vision model found.'}"}
-
-                final_response = clean_ai_response(response.text)
-                chat_sessions[session_id].append({"role": "user", "content": f"[User sent image] {user_q}"})
-                chat_sessions[session_id].append({"role": "assistant", "content": final_response})
-
-                return {
-                    "status": "success",
-                    "question": user_q,
-                    "response": final_response
-                }
-
-        else:
-            if not GROQ_API_KEY:
-                return {"status": "error", "message": "GROQ_API_KEY missing in environment."}
-            
-            client = Groq(api_key=GROQ_API_KEY)
-
-            current_user_msg = {"role": "user", "content": question}
-            messages_payload.append(current_user_msg)
-
-            preferred_models = [
-                "llama-3.3-70b-versatile",
-                "llama-3.1-8b-instant"
-            ]
-
-            completion = None
-            last_error = ""
-
-            try:
-                active_models_resp = client.models.list()
-                active_ids = [m.id for m in active_models_resp.data]
-                usable_models = [m for m in preferred_models if m in active_ids]
-                if not usable_models and active_ids:
-                    usable_models = active_ids
-            except Exception:
-                usable_models = preferred_models
-
-            for model_name in usable_models:
-                try:
-                    completion = client.chat.completions.create(
-                        model=model_name,
-                        messages=messages_payload
-                    )
-                    if completion and completion.choices:
-                        break
-                except Exception as model_err:
-                    last_error = str(model_err)
-                    continue
-
-            if not completion or not completion.choices:
-                return {"status": "error", "message": f"Groq Error: {last_error}"}
-
-            final_response = clean_ai_response(completion.choices[0].message.content)
-
-            chat_sessions[session_id].append(current_user_msg)
-            chat_sessions[session_id].append({"role": "assistant", "content": final_response})
 
             return {
                 "status": "success",
-                "question": question,
-                "response": final_response
+                "text": transcription.text
             }
 
+        finally:
+
+            if os.path.exists(temp_audio_path):
+                os.remove(temp_audio_path)
+
     except Exception as e:
+
         return {
             "status": "error",
             "message": str(e)
         }
 
+
+# ============================================================
+# SMART CHAT TITLE
+# ============================================================
+
+@app.post("/api/generate-title")
+async def generate_title(
+    prompt: str = Form(...)
+):
+
+    try:
+
+        if not GROQ_API_KEY or not groq_client:
+
+            return {
+                "status": "success",
+                "title": "New Chat"
+            }
+
+        title_prompt = f"""
+Create a short 2-5 word title for this conversation.
+
+User message:
+{prompt}
+
+Rules:
+- Output ONLY the title.
+- No quotation marks.
+- No explanation.
+- No punctuation at the end.
+"""
+
+        completion = groq_client.chat.completions.create(
+            model="llama-3.3-70b-versatile",
+            messages=[
+                {
+                    "role": "user",
+                    "content": title_prompt
+                }
+            ],
+            max_tokens=20,
+            temperature=0.3
+        )
+
+        title = completion.choices[0].message.content.strip()
+
+        title = title.replace('"', "")
+        title = title.replace("'", "")
+
+        return {
+            "status": "success",
+            "title": title
+        }
+
+    except Exception:
+
+        return {
+            "status": "success",
+            "title": "New Chat"
+        }
+
+
+# ============================================================
+# IMAGE AI
+# ============================================================
+
+async def analyze_image(
+    question: str,
+    image_bytes: bytes,
+    mime_type: str
+):
+    """
+    Use Gemini vision for image understanding.
+    """
+
+    if not GEMINI_API_KEY:
+
+        return None, "GEMINI_API_KEY missing."
+
+    try:
+
+        prompt = f"""
+You are Tuto AI, a general-purpose AI assistant.
+
+Analyze the image carefully and answer the user's request.
+
+User request:
+{question if question else "Describe and analyze this image helpfully."}
+
+Important:
+- Answer directly.
+- Do not reveal hidden reasoning.
+- Do not invent information that cannot be seen.
+- Match the user's language.
+"""
+
+        image_part = {
+            "mime_type": mime_type,
+            "data": image_bytes
+        }
+
+        # Prefer a current Gemini vision-capable model.
+        preferred_models = [
+            "gemini-2.0-flash",
+            "gemini-1.5-flash"
+        ]
+
+        last_error = ""
+
+        for model_name in preferred_models:
+
+            try:
+
+                model = genai.GenerativeModel(model_name)
+
+                response = model.generate_content([
+                    prompt,
+                    image_part
+                ])
+
+                if response and response.text:
+
+                    return (
+                        clean_ai_response(response.text),
+                        None
+                    )
+
+            except Exception as e:
+
+                last_error = str(e)
+
+        return (
+            None,
+            f"Gemini vision error: {last_error}"
+        )
+
+    except Exception as e:
+
+        return None, str(e)
+
+
+# ============================================================
+# MAIN CHAT API
+# ============================================================
+
+@app.post("/api/chat")
+async def chat_endpoint(
+    question: str = Form(""),
+    session_id: str = Form("default"),
+    grade: str = Form(""),
+    subject: str = Form(""),
+    file: UploadFile = File(None)
+):
+
+    try:
+
+        question = question.strip()
+
+        # ----------------------------------------------------
+        # Session
+        # ----------------------------------------------------
+
+        history = get_session_history(session_id)
+
+        # ----------------------------------------------------
+        # FILE HANDLING
+        # ----------------------------------------------------
+
+        if file and file.filename:
+
+            filename = file.filename.lower()
+
+            file_contents = await file.read()
+
+            # =================================================
+            # PDF
+            # =================================================
+
+            if (
+                filename.endswith(".pdf")
+                or file.content_type == "application/pdf"
+            ):
+
+                extracted_text = extract_pdf_text(
+                    file_contents
+                )
+
+                if not extracted_text:
+
+                    return {
+                        "status": "error",
+                        "message": "PDF থেকে কোনো readable text পাওয়া যায়নি।"
+                    }
+
+                user_question = question
+
+                if not user_question:
+
+                    user_question = (
+                        "Please analyze this document and summarize "
+                        "the most important information."
+                    )
+
+                document_context = (
+                    f"User uploaded a PDF named: {file.filename}\n\n"
+                    f"Document content:\n"
+                    f"{extracted_text[:12000]}"
+                )
+
+                # Add optional student context only when supplied.
+                if grade:
+
+                    document_context += (
+                        f"\n\nUser level/context: {grade}"
+                    )
+
+                if subject:
+
+                    document_context += (
+                        f"\nSubject/context: {subject}"
+                    )
+
+                response = ask_ai(
+                    user_question=user_question,
+                    chat_history=history,
+                    context_text=document_context
+                )
+
+                response = clean_ai_response(response)
+
+                save_message(
+                    session_id,
+                    "user",
+                    f"[PDF: {file.filename}] {user_question}"
+                )
+
+                save_message(
+                    session_id,
+                    "assistant",
+                    response
+                )
+
+                return {
+                    "status": "success",
+                    "question": user_question,
+                    "response": response
+                }
+
+            # =================================================
+            # IMAGE
+            # =================================================
+
+            if (
+                file.content_type
+                and file.content_type.startswith("image/")
+            ):
+
+                user_question = question
+
+                if not user_question:
+
+                    user_question = (
+                        "Analyze this image and tell me what is important."
+                    )
+
+                image_response, error = await analyze_image(
+                    user_question,
+                    file_contents,
+                    file.content_type
+                )
+
+                if error:
+
+                    return {
+                        "status": "error",
+                        "message": error
+                    }
+
+                save_message(
+                    session_id,
+                    "user",
+                    f"[Image: {file.filename}] {user_question}"
+                )
+
+                save_message(
+                    session_id,
+                    "assistant",
+                    image_response
+                )
+
+                return {
+                    "status": "success",
+                    "question": user_question,
+                    "response": image_response
+                }
+
+            return {
+                "status": "error",
+                "message": "Unsupported file type."
+            }
+
+        # ====================================================
+        # NORMAL TEXT CHAT
+        # ====================================================
+
+        if not question:
+
+            return {
+                "status": "error",
+                "message": "Please enter a message."
+            }
+
+        # Optional contextual information.
+        contextual_question = question
+
+        if grade:
+
+            contextual_question += (
+                f"\n\n[Optional user context: {grade}]"
+            )
+
+        if subject:
+
+            contextual_question += (
+                f"\n[Optional subject context: {subject}]"
+            )
+
+        # Ask the new horizontal AI brain.
+        response = ask_ai(
+            user_question=contextual_question,
+            chat_history=history
+        )
+
+        response = clean_ai_response(response)
+
+        # Save conversation.
+        save_message(
+            session_id,
+            "user",
+            question
+        )
+
+        save_message(
+            session_id,
+            "assistant",
+            response
+        )
+
+        return {
+            "status": "success",
+            "question": question,
+            "response": response
+        }
+
+    except Exception as e:
+
+        return {
+            "status": "error",
+            "message": str(e)
+        }
+
+
+# ============================================================
+# SERVER
+# ============================================================
+
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 8000))
-    uvicorn.run(app, host="0.0.0.0", port=port)
+
+    port = int(
+        os.environ.get("PORT", 8000)
+    )
+
+    uvicorn.run(
+        app,
+        host="0.0.0.0",
+        port=port
+    )
