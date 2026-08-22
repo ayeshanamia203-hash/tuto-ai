@@ -5,6 +5,7 @@ import io
 import os
 import tempfile
 import re
+from pathlib import Path
 
 from fastapi import FastAPI, File, Form, UploadFile
 from fastapi.responses import HTMLResponse
@@ -36,13 +37,12 @@ groq_client = None
 if GROQ_API_KEY:
     groq_client = Groq(api_key=GROQ_API_KEY)
 
-
 if GEMINI_API_KEY:
     genai.configure(api_key=GEMINI_API_KEY)
 
 
 # ============================================================
-# IN-MEMORY CHAT MEMORY
+# CHAT MEMORY
 # ============================================================
 
 chat_sessions = {}
@@ -53,10 +53,6 @@ chat_sessions = {}
 # ============================================================
 
 def clean_ai_response(text: str) -> str:
-    """
-    Removes accidental internal-thinking tags and unnecessary output.
-    """
-
     if not text:
         return ""
 
@@ -71,15 +67,10 @@ def clean_ai_response(text: str) -> str:
 
 
 def extract_pdf_text(contents: bytes) -> str:
-    """
-    Extract text from uploaded PDF.
-    """
-
     try:
         import pypdf
 
         reader = pypdf.PdfReader(io.BytesIO(contents))
-
         pages = []
 
         for page in reader.pages:
@@ -95,10 +86,6 @@ def extract_pdf_text(contents: bytes) -> str:
 
 
 def get_session_history(session_id: str):
-    """
-    Get conversation history for a session.
-    """
-
     if session_id not in chat_sessions:
         chat_sessions[session_id] = []
 
@@ -106,9 +93,6 @@ def get_session_history(session_id: str):
 
 
 def save_message(session_id: str, role: str, content: str):
-    """
-    Save a message into conversation memory.
-    """
 
     if session_id not in chat_sessions:
         chat_sessions[session_id] = []
@@ -118,8 +102,7 @@ def save_message(session_id: str, role: str, content: str):
         "content": content
     })
 
-    # Keep memory under control.
-    # 40 messages = approximately 20 user/AI turns.
+    # Maximum 40 messages = approximately 20 turns
     chat_sessions[session_id] = chat_sessions[session_id][-40:]
 
 
@@ -131,48 +114,72 @@ def save_message(session_id: str, role: str, content: str):
 async def home():
 
     """
-    Serve the existing index.html.
-
-    This means your current UI remains separate from
-    the backend and does not need to be redesigned.
+    Serve index.html from the same directory as main.py.
     """
 
     try:
 
-        possible_paths = [
-            "index.html",
-            os.path.join(os.path.dirname(__file__), "index.html")
-        ]
+        # Get the exact directory where main.py is located
+        base_dir = Path(__file__).resolve().parent
 
-        html = None
+        # Expected frontend location
+        index_file = base_dir / "index.html"
 
-        for path in possible_paths:
+        # Debug-friendly fallback
+        if not index_file.exists():
 
-            if os.path.exists(path):
+            # Also check current working directory
+            current_file = Path.cwd() / "index.html"
 
-                with open(
-                    path,
-                    "r",
-                    encoding="utf-8"
-                ) as file:
+            if current_file.exists():
+                index_file = current_file
 
-                    html = file.read()
+            else:
 
-                break
+                return HTMLResponse(
+                    content=f"""
+                    <html>
+                    <body style="
+                        background:#131314;
+                        color:white;
+                        font-family:Arial;
+                        padding:40px;
+                    ">
+                        <h2>Tuto AI frontend (index.html) not found.</h2>
+                        <p>Expected location:</p>
+                        <code>{index_file}</code>
+                        </body>
+                    </html>
+                    """,
+                    status_code=500
+                )
 
-        if html is None:
+        # Read frontend
+        html = index_file.read_text(
+            encoding="utf-8"
+        )
 
-            return HTMLResponse(
-                content="<h2>Tuto AI frontend (index.html) not found.</h2>",
-                status_code=500
-            )
-
-        return HTMLResponse(content=html)
+        return HTMLResponse(
+            content=html,
+            status_code=200
+        )
 
     except Exception as e:
 
         return HTMLResponse(
-            content=f"<h2>Frontend error: {str(e)}</h2>",
+            content=f"""
+            <html>
+            <body style="
+                background:#131314;
+                color:white;
+                font-family:Arial;
+                padding:40px;
+            ">
+                <h2>Tuto AI Frontend Error</h2>
+                <p>{str(e)}</p>
+            </body>
+            </html>
+            """,
             status_code=500
         )
 
@@ -323,12 +330,8 @@ async def analyze_image(
     image_bytes: bytes,
     mime_type: str
 ):
-    """
-    Use Gemini vision for image understanding.
-    """
 
     if not GEMINI_API_KEY:
-
         return None, "GEMINI_API_KEY missing."
 
     try:
@@ -341,7 +344,7 @@ Analyze the image carefully and answer the user's request.
 User request:
 {question if question else "Describe and analyze this image helpfully."}
 
-Important:
+Rules:
 - Answer directly.
 - Do not reveal hidden reasoning.
 - Do not invent information that cannot be seen.
@@ -353,7 +356,6 @@ Important:
             "data": image_bytes
         }
 
-        # Prefer a current Gemini vision-capable model.
         preferred_models = [
             "gemini-2.0-flash",
             "gemini-1.5-flash"
@@ -365,7 +367,9 @@ Important:
 
             try:
 
-                model = genai.GenerativeModel(model_name)
+                model = genai.GenerativeModel(
+                    model_name
+                )
 
                 response = model.generate_content([
                     prompt,
@@ -411,7 +415,7 @@ async def chat_endpoint(
         question = question.strip()
 
         # ----------------------------------------------------
-        # Session
+        # SESSION
         # ----------------------------------------------------
 
         history = get_session_history(session_id)
@@ -423,7 +427,6 @@ async def chat_endpoint(
         if file and file.filename:
 
             filename = file.filename.lower()
-
             file_contents = await file.read()
 
             # =================================================
@@ -449,7 +452,6 @@ async def chat_endpoint(
                 user_question = question
 
                 if not user_question:
-
                     user_question = (
                         "Please analyze this document and summarize "
                         "the most important information."
@@ -461,15 +463,12 @@ async def chat_endpoint(
                     f"{extracted_text[:12000]}"
                 )
 
-                # Add optional student context only when supplied.
                 if grade:
-
                     document_context += (
                         f"\n\nUser level/context: {grade}"
                     )
 
                 if subject:
-
                     document_context += (
                         f"\nSubject/context: {subject}"
                     )
@@ -512,7 +511,6 @@ async def chat_endpoint(
                 user_question = question
 
                 if not user_question:
-
                     user_question = (
                         "Analyze this image and tell me what is important."
                     )
@@ -564,22 +562,18 @@ async def chat_endpoint(
                 "message": "Please enter a message."
             }
 
-        # Optional contextual information.
         contextual_question = question
 
         if grade:
-
             contextual_question += (
                 f"\n\n[Optional user context: {grade}]"
             )
 
         if subject:
-
             contextual_question += (
                 f"\n[Optional subject context: {subject}]"
             )
 
-        # Ask the new horizontal AI brain.
         response = ask_ai(
             user_question=contextual_question,
             chat_history=history
@@ -587,7 +581,6 @@ async def chat_endpoint(
 
         response = clean_ai_response(response)
 
-        # Save conversation.
         save_message(
             session_id,
             "user",
