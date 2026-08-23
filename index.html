@@ -1,606 +1,866 @@
-<!-- Tuto AI Frontend -->
 <!DOCTYPE html>
 <html lang="en" data-theme="dark">
+
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-
-    <title>Tuto AI</title>
-
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-
-    <!-- KaTeX -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
-    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
-    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js"></script>
-
-    <!-- Markdown -->
-    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-
-    <!-- Highlight.js -->
-    <link rel="stylesheet"
-          href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/atom-one-dark.min.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
-
-    <style>
-        :root[data-theme="dark"] {
-            --bg-color: #131314;
-            --sidebar-bg: #1e1e20;
-            --text-color: #ffffff;
-            --text-muted: #b8b8b8;
-            --accent-color: #a8c7fa;
-            --border-color: #2d2d30;
-            --input-bg: #1e1e20;
-            --input-border: #3c4043;
-            --btn-hover: #2b2a33;
-            --bubble-text: #ffffff;
-            --strong-color: #a8c7fa;
-            --modal-bg: #1e1e20;
-        }
-
-        :root[data-theme="light"] {
-            --bg-color: #ffffff;
-            --sidebar-bg: #f0f4f9;
-            --text-color: #1f1f1f;
-            --text-muted: #555555;
-            --accent-color: #0b57d0;
-            --border-color: #e1e3e1;
-            --input-bg: #f0f4f9;
-            --input-border: #c4c7c5;
-            --btn-hover: #e3e3e3;
-            --bubble-text: #1f1f1f;
-            --strong-color: #0b57d0;
-            --modal-bg: #ffffff;
-        }
-
-        * {
-            box-sizing: border-box;
-        }
-
-        html,
-        body {
-            margin: 0;
-            padding: 0;
-            width: 100%;
-            height: 100%;
-            overflow: hidden;
-            background: var(--bg-color);
-            color: var(--text-color);
-            font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
-        }
-
-        body {
-            display: flex;
-        }
-
-        /* ================= SIDEBAR ================= */
-
-        .sidebar {
-            width: 260px;
-            height: 100%;
-            background: var(--sidebar-bg);
-            border-right: 1px solid var(--border-color);
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-            flex-shrink: 0;
-            transition: all 0.3s ease;
-            z-index: 1000;
-        }
-
-        .sidebar.collapsed {
-            margin-left: -260px;
-        }
-
-        .sidebar-overlay {
-            display: none;
-            position: fixed;
-            inset: 0;
-            background: rgba(0,0,0,.5);
-            z-index: 999;
-        }
-
-        .new-chat-btn {
-            background: var(--input-bg);
-            color: var(--text-color);
-            border: 1px solid var(--border-color);
-            border-radius: 30px;
-            padding: 10px 15px;
-            font-weight: 500;
-            transition: .2s;
-        }
-
-        .new-chat-btn:hover {
-            background: var(--btn-hover);
-        }
-
-        .history-list {
-            flex: 1;
-            overflow-y: auto;
-            margin-top: 15px;
-            margin-bottom: 15px;
-        }
-
-        .history-item {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 8px 12px;
-            border-radius: 10px;
-            color: var(--text-muted);
-            cursor: pointer;
-            font-size: 14px;
-            margin-bottom: 5px;
-            user-select: none;
-            position: relative;
-        }
-
-        .history-item:hover,
-        .history-item.active {
-            background: var(--btn-hover);
-            color: var(--text-color);
-        }
-
-        .history-title {
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            max-width: 150px;
-        }
-
-        .action-btns-group {
-            display: none;
-            align-items: center;
-            gap: 6px;
-        }
-
-        .history-item.show-actions .action-btns-group {
-            display: flex;
-        }
-
-        .action-icon-btn {
-            border: none;
-            background: transparent;
-            font-size: 13px;
-            cursor: pointer;
-            padding: 2px 4px;
-        }
-
-        .delete-btn-icon {
-            color: #e11d48;
-        }
-
-        .star-btn-icon {
-            color: #f59e0b;
-        }
-
-        .is-pinned-icon {
-            color: #f59e0b;
-            font-size: 12px;
-            margin-left: 4px;
-        }
-
-        /* ================= MAIN ================= */
-
-        .main-chat {
-            flex: 1;
-            width: 100%;
-            height: 100vh;
-            height: 100dvh;
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-        }
-
-        .chat-header {
-            padding: 15px 25px;
-            border-bottom: 1px solid var(--border-color);
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            flex-shrink: 0;
-        }
-
-        .header-left {
-            display: flex;
-            align-items: center;
-        }
-
-        .toggle-btn,
-        .theme-btn {
-            background: transparent;
-            border: none;
-            color: var(--text-color);
-            cursor: pointer;
-            padding: 7px 12px;
-            border-radius: 20px;
-        }
-
-        .toggle-btn:hover,
-        .theme-btn:hover {
-            background: var(--btn-hover);
-        }
-
-        .theme-btn {
-            border: 1px solid var(--border-color);
-            font-size: 14px;
-        }
-
-        /* ================= CHAT ================= */
-
-        .chat-container {
-            flex: 1;
-            overflow-y: auto;
-            padding: 20px;
-            width: 100%;
-            max-width: 900px;
-            margin: 0 auto;
-        }
-
-        .welcome-screen {
-            min-height: 100%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            flex-direction: column;
-            text-align: center;
-        }
-
-        .welcome-avatar {
-            width: 58px;
-            height: 58px;
-            border-radius: 50%;
-            background: linear-gradient(135deg,#f59e0b,#d97706);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-weight: bold;
-            font-size: 22px;
-            margin-bottom: 15px;
-        }
-
-        .message {
-            display: flex;
-            gap: 15px;
-            margin-bottom: 28px;
-        }
-
-        .avatar {
-            width: 35px;
-            height: 35px;
-            border-radius: 50%;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            flex-shrink: 0;
-            font-size: 13px;
-            font-weight: bold;
-        }
-
-        .user-avatar {
-            background: #5436da;
-            color: white;
-        }
-
-        .ai-avatar {
-            background: linear-gradient(135deg,#f59e0b,#d97706);
-            color: white;
-        }
-
-        .bubble {
-            width: 100%;
-            max-width: 88%;
-            color: var(--bubble-text);
-            font-size: 16px;
-            line-height: 1.65;
-            word-wrap: break-word;
-        }
-
-        .bubble strong {
-            color: var(--strong-color);
-        }
-
-        .bubble table {
-            width: 100%;
-            border-collapse: collapse;
-            margin: 12px 0;
-        }
-
-        .bubble th,
-        .bubble td {
-            border: 1px solid var(--border-color);
-            padding: 8px;
-        }
-
-        .bubble th {
-            background: var(--btn-hover);
-        }
-
-        /* ================= CODE ================= */
-
-        .code-container {
-            margin: 12px 0;
-            border-radius: 8px;
-            overflow: hidden;
-            border: 1px solid #3e4451;
-            background: #282c34;
-        }
-
-        .code-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            background: #21252b;
-            padding: 6px 12px;
-            font-size: 12px;
-            color: #abb2bf;
-        }
-
-        pre {
-            margin: 0 !important;
-            padding: 12px !important;
-            overflow-x: auto;
-        }
-
-        .copy-code-btn {
-            background: #3e4451;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            padding: 3px 8px;
-            font-size: 12px;
-            cursor: pointer;
-        }
-
-        /* ================= FILE PREVIEW ================= */
-
-        .uploaded-img-preview {
-            max-width: 220px;
-            border-radius: 10px;
-            border: 1px solid var(--border-color);
-            margin-bottom: 8px;
-        }
-
-        .pdf-badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            background: var(--btn-hover);
-            border: 1px solid #e11d48;
-            color: #ff4d4d;
-            padding: 7px 12px;
-            border-radius: 8px;
-        }
-
-        /* ================= INPUT ================= */
-
-        .input-container-box {
-            width: 100%;
-            padding: 10px 15px 15px;
-            background: var(--bg-color);
-            flex-shrink: 0;
-        }
-
-        .input-wrapper {
-            width: 100%;
-            max-width: 850px;
-            margin: 0 auto;
-            background: var(--input-bg);
-            border: 1px solid var(--input-border);
-            border-radius: 24px;
-            padding: 8px 15px;
-        }
-
-        #filePreviewArea {
-            display: none;
-            position: relative;
-            width: fit-content;
-            margin-bottom: 8px;
-        }
-
-        #previewImgThumb {
-            width: 70px;
-            height: 70px;
-            object-fit: cover;
-            border-radius: 12px;
-        }
-
-        #pdfPreviewThumb {
-            display: none;
-            background: var(--btn-hover);
-            border: 1px solid #e11d48;
-            color: #ff4d4d;
-            padding: 8px 12px;
-            border-radius: 10px;
-            font-size: 13px;
-        }
-
-        .close-img-btn {
-            position: absolute;
-            top: -7px;
-            right: -7px;
-            width: 22px;
-            height: 22px;
-            border: none;
-            border-radius: 50%;
-            background: #e11d48;
-            color: white;
-            cursor: pointer;
-        }
-
-        .input-row {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .plus-btn,
-        .mic-btn {
-            background: none;
-            border: none;
-            color: var(--accent-color);
-            font-size: 18px;
-            cursor: pointer;
-            padding: 5px;
-        }
-
-        .mic-btn.recording {
-            color: #ef4444 !important;
-            animation: pulse 1.2s infinite;
-        }
-
-        @keyframes pulse {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.2); }
-            100% { transform: scale(1); }
-        }
-
-        .chat-textarea {
-            background: transparent;
-            border: none;
-            outline: none;
-            color: var(--text-color);
-            width: 100%;
-            resize: none;
-            min-height: 28px;
-            max-height: 120px;
-            padding: 6px 0;
-            font-size: 15px;
-            font-family: inherit;
-        }
-
-        .send-btn {
-            width: 32px;
-            height: 32px;
-            border-radius: 50%;
-            border: none;
-            background: var(--text-color);
-            color: var(--bg-color);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            flex-shrink: 0;
-        }
-
-        .send-btn:disabled {
-            background: var(--border-color);
-            color: var(--text-muted);
-            cursor: not-allowed;
-        }
-
-        .tts-btn {
-            background: none;
-            border: none;
-            color: var(--text-muted);
-            cursor: pointer;
-        }
-
-        /* ================= MODAL ================= */
-
-        .modal-content {
-            background: var(--modal-bg);
-            color: var(--text-color);
-            border: 1px solid var(--border-color);
-        }
-
-        .modal-btn {
-            width: 100%;
-            padding: 15px;
-            margin-bottom: 10px;
-            border-radius: 15px;
-            border: 1px solid var(--border-color);
-            background: var(--input-bg);
-            color: var(--text-color);
-            text-align: left;
-        }
-
-        .modal-btn:hover {
-            background: var(--btn-hover);
-        }
-
-        @media(max-width:768px) {
-            .sidebar {
-                position: absolute;
-                top: 0;
-                bottom: 0;
-                left: 0;
-                box-shadow: 5px 0 15px rgba(0,0,0,.3);
-            }
-
-            .sidebar.collapsed {
-                margin-left: -260px;
-            }
-
-            .sidebar-overlay.active {
-                display: block;
-            }
-
-            .chat-container {
-                padding: 15px 10px;
-            }
-
-            .chat-header {
-                padding: 12px 15px;
-            }
-        }
-    </style>
+
+<meta charset="UTF-8">
+
+<meta
+    name="viewport"
+    content="width=device-width,
+             initial-scale=1.0,
+             maximum-scale=1.0,
+             user-scalable=no"
+>
+
+<title>Tuto AI</title>
+
+<link
+    href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+    rel="stylesheet"
+>
+
+<link
+    rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+>
+
+<link
+    rel="stylesheet"
+    href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css"
+>
+
+<script
+    defer
+    src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js">
+</script>
+
+<script
+    defer
+    src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js">
+</script>
+
+<script
+    src="https://cdn.jsdelivr.net/npm/marked/marked.min.js">
+</script>
+
+<link
+    rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/atom-one-dark.min.css"
+>
+
+<script
+    src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js">
+</script>
+
+
+<style>
+
+:root[data-theme="dark"] {
+
+    --bg:#131314;
+    --side:#1e1e20;
+    --text:#ffffff;
+    --muted:#b8b8b8;
+    --accent:#a8c7fa;
+    --border:#2d2d30;
+    --input:#1e1e20;
+    --hover:#2b2a33;
+}
+
+:root[data-theme="light"] {
+
+    --bg:#ffffff;
+    --side:#f0f4f9;
+    --text:#1f1f1f;
+    --muted:#555555;
+    --accent:#0b57d0;
+    --border:#e1e3e1;
+    --input:#f0f4f9;
+    --hover:#e3e3e3;
+}
+
+* {
+    box-sizing:border-box;
+}
+
+html,
+body {
+
+    margin:0;
+    padding:0;
+
+    width:100%;
+    height:100%;
+
+    overflow:hidden;
+
+    background:var(--bg);
+    color:var(--text);
+
+    font-family:
+        "Segoe UI",
+        system-ui,
+        -apple-system,
+        sans-serif;
+}
+
+body {
+    display:flex;
+}
+
+
+/* SIDEBAR */
+
+.sidebar {
+
+    width:260px;
+    height:100%;
+
+    background:var(--side);
+
+    border-right:
+        1px solid var(--border);
+
+    padding:20px;
+
+    display:flex;
+    flex-direction:column;
+
+    flex-shrink:0;
+
+    transition:.3s;
+
+    z-index:1000;
+}
+
+.sidebar.collapsed {
+    margin-left:-260px;
+}
+
+.sidebar-overlay {
+
+    display:none;
+
+    position:fixed;
+
+    inset:0;
+
+    background:
+        rgba(0,0,0,.5);
+
+    z-index:999;
+}
+
+.new-chat-btn {
+
+    background:var(--input);
+
+    color:var(--text);
+
+    border:
+        1px solid var(--border);
+
+    border-radius:30px;
+
+    padding:10px 15px;
+
+    font-weight:500;
+}
+
+.history-list {
+
+    flex:1;
+
+    overflow-y:auto;
+
+    margin-top:15px;
+}
+
+.history-item {
+
+    display:flex;
+
+    align-items:center;
+
+    justify-content:space-between;
+
+    padding:9px 12px;
+
+    border-radius:10px;
+
+    color:var(--muted);
+
+    cursor:pointer;
+
+    margin-bottom:5px;
+
+    font-size:14px;
+}
+
+.history-item:hover,
+.history-item.active {
+
+    background:var(--hover);
+
+    color:var(--text);
+}
+
+.history-title {
+
+    white-space:nowrap;
+
+    overflow:hidden;
+
+    text-overflow:ellipsis;
+
+    max-width:160px;
+}
+
+.action-btns-group {
+
+    display:none;
+
+    gap:6px;
+}
+
+.history-item.show-actions
+.action-btns-group {
+
+    display:flex;
+}
+
+.action-icon-btn {
+
+    border:0;
+
+    background:transparent;
+
+    cursor:pointer;
+}
+
+.delete-btn-icon {
+    color:#e11d48;
+}
+
+.star-btn-icon {
+    color:#f59e0b;
+}
+
+
+/* MAIN */
+
+.main-chat {
+
+    flex:1;
+
+    width:100%;
+
+    height:100vh;
+    height:100dvh;
+
+    display:flex;
+
+    flex-direction:column;
+
+    overflow:hidden;
+}
+
+.chat-header {
+
+    padding:15px 25px;
+
+    border-bottom:
+        1px solid var(--border);
+
+    display:flex;
+
+    align-items:center;
+
+    justify-content:space-between;
+
+    flex-shrink:0;
+}
+
+.header-left {
+
+    display:flex;
+
+    align-items:center;
+
+    gap:8px;
+}
+
+.toggle-btn,
+.theme-btn {
+
+    background:transparent;
+
+    color:var(--text);
+
+    border:0;
+
+    cursor:pointer;
+
+    padding:8px 12px;
+
+    border-radius:20px;
+}
+
+.theme-btn {
+
+    border:
+        1px solid var(--border);
+}
+
+
+/* CHAT */
+
+.chat-container {
+
+    flex:1;
+
+    overflow-y:auto;
+
+    padding:20px;
+
+    width:100%;
+
+    max-width:900px;
+
+    margin:auto;
+}
+
+.welcome-screen {
+
+    min-height:100%;
+
+    display:flex;
+
+    align-items:center;
+
+    justify-content:center;
+
+    flex-direction:column;
+
+    text-align:center;
+}
+
+.welcome-avatar,
+.ai-avatar {
+
+    width:38px;
+    height:38px;
+
+    border-radius:50%;
+
+    background:
+        linear-gradient(
+            135deg,
+            #f59e0b,
+            #d97706
+        );
+
+    color:white;
+
+    display:flex;
+
+    align-items:center;
+
+    justify-content:center;
+
+    font-weight:bold;
+}
+
+.welcome-avatar {
+
+    width:58px;
+    height:58px;
+
+    margin-bottom:15px;
+
+    font-size:20px;
+}
+
+.message {
+
+    display:flex;
+
+    gap:15px;
+
+    margin-bottom:28px;
+}
+
+.avatar {
+
+    width:35px;
+    height:35px;
+
+    border-radius:50%;
+
+    flex-shrink:0;
+
+    display:flex;
+
+    align-items:center;
+
+    justify-content:center;
+
+    font-size:12px;
+
+    font-weight:bold;
+}
+
+.user-avatar {
+
+    background:#5436da;
+
+    color:white;
+}
+
+.bubble {
+
+    width:100%;
+
+    max-width:88%;
+
+    color:var(--text);
+
+    font-size:16px;
+
+    line-height:1.65;
+
+    word-wrap:break-word;
+}
+
+.bubble strong {
+
+    color:var(--accent);
+}
+
+.bubble table {
+
+    width:100%;
+
+    border-collapse:collapse;
+
+    margin:12px 0;
+}
+
+.bubble th,
+.bubble td {
+
+    border:
+        1px solid var(--border);
+
+    padding:8px;
+}
+
+.bubble th {
+
+    background:var(--hover);
+}
+
+
+/* IMAGE */
+
+.uploaded-img-preview {
+
+    display:block;
+
+    max-width:240px;
+
+    max-height:320px;
+
+    object-fit:contain;
+
+    border-radius:12px;
+
+    border:
+        1px solid var(--border);
+
+    margin-bottom:8px;
+}
+
+
+/* CODE */
+
+.code-container {
+
+    margin:12px 0;
+
+    border-radius:8px;
+
+    overflow:hidden;
+
+    border:
+        1px solid #3e4451;
+
+    background:#282c34;
+}
+
+.code-header {
+
+    display:flex;
+
+    justify-content:space-between;
+
+    align-items:center;
+
+    background:#21252b;
+
+    padding:6px 12px;
+
+    font-size:12px;
+
+    color:#abb2bf;
+}
+
+pre {
+
+    margin:0 !important;
+
+    padding:12px !important;
+
+    overflow-x:auto;
+}
+
+.copy-code-btn {
+
+    background:#3e4451;
+
+    color:white;
+
+    border:0;
+
+    border-radius:4px;
+
+    padding:3px 8px;
+
+    cursor:pointer;
+}
+
+
+/* INPUT */
+
+.input-container-box {
+
+    width:100%;
+
+    padding:
+        10px 15px 15px;
+
+    background:var(--bg);
+
+    flex-shrink:0;
+}
+
+.input-wrapper {
+
+    width:100%;
+
+    max-width:850px;
+
+    margin:auto;
+
+    background:var(--input);
+
+    border:
+        1px solid var(--border);
+
+    border-radius:24px;
+
+    padding:8px 15px;
+}
+
+#filePreviewArea {
+
+    display:none;
+
+    position:relative;
+
+    width:max-content;
+
+    margin-bottom:8px;
+}
+
+#previewImgThumb {
+
+    width:75px;
+    height:75px;
+
+    object-fit:cover;
+
+    border-radius:12px;
+}
+
+.close-img-btn {
+
+    position:absolute;
+
+    top:-7px;
+    right:-7px;
+
+    width:22px;
+    height:22px;
+
+    border:0;
+
+    border-radius:50%;
+
+    background:#e11d48;
+
+    color:white;
+
+    cursor:pointer;
+}
+
+.pdf-preview {
+
+    background:var(--hover);
+
+    border:
+        1px solid #e11d48;
+
+    color:#ff4d4d;
+
+    padding:8px 12px;
+
+    border-radius:10px;
+}
+
+.input-row {
+
+    display:flex;
+
+    align-items:center;
+
+    gap:10px;
+}
+
+.plus-btn,
+.mic-btn {
+
+    background:none;
+
+    border:0;
+
+    color:var(--accent);
+
+    font-size:18px;
+
+    cursor:pointer;
+
+    padding:5px;
+}
+
+.mic-btn.recording {
+
+    color:#ef4444 !important;
+
+    animation:pulse 1.2s infinite;
+}
+
+@keyframes pulse {
+
+    0% {
+        transform:scale(1);
+    }
+
+    50% {
+        transform:scale(1.2);
+    }
+
+    100% {
+        transform:scale(1);
+    }
+}
+
+.chat-textarea {
+
+    background:transparent;
+
+    border:0;
+
+    outline:0;
+
+    color:var(--text);
+
+    width:100%;
+
+    resize:none;
+
+    min-height:28px;
+
+    max-height:120px;
+
+    padding:6px 0;
+
+    font-size:15px;
+
+    font-family:inherit;
+}
+
+.send-btn {
+
+    width:32px;
+    height:32px;
+
+    border-radius:50%;
+
+    border:0;
+
+    background:var(--text);
+
+    color:var(--bg);
+
+    display:flex;
+
+    align-items:center;
+
+    justify-content:center;
+
+    cursor:pointer;
+}
+
+.send-btn:disabled {
+
+    background:var(--border);
+
+    color:var(--muted);
+
+}
+
+.tts-btn {
+
+    background:none;
+
+    border:0;
+
+    color:var(--muted);
+
+    cursor:pointer;
+}
+
+
+/* MOBILE */
+
+@media(max-width:768px) {
+
+    .sidebar {
+
+        position:absolute;
+
+        top:0;
+        bottom:0;
+        left:0;
+
+        box-shadow:
+            5px 0 15px rgba(0,0,0,.3);
+    }
+
+    .sidebar-overlay.active {
+
+        display:block;
+    }
+
+    .chat-container {
+
+        padding:
+            15px 10px;
+    }
+
+    .chat-header {
+
+        padding:
+            12px 15px;
+    }
+
+    .bubble {
+
+        max-width:calc(100vw - 80px);
+
+    }
+
+}
+
+</style>
+
 </head>
+
 
 <body>
 
-<div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
 
-<!-- ================= SIDEBAR ================= -->
+<div
+    class="sidebar-overlay"
+    id="sidebarOverlay"
+    onclick="toggleSidebar()">
+</div>
 
-<div class="sidebar" id="sidebar">
 
-    <div class="d-flex justify-content-between align-items-center mb-3 d-md-none">
-        <span class="fw-bold">Menu</span>
-        <button class="btn btn-sm text-secondary" onclick="toggleSidebar()">
-            <i class="fa-solid fa-xmark fa-xl"></i>
-        </button>
-    </div>
+<!-- SIDEBAR -->
 
-    <button class="new-chat-btn w-100 mb-2" onclick="startNewChat()">
+<div
+    class="sidebar"
+    id="sidebar">
+
+    <button
+        class="new-chat-btn w-100"
+        onclick="startNewChat()">
+
         <i class="fa-solid fa-plus me-2"></i>
+
         New Chat
+
     </button>
 
-    <div class="history-list" id="historyList"></div>
+    <div
+        class="history-list"
+        id="historyList">
+    </div>
 
 </div>
 
-<!-- ================= MAIN ================= -->
+
+<!-- MAIN -->
 
 <div class="main-chat">
+
 
     <div class="chat-header">
 
         <div class="header-left">
 
-            <button class="toggle-btn"
-                    onclick="toggleSidebar()"
-                    title="Toggle Sidebar">
+            <button
+                class="toggle-btn"
+                onclick="toggleSidebar()">
 
                 <i class="fa-solid fa-bars"></i>
 
             </button>
 
             <h5 class="m-0 fw-bold">
-                <i class="fa-solid fa-sparkles me-2 text-warning"></i>
+
+                <i
+                    class="fa-solid fa-sparkles me-2 text-warning">
+                </i>
+
                 Tuto AI
+
             </h5>
 
         </div>
 
-        <button class="theme-btn"
-                onclick="toggleTheme()"
-                id="themeToggleBtn">
 
-            <i class="fa-solid fa-sun" id="themeIcon"></i>
+        <button
+            class="theme-btn"
+            onclick="toggleTheme()">
+
+            <i
+                class="fa-solid fa-sun"
+                id="themeIcon">
+            </i>
 
             <span id="themeText">
                 Light
@@ -611,27 +871,36 @@
     </div>
 
 
-    <!-- ================= CHAT BOX ================= -->
+    <div
+        class="chat-container"
+        id="chatBox">
+    </div>
 
-    <div class="chat-container" id="chatBox"></div>
 
-
-    <!-- ================= INPUT ================= -->
+    <!-- INPUT -->
 
     <div class="input-container-box">
 
         <div class="input-wrapper">
 
+
             <div id="filePreviewArea">
 
-                <img id="previewImgThumb"
-                     src=""
-                     alt="Image preview"
-                     style="display:none;">
+                <img
+                    id="previewImgThumb"
+                    src=""
+                    style="display:none;"
+                    alt="preview"
+                >
 
-                <div id="pdfPreviewThumb">
+                <div
+                    id="pdfPreviewThumb"
+                    class="pdf-preview"
+                    style="display:none;">
 
-                    <i class="fa-solid fa-file-pdf me-2"></i>
+                    <i
+                        class="fa-solid fa-file-pdf me-2">
+                    </i>
 
                     <span id="pdfFileName">
                         document.pdf
@@ -639,8 +908,10 @@
 
                 </div>
 
-                <button class="close-img-btn"
-                        onclick="clearSelectedFile()">
+
+                <button
+                    class="close-img-btn"
+                    onclick="clearSelectedFile()">
 
                     <i class="fa-solid fa-xmark"></i>
 
@@ -651,43 +922,56 @@
 
             <div class="input-row">
 
-                <button class="plus-btn"
-                        data-bs-toggle="modal"
-                        data-bs-target="#uploadModal">
 
-                    <i class="fa-solid fa-circle-plus"></i>
+                <button
+                    class="plus-btn"
+                    data-bs-toggle="modal"
+                    data-bs-target="#uploadModal">
+
+                    <i
+                        class="fa-solid fa-circle-plus">
+                    </i>
 
                 </button>
 
 
-                <form id="chatForm"
-                      class="d-flex w-100 align-items-center gap-2">
+                <form
+                    id="chatForm"
+                    class="d-flex w-100 align-items-center gap-2">
+
 
                     <textarea
                         id="question"
                         class="chat-textarea"
                         rows="1"
-                        placeholder="Message Tuto AI..."
-                    ></textarea>
+                        placeholder="Message Tuto AI...">
+                    </textarea>
 
 
-                    <button type="button"
-                            class="mic-btn"
-                            id="micBtn"
-                            onclick="toggleVoiceRecording()">
+                    <button
+                        type="button"
+                        class="mic-btn"
+                        id="micBtn"
+                        onclick="toggleVoiceRecording()">
 
-                        <i class="fa-solid fa-microphone"></i>
+                        <i
+                            class="fa-solid fa-microphone">
+                        </i>
+
+                    </button>
+
+
+                    <button
+                        type="submit"
+                        class="send-btn"
+                        id="sendBtn">
+
+                        <i
+                            class="fa-solid fa-arrow-up">
+                        </i>
 
                     </button>
 
-
-                    <button type="submit"
-                            class="send-btn"
-                            id="sendBtn">
-
-                        <i class="fa-solid fa-arrow-up"></i>
-
-                    </button>
 
                 </form>
 
@@ -700,83 +984,104 @@
 </div>
 
 
-<!-- ================= FILE INPUTS ================= -->
+<!-- FILE INPUTS -->
 
-<input type="file"
-       id="galleryInput"
-       accept="image/*"
-       style="display:none"
-       onchange="handleFileSelect(this)">
+<input
+    type="file"
+    id="galleryInput"
+    accept="image/*"
+    style="display:none"
+    onchange="handleFileSelect(this)"
+>
 
-<input type="file"
-       id="cameraInput"
-       accept="image/*"
-       capture="environment"
-       style="display:none"
-       onchange="handleFileSelect(this)">
+<input
+    type="file"
+    id="cameraInput"
+    accept="image/*"
+    capture="environment"
+    style="display:none"
+    onchange="handleFileSelect(this)"
+>
 
-<input type="file"
-       id="pdfInput"
-       accept="application/pdf"
-       style="display:none"
-       onchange="handleFileSelect(this)">
+<input
+    type="file"
+    id="pdfInput"
+    accept="application/pdf"
+    style="display:none"
+    onchange="handleFileSelect(this)"
+>
 
 
-<!-- ================= UPLOAD MODAL ================= -->
+<!-- UPLOAD MODAL -->
 
-<div class="modal fade"
-     id="uploadModal"
-     tabindex="-1">
+<div
+    class="modal fade"
+    id="uploadModal"
+    tabindex="-1">
 
-    <div class="modal-dialog modal-dialog-centered">
+    <div
+        class="modal-dialog modal-dialog-centered">
 
         <div class="modal-content">
 
-            <div class="modal-header border-0">
+            <div class="modal-header">
 
-                <h5 class="modal-title fw-bold">
+                <h5 class="modal-title">
 
-                    <i class="fa-solid fa-paperclip me-2 text-primary"></i>
+                    <i
+                        class="fa-solid fa-paperclip me-2">
+                    </i>
 
                     Attach File
 
                 </h5>
 
-                <button type="button"
-                        class="btn-close"
-                        data-bs-dismiss="modal">
+                <button
+                    type="button"
+                    class="btn-close"
+                    data-bs-dismiss="modal">
                 </button>
 
             </div>
 
+
             <div class="modal-body">
 
-                <button class="modal-btn"
-                        onclick="triggerCamera()">
+                <button
+                    class="btn btn-outline-warning w-100 mb-2"
+                    onclick="triggerCamera()">
 
-                    <i class="fa-solid fa-camera fa-lg me-3 text-warning"></i>
+                    <i
+                        class="fa-solid fa-camera me-2">
+                    </i>
 
-                    <strong>Take Photo</strong>
-
-                </button>
-
-
-                <button class="modal-btn"
-                        onclick="triggerGallery()">
-
-                    <i class="fa-solid fa-images fa-lg me-3 text-info"></i>
-
-                    <strong>Upload Photo</strong>
+                    Take Photo
 
                 </button>
 
 
-                <button class="modal-btn"
-                        onclick="triggerPDF()">
+                <button
+                    class="btn btn-outline-info w-100 mb-2"
+                    onclick="triggerGallery()">
 
-                    <i class="fa-solid fa-file-pdf fa-lg me-3 text-danger"></i>
+                    <i
+                        class="fa-solid fa-images me-2">
+                    </i>
 
-                    <strong>Upload PDF Document</strong>
+                    Upload Photo
+
+                </button>
+
+
+                <button
+                    class="btn btn-outline-danger w-100"
+                    onclick="triggerPDF()">
+
+                    <i
+                        class="fa-solid fa-file-pdf me-2">
+                    </i>
+
+                    Upload PDF
 
                 </button>
 
@@ -789,11 +1094,30 @@
 </div>
 
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script
+src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js">
+</script>
+
 
 <script>
 
+
+/* =====================================================
+   GLOBAL
+===================================================== */
+
 let selectedFile = null;
+
+let previewDataURL = null;
+
+let uploadedFileName = null;
+
+let mediaRecorder = null;
+
+let audioChunks = [];
+
+let isRecording = false;
+
 
 const questionInput =
     document.getElementById("question");
@@ -809,13 +1133,16 @@ const micBtn =
 
 
 /* =====================================================
-   SESSION STORAGE
+   STORAGE
 ===================================================== */
 
 let allSessions =
     JSON.parse(
-        localStorage.getItem("tuto_all_sessions")
+        localStorage.getItem(
+            "tuto_all_sessions"
+        )
     ) || {};
+
 
 let currentSessionId =
     localStorage.getItem(
@@ -824,12 +1151,34 @@ let currentSessionId =
 
 
 /* =====================================================
-   VOICE
+   WELCOME
 ===================================================== */
 
-let mediaRecorder = null;
-let audioChunks = [];
-let isRecording = false;
+const DEFAULT_WELCOME = `
+
+<div class="welcome-screen">
+
+    <div class="welcome-avatar">
+        AI
+    </div>
+
+    <h2 class="fw-bold mb-2">
+        Hello there!
+    </h2>
+
+    <p class="text-secondary fs-5">
+        How can I help you today?
+    </p>
+
+    <small class="text-secondary">
+        Ask me anything — study, coding,
+        writing, math, science,
+        technology and more.
+    </small>
+
+</div>
+
+`;
 
 
 /* =====================================================
@@ -838,10 +1187,12 @@ let isRecording = false;
 
 function initTheme() {
 
-    const savedTheme =
-        localStorage.getItem("tuto_theme") || "dark";
+    const theme =
+        localStorage.getItem(
+            "tuto_theme"
+        ) || "dark";
 
-    setTheme(savedTheme);
+    setTheme(theme);
 }
 
 
@@ -849,12 +1200,14 @@ function toggleTheme() {
 
     const current =
         document.documentElement
-        .getAttribute("data-theme");
+        .getAttribute(
+            "data-theme"
+        );
 
     setTheme(
         current === "dark"
-        ? "light"
-        : "dark"
+            ? "light"
+            : "dark"
     );
 }
 
@@ -862,7 +1215,10 @@ function toggleTheme() {
 function setTheme(theme) {
 
     document.documentElement
-        .setAttribute("data-theme", theme);
+        .setAttribute(
+            "data-theme",
+            theme
+        );
 
     localStorage.setItem(
         "tuto_theme",
@@ -870,10 +1226,15 @@ function setTheme(theme) {
     );
 
     const icon =
-        document.getElementById("themeIcon");
+        document.getElementById(
+            "themeIcon"
+        );
 
     const text =
-        document.getElementById("themeText");
+        document.getElementById(
+            "themeText"
+        );
+
 
     if(theme === "light") {
 
@@ -901,23 +1262,37 @@ function setTheme(theme) {
 function toggleSidebar() {
 
     const sidebar =
-        document.getElementById("sidebar");
+        document.getElementById(
+            "sidebar"
+        );
 
     const overlay =
-        document.getElementById("sidebarOverlay");
+        document.getElementById(
+            "sidebarOverlay"
+        );
 
-    sidebar.classList.toggle("collapsed");
+    sidebar.classList.toggle(
+        "collapsed"
+    );
+
 
     if(window.innerWidth <= 768) {
 
-        if(!sidebar.classList.contains("collapsed")) {
+        if(
+            sidebar.classList.contains(
+                "collapsed"
+            )
+        ) {
 
-            overlay.classList.add("active");
+            overlay.classList.remove(
+                "active"
+            );
 
         } else {
 
-            overlay.classList.remove("active");
-
+            overlay.classList.add(
+                "active"
+            );
         }
     }
 }
@@ -929,40 +1304,12 @@ function mobileSidebarCheck() {
 
         document
             .getElementById("sidebar")
-            .classList.add("collapsed");
+            .classList.add(
+                "collapsed"
+            );
 
     }
 }
-
-
-/* =====================================================
-   WELCOME SCREEN
-===================================================== */
-
-const DEFAULT_WELCOME = `
-
-<div class="welcome-screen">
-
-    <div class="welcome-avatar">
-        AI
-    </div>
-
-    <h2 class="fw-bold mb-2">
-        Hello there!
-    </h2>
-
-    <p class="text-secondary fs-5">
-        How can I help you today?
-    </p>
-
-    <small class="text-secondary">
-        Ask me anything — study, coding, writing,
-        ideas, math, science, technology and more.
-    </small>
-
-</div>
-
-`;
 
 
 /* =====================================================
@@ -977,6 +1324,7 @@ window.addEventListener(
 
         mobileSidebarCheck();
 
+
         if(
             !currentSessionId ||
             !allSessions[currentSessionId]
@@ -988,7 +1336,10 @@ window.addEventListener(
 
             renderSidebarHistory();
 
-            loadSession(currentSessionId);
+            loadSession(
+                currentSessionId
+            );
+
         }
 
     }
@@ -1001,9 +1352,10 @@ window.addEventListener(
 
 questionInput.addEventListener(
     "input",
-    function(){
+    function() {
 
-        this.style.height = "auto";
+        this.style.height =
+            "auto";
 
         this.style.height =
             this.scrollHeight + "px";
@@ -1014,20 +1366,25 @@ questionInput.addEventListener(
 
 questionInput.addEventListener(
     "keydown",
-    function(e){
+    function(e) {
 
         if(
             e.key === "Enter" &&
             !e.shiftKey
-        ){
+        ) {
 
             e.preventDefault();
 
             document
-                .getElementById("chatForm")
+                .getElementById(
+                    "chatForm"
+                )
                 .dispatchEvent(
-                    new Event("submit")
+                    new Event(
+                        "submit"
+                    )
                 );
+
         }
 
     }
@@ -1038,177 +1395,216 @@ questionInput.addEventListener(
    MATH
 ===================================================== */
 
-function renderMath(element){
+function renderMath(element) {
 
-    if(window.renderMathInElement){
+    if(!window.renderMathInElement)
+        return;
 
-        try{
+    try {
 
-            renderMathInElement(
-                element,
-                {
-                    delimiters: [
+        renderMathInElement(
+            element,
+            {
 
-                        {
-                            left:"$$",
-                            right:"$$",
-                            display:true
-                        },
+                delimiters: [
 
-                        {
-                            left:"$",
-                            right:"$",
-                            display:false
-                        },
+                    {
+                        left:"$$",
+                        right:"$$",
+                        display:true
+                    },
 
-                        {
-                            left:"\\(",
-                            right:"\\)",
-                            display:false
-                        },
+                    {
+                        left:"$",
+                        right:"$",
+                        display:false
+                    },
 
-                        {
-                            left:"\\[",
-                            right:"\\]",
-                            display:true
-                        }
+                    {
+                        left:"\\(",
+                        right:"\\)",
+                        display:false
+                    },
 
-                    ],
+                    {
+                        left:"\\[",
+                        right:"\\]",
+                        display:true
+                    }
 
-                    throwOnError:false
-                }
-            );
+                ],
 
-        }catch(e){}
-    }
+                throwOnError:false
+
+            }
+        );
+
+    } catch(e) {}
+
 }
 
 
 /* =====================================================
-   CODE BLOCK
+   CODE
 ===================================================== */
 
-function processCodeBlocks(element){
+function processCodeBlocks(element) {
 
-    if(!element) return;
+    if(!element)
+        return;
 
     element
         .querySelectorAll("pre")
-        .forEach(pre => {
+        .forEach(
+            pre => {
 
-            if(
-                pre.closest(".code-container")
-            ) return;
+                if(
+                    pre.closest(
+                        ".code-container"
+                    )
+                )
+                    return;
 
-            const code =
-                pre.querySelector("code");
 
-            const codeText =
-                code
-                ? code.innerText
-                : pre.innerText;
-
-            let language = "code";
-
-            if(
-                code &&
-                code.className
-            ){
-
-                const match =
-                    code.className.match(
-                        /language-(\w+)/
+                const code =
+                    pre.querySelector(
+                        "code"
                     );
 
-                if(match)
-                    language = match[1];
 
-            }
-
-
-            const container =
-                document.createElement("div");
-
-            container.className =
-                "code-container";
+                const codeText =
+                    code
+                        ? code.innerText
+                        : pre.innerText;
 
 
-            const header =
-                document.createElement("div");
-
-            header.className =
-                "code-header";
+                let language =
+                    "code";
 
 
-            const label =
-                document.createElement("span");
+                if(
+                    code &&
+                    code.className
+                ) {
 
-            label.innerText =
-                language;
-
-
-            const copyBtn =
-                document.createElement("button");
-
-            copyBtn.className =
-                "copy-code-btn";
-
-            copyBtn.innerHTML =
-                '<i class="fa-regular fa-copy"></i> Copy';
-
-
-            copyBtn.onclick =
-                async function(){
-
-                    try{
-
-                        await navigator
-                            .clipboard
-                            .writeText(
-                                codeText.trim()
-                            );
-
-                        copyBtn.innerHTML =
-                            '<i class="fa-solid fa-check"></i> Copied!';
-
-                        setTimeout(
-                            () => {
-
-                                copyBtn.innerHTML =
-                                    '<i class="fa-regular fa-copy"></i> Copy';
-
-                            },
-                            2000
+                    const match =
+                        code.className.match(
+                            /language-(\w+)/
                         );
 
-                    }catch(e){}
-                };
+                    if(match)
+                        language =
+                            match[1];
+
+                }
 
 
-            header.appendChild(label);
-            header.appendChild(copyBtn);
+                const container =
+                    document.createElement(
+                        "div"
+                    );
 
-            pre.parentNode.insertBefore(
-                container,
-                pre
-            );
-
-            container.appendChild(header);
-            container.appendChild(pre);
+                container.className =
+                    "code-container";
 
 
-            if(
-                window.hljs &&
-                code
-            ){
+                const header =
+                    document.createElement(
+                        "div"
+                    );
 
-                try{
-                    hljs.highlightElement(code);
-                }catch(e){}
+                header.className =
+                    "code-header";
+
+
+                const label =
+                    document.createElement(
+                        "span"
+                    );
+
+                label.innerText =
+                    language;
+
+
+                const copyBtn =
+                    document.createElement(
+                        "button"
+                    );
+
+                copyBtn.className =
+                    "copy-code-btn";
+
+                copyBtn.innerText =
+                    "Copy";
+
+
+                copyBtn.onclick =
+                    async () => {
+
+                        try {
+
+                            await navigator
+                                .clipboard
+                                .writeText(
+                                    codeText.trim()
+                                );
+
+                            copyBtn.innerText =
+                                "Copied!";
+
+                            setTimeout(
+                                () => {
+                                    copyBtn.innerText =
+                                        "Copy";
+                                },
+                                1500
+                            );
+
+                        } catch(e) {}
+
+                    };
+
+
+                header.appendChild(
+                    label
+                );
+
+                header.appendChild(
+                    copyBtn
+                );
+
+
+                pre.parentNode.insertBefore(
+                    container,
+                    pre
+                );
+
+                container.appendChild(
+                    header
+                );
+
+                container.appendChild(
+                    pre
+                );
+
+
+                if(
+                    window.hljs &&
+                    code
+                ) {
+
+                    try {
+
+                        hljs.highlightElement(
+                            code
+                        );
+
+                    } catch(e) {}
+
+                }
 
             }
-
-        });
+        );
 }
 
 
@@ -1216,11 +1612,13 @@ function processCodeBlocks(element){
    SAVE
 ===================================================== */
 
-function saveSessions(){
+function saveSessions() {
 
     localStorage.setItem(
         "tuto_all_sessions",
-        JSON.stringify(allSessions)
+        JSON.stringify(
+            allSessions
+        )
     );
 
     localStorage.setItem(
@@ -1234,12 +1632,18 @@ function saveSessions(){
    NEW CHAT
 ===================================================== */
 
-function startNewChat(render=true){
+function startNewChat(
+    render = true
+) {
 
     currentSessionId =
-        "session_" + Date.now();
+        "session_" +
+        Date.now();
 
-    allSessions[currentSessionId] = {
+
+    allSessions[
+        currentSessionId
+    ] = {
 
         title:"New Chat",
 
@@ -1249,15 +1653,20 @@ function startNewChat(render=true){
 
     };
 
+
     saveSessions();
 
-    if(render){
+
+    if(render) {
 
         renderSidebarHistory();
 
-        loadSession(currentSessionId);
+        loadSession(
+            currentSessionId
+        );
 
     }
+
 
     mobileSidebarCheck();
 }
@@ -1267,31 +1676,46 @@ function startNewChat(render=true){
    LOAD CHAT
 ===================================================== */
 
-function loadSession(id){
+function loadSession(id) {
 
     if(!allSessions[id])
         return;
 
-    currentSessionId = id;
+
+    currentSessionId =
+        id;
+
 
     saveSessions();
+
 
     chatBox.innerHTML =
         allSessions[id].html ||
         DEFAULT_WELCOME;
 
+
     chatBox
-        .querySelectorAll(".bubble")
-        .forEach(bubble => {
+        .querySelectorAll(
+            ".bubble"
+        )
+        .forEach(
+            bubble => {
 
-            renderMath(bubble);
+                renderMath(
+                    bubble
+                );
 
-            processCodeBlocks(bubble);
+                processCodeBlocks(
+                    bubble
+                );
 
-        });
+            }
+        );
+
 
     chatBox.scrollTop =
         chatBox.scrollHeight;
+
 
     renderSidebarHistory();
 
@@ -1300,44 +1724,59 @@ function loadSession(id){
 
 
 /* =====================================================
-   DELETE CHAT
+   DELETE
 ===================================================== */
 
-function deleteSession(event,id){
+function deleteSession(
+    event,
+    id
+) {
 
     event.stopPropagation();
+
 
     if(
         !confirm(
             "Delete this chat?"
         )
-    ) return;
+    )
+        return;
+
 
     delete allSessions[id];
 
+
     const keys =
-        Object.keys(allSessions);
+        Object.keys(
+            allSessions
+        );
+
 
     if(
         currentSessionId === id
-    ){
+    ) {
 
-        if(keys.length){
+        if(keys.length) {
 
             currentSessionId =
                 keys[keys.length - 1];
 
-        }else{
+        } else {
 
             startNewChat(false);
+
         }
+
     }
+
 
     saveSessions();
 
     renderSidebarHistory();
 
-    loadSession(currentSessionId);
+    loadSession(
+        currentSessionId
+    );
 }
 
 
@@ -1345,11 +1784,15 @@ function deleteSession(event,id){
    PIN
 ===================================================== */
 
-function togglePin(event,id){
+function togglePin(
+    event,
+    id
+) {
 
     event.stopPropagation();
 
-    if(allSessions[id]){
+
+    if(allSessions[id]) {
 
         allSessions[id].isPinned =
             !allSessions[id].isPinned;
@@ -1357,6 +1800,7 @@ function togglePin(event,id){
         saveSessions();
 
         renderSidebarHistory();
+
     }
 }
 
@@ -1365,140 +1809,108 @@ function togglePin(event,id){
    SIDEBAR HISTORY
 ===================================================== */
 
-function renderSidebarHistory(){
+function renderSidebarHistory() {
 
-    historyList.innerHTML = "";
+    historyList.innerHTML =
+        "";
+
 
     const keys =
-        Object.keys(allSessions)
-        .reverse();
+        Object.keys(
+            allSessions
+        ).reverse();
 
 
-    const pinned =
-        keys.filter(
-            id => allSessions[id].isPinned
-        );
+    keys.forEach(
+        id => {
 
-    const recent =
-        keys.filter(
-            id => !allSessions[id].isPinned
-        );
+            const session =
+                allSessions[id];
 
 
-    if(pinned.length){
-
-        historyList.innerHTML += `
-
-            <div class="text-warning small fw-bold mt-2 mb-1">
-
-                <i class="fa-solid fa-star me-1"></i>
-
-                PINNED CHATS
-
-            </div>
-
-        `;
-
-        pinned.forEach(
-            id => renderHistoryItem(id)
-        );
-    }
+            const item =
+                document.createElement(
+                    "div"
+                );
 
 
-    if(recent.length){
-
-        historyList.innerHTML += `
-
-            <div class="text-secondary small fw-bold mt-3 mb-1">
-
-                RECENT CHATS
-
-            </div>
-
-        `;
-
-        recent.forEach(
-            id => renderHistoryItem(id)
-        );
-    }
-}
+            item.className =
+                "history-item" +
+                (
+                    id === currentSessionId
+                        ? " active"
+                        : ""
+                );
 
 
-function renderHistoryItem(id){
-
-    const session =
-        allSessions[id];
-
-    const active =
-        id === currentSessionId
-        ? "active"
-        : "";
-
-    const star =
-        session.isPinned
-        ? "fa-solid fa-star"
-        : "fa-regular fa-star";
+            item.onclick =
+                () => loadSession(id);
 
 
-    historyList.innerHTML += `
+            item.innerHTML = `
 
-        <div
-            class="history-item ${active}"
-            onclick="loadSession('${id}')"
-        >
+                <div
+                    class="history-title">
 
-            <div class="history-title">
+                    <i
+                        class="fa-regular fa-message me-2">
+                    </i>
 
-                <i class="fa-regular fa-message me-2"></i>
+                    ${escapeHTML(
+                        session.title
+                    )}
 
-                ${escapeHTML(session.title)}
+                </div>
 
-                ${
-                    session.isPinned
-                    ? '<i class="fa-solid fa-star is-pinned-icon"></i>'
-                    : ''
-                }
+                <div>
 
-            </div>
+                    <button
+                        class="action-icon-btn delete-btn-icon"
+                        onclick="deleteSession(event,'${id}')">
+
+                        <i
+                            class="fa-solid fa-trash-can">
+                        </i>
+
+                    </button>
+
+                    <button
+                        class="action-icon-btn star-btn-icon"
+                        onclick="togglePin(event,'${id}')">
+
+                        <i
+                            class="${
+                                session.isPinned
+                                ? "fa-solid"
+                                : "fa-regular"
+                            } fa-star">
+                        </i>
+
+                    </button>
+
+                </div>
+            `;
 
 
-            <div class="action-btns-group">
+            historyList.appendChild(
+                item
+            );
 
-                <button
-                    class="action-icon-btn delete-btn-icon"
-                    onclick="deleteSession(event,'${id}')"
-                >
-
-                    <i class="fa-solid fa-trash-can"></i>
-
-                </button>
-
-
-                <button
-                    class="action-icon-btn star-btn-icon"
-                    onclick="togglePin(event,'${id}')"
-                >
-
-                    <i class="${star}"></i>
-
-                </button>
-
-            </div>
-
-        </div>
-
-    `;
+        }
+    );
 }
 
 
 /* =====================================================
-   SAFE HTML
+   ESCAPE HTML
 ===================================================== */
 
-function escapeHTML(text){
+function escapeHTML(text) {
 
     const div =
-        document.createElement("div");
+        document.createElement(
+            "div"
+        );
 
     div.innerText =
         text || "";
@@ -1508,16 +1920,16 @@ function escapeHTML(text){
 
 
 /* =====================================================
-   VOICE INPUT
+   VOICE
 ===================================================== */
 
-async function toggleVoiceRecording(){
+async function toggleVoiceRecording() {
 
-    if(isRecording){
+    if(isRecording) {
 
         stopRecording();
 
-    }else{
+    } else {
 
         startRecording();
 
@@ -1525,9 +1937,9 @@ async function toggleVoiceRecording(){
 }
 
 
-async function startRecording(){
+async function startRecording() {
 
-    try{
+    try {
 
         const stream =
             await navigator
@@ -1538,7 +1950,10 @@ async function startRecording(){
 
 
         mediaRecorder =
-            new MediaRecorder(stream);
+            new MediaRecorder(
+                stream
+            );
+
 
         audioChunks = [];
 
@@ -1546,7 +1961,9 @@ async function startRecording(){
         mediaRecorder.ondataavailable =
             event => {
 
-                if(event.data.size > 0){
+                if(
+                    event.data.size > 0
+                ) {
 
                     audioChunks.push(
                         event.data
@@ -1564,17 +1981,23 @@ async function startRecording(){
                     new Blob(
                         audioChunks,
                         {
-                            type:"audio/webm"
+                            type:
+                                "audio/webm"
                         }
                     );
+
 
                 stream
                     .getTracks()
                     .forEach(
-                        track => track.stop()
+                        track =>
+                            track.stop()
                     );
 
-                await transcribeAudio(blob);
+
+                await transcribeAudio(
+                    blob
+                );
 
             };
 
@@ -1590,22 +2013,23 @@ async function startRecording(){
         questionInput.placeholder =
             "Recording... Tap microphone to stop";
 
-    }catch(error){
+    } catch(error) {
 
         alert(
             "Microphone permission denied or unavailable."
         );
 
     }
+
 }
 
 
-function stopRecording(){
+function stopRecording() {
 
     if(
         mediaRecorder &&
         isRecording
-    ){
+    ) {
 
         mediaRecorder.stop();
 
@@ -1619,13 +2043,17 @@ function stopRecording(){
             "Processing voice...";
 
     }
+
 }
 
 
-async function transcribeAudio(blob){
+async function transcribeAudio(
+    blob
+) {
 
     const formData =
         new FormData();
+
 
     formData.append(
         "audio",
@@ -1634,7 +2062,7 @@ async function transcribeAudio(blob){
     );
 
 
-    try{
+    try {
 
         const response =
             await fetch(
@@ -1651,180 +2079,487 @@ async function transcribeAudio(blob){
 
 
         if(
-            data.status === "success" &&
+            data.status ===
+                "success" &&
             data.text
-        ){
+        ) {
 
             questionInput.value =
                 data.text;
 
+
             questionInput.style.height =
                 "auto";
+
 
             questionInput.style.height =
                 questionInput.scrollHeight +
                 "px";
 
-        }else{
+        } else {
 
             alert(
                 data.message ||
                 "Voice recognition failed."
             );
+
         }
 
-    }catch(error){
+    } catch(error) {
 
         alert(
             "Could not connect to voice service."
         );
 
-    }finally{
+    } finally {
 
         questionInput.placeholder =
             "Message Tuto AI...";
 
     }
+
 }
 
 
 /* =====================================================
-   FILE UPLOAD
+   UPLOAD MODAL
 ===================================================== */
 
-function closeUploadModal(){
+function closeUploadModal() {
 
     const modal =
         document.getElementById(
             "uploadModal"
         );
 
+
     const instance =
         bootstrap.Modal.getInstance(
             modal
         );
+
 
     if(instance)
         instance.hide();
 }
 
 
-function triggerCamera(){
+function triggerCamera() {
 
     closeUploadModal();
 
     document
-        .getElementById("cameraInput")
+        .getElementById(
+            "cameraInput"
+        )
         .click();
 }
 
 
-function triggerGallery(){
+function triggerGallery() {
 
     closeUploadModal();
 
     document
-        .getElementById("galleryInput")
+        .getElementById(
+            "galleryInput"
+        )
         .click();
 }
 
 
-function triggerPDF(){
+function triggerPDF() {
 
     closeUploadModal();
 
     document
-        .getElementById("pdfInput")
+        .getElementById(
+            "pdfInput"
+        )
         .click();
 }
 
 
-function handleFileSelect(input){
+/* =====================================================
+   IMAGE COMPRESS
+===================================================== */
+
+function compressImage(
+    file
+) {
+
+    return new Promise(
+        (resolve, reject) => {
+
+            const reader =
+                new FileReader();
+
+
+            reader.onload =
+                event => {
+
+                    const img =
+                        new Image();
+
+
+                    img.onload =
+                        () => {
+
+                            const maxSize =
+                                1600;
+
+
+                            let width =
+                                img.width;
+
+                            let height =
+                                img.height;
+
+
+                            if(
+                                width >
+                                    maxSize ||
+                                height >
+                                    maxSize
+                            ) {
+
+                                if(
+                                    width >
+                                    height
+                                ) {
+
+                                    height =
+                                        Math.round(
+                                            height *
+                                            maxSize /
+                                            width
+                                        );
+
+                                    width =
+                                        maxSize;
+
+                                } else {
+
+                                    width =
+                                        Math.round(
+                                            width *
+                                            maxSize /
+                                            height
+                                        );
+
+                                    height =
+                                        maxSize;
+
+                                }
+
+                            }
+
+
+                            const canvas =
+                                document
+                                    .createElement(
+                                        "canvas"
+                                    );
+
+
+                            canvas.width =
+                                width;
+
+                            canvas.height =
+                                height;
+
+
+                            const ctx =
+                                canvas
+                                    .getContext(
+                                        "2d"
+                                    );
+
+
+                            ctx.drawImage(
+                                img,
+                                0,
+                                0,
+                                width,
+                                height
+                            );
+
+
+                            canvas.toBlob(
+                                blob => {
+
+                                    if(!blob) {
+
+                                        reject(
+                                            "Compression failed"
+                                        );
+
+                                        return;
+
+                                    }
+
+
+                                    resolve(
+                                        new File(
+                                            [blob],
+                                            "tuto-image.jpg",
+                                            {
+                                                type:
+                                                    "image/jpeg"
+                                            }
+                                        )
+                                    );
+
+                                },
+
+                                "image/jpeg",
+
+                                0.78
+                            );
+
+                        };
+
+
+                    img.onerror =
+                        reject;
+
+
+                    img.src =
+                        event.target.result;
+
+                };
+
+
+            reader.onerror =
+                reject;
+
+
+            reader.readAsDataURL(
+                file
+            );
+
+        }
+    );
+}
+
+
+/* =====================================================
+   IMAGE PREVIEW DATA
+===================================================== */
+
+function makePreview(
+    file
+) {
+
+    return new Promise(
+        (resolve, reject) => {
+
+            const reader =
+                new FileReader();
+
+
+            reader.onload =
+                () => resolve(
+                    reader.result
+                );
+
+
+            reader.onerror =
+                reject;
+
+
+            reader.readAsDataURL(
+                file
+            );
+
+        }
+    );
+}
+
+
+/* =====================================================
+   FILE SELECT
+===================================================== */
+
+async function handleFileSelect(
+    input
+) {
 
     if(
         !input.files ||
         !input.files[0]
-    ) return;
+    )
+        return;
 
-    selectedFile =
+
+    const originalFile =
         input.files[0];
 
 
-    const previewArea =
-        document.getElementById(
-            "filePreviewArea"
-        );
-
-    const imageThumb =
-        document.getElementById(
-            "previewImgThumb"
-        );
-
-    const pdfThumb =
-        document.getElementById(
-            "pdfPreviewThumb"
-        );
+    uploadedFileName =
+        originalFile.name;
 
 
-    if(
-        selectedFile.type ===
-        "application/pdf"
-    ){
+    try {
 
-        imageThumb.style.display =
-            "none";
+        if(
+            originalFile.type.startsWith(
+                "image/"
+            )
+        ) {
 
-        pdfThumb.style.display =
-            "inline-block";
+            /*
+             * Compress image first.
+             * This keeps Groq request small.
+             */
 
-        document.getElementById(
-            "pdfFileName"
-        ).innerText =
-            selectedFile.name;
+            selectedFile =
+                await compressImage(
+                    originalFile
+                );
 
-    }else{
 
-        pdfThumb.style.display =
-            "none";
+            previewDataURL =
+                await makePreview(
+                    selectedFile
+                );
 
-        imageThumb.style.display =
+
+            document
+                .getElementById(
+                    "previewImgThumb"
+                )
+                .src =
+                previewDataURL;
+
+
+            document
+                .getElementById(
+                    "previewImgThumb"
+                )
+                .style.display =
+                "block";
+
+
+            document
+                .getElementById(
+                    "pdfPreviewThumb"
+                )
+                .style.display =
+                "none";
+
+
+        } else if(
+            originalFile.type ===
+            "application/pdf"
+        ) {
+
+            selectedFile =
+                originalFile;
+
+            previewDataURL =
+                null;
+
+
+            document
+                .getElementById(
+                    "previewImgThumb"
+                )
+                .style.display =
+                "none";
+
+
+            document
+                .getElementById(
+                    "pdfPreviewThumb"
+                )
+                .style.display =
+                "block";
+
+
+            document
+                .getElementById(
+                    "pdfFileName"
+                )
+                .innerText =
+                originalFile.name;
+
+        }
+
+
+        document
+            .getElementById(
+                "filePreviewArea"
+            )
+            .style.display =
             "block";
 
-        imageThumb.src =
-            URL.createObjectURL(
-                selectedFile
-            );
+
+    } catch(error) {
+
+        console.error(
+            error
+        );
+
+        alert(
+            "Could not prepare the file."
+        );
+
+        clearSelectedFile();
+
     }
 
-
-    previewArea.style.display =
-        "block";
 }
 
 
-function clearSelectedFile(){
+/* =====================================================
+   CLEAR FILE
+===================================================== */
+
+function clearSelectedFile() {
 
     selectedFile = null;
 
-    document.getElementById(
-        "galleryInput"
-    ).value = "";
+    previewDataURL = null;
 
-    document.getElementById(
-        "cameraInput"
-    ).value = "";
+    uploadedFileName = null;
 
-    document.getElementById(
-        "pdfInput"
-    ).value = "";
 
-    document.getElementById(
-        "filePreviewArea"
-    ).style.display = "none";
+    document
+        .getElementById(
+            "galleryInput"
+        )
+        .value = "";
 
-    document.getElementById(
-        "previewImgThumb"
-    ).src = "";
+
+    document
+        .getElementById(
+            "cameraInput"
+        )
+        .value = "";
+
+
+    document
+        .getElementById(
+            "pdfInput"
+        )
+        .value = "";
+
+
+    document
+        .getElementById(
+            "filePreviewArea"
+        )
+        .style.display =
+        "none";
+
+
+    document
+        .getElementById(
+            "previewImgThumb"
+        )
+        .src = "";
+
 }
 
 
@@ -1832,11 +2567,11 @@ function clearSelectedFile(){
    TEXT TO SPEECH
 ===================================================== */
 
-function speakText(button){
+function speakText(button) {
 
     if(
         !("speechSynthesis" in window)
-    ){
+    ) {
 
         alert(
             "Voice output is not supported."
@@ -1847,17 +2582,21 @@ function speakText(button){
 
 
     const bubble =
-        button.closest(".bubble");
+        button.closest(
+            ".bubble"
+        );
 
-    let text =
+
+    const text =
         bubble
-        ? bubble.innerText
-        : "";
+            ? bubble.innerText
+            : "";
 
 
     if(
-        window.speechSynthesis.speaking
-    ){
+        window.speechSynthesis
+            .speaking
+    ) {
 
         window.speechSynthesis.cancel();
 
@@ -1875,21 +2614,24 @@ function speakText(button){
 
 
     if(
-        /[\u0980-\u09FF]/.test(text)
-    ){
+        /[\u0980-\u09FF]/.test(
+            text
+        )
+    ) {
 
         utterance.lang =
             "bn-BD";
 
-    }else{
+    } else {
 
         utterance.lang =
             "en-US";
+
     }
 
 
     button.innerHTML =
-        '<i class="fa-solid fa-volume-xmark text-warning"></i>';
+        '<i class="fa-solid fa-volume-xmark"></i>';
 
 
     utterance.onend =
@@ -1908,14 +2650,16 @@ function speakText(button){
 
 
 /* =====================================================
-   SEND MESSAGE
+   SEND CHAT
 ===================================================== */
 
 document
-    .getElementById("chatForm")
+    .getElementById(
+        "chatForm"
+    )
     .addEventListener(
         "submit",
-        async function(e){
+        async function(e) {
 
             e.preventDefault();
 
@@ -1933,82 +2677,116 @@ document
             if(
                 !question &&
                 !selectedFile
-            ){
-
+            )
                 return;
-            }
 
 
-            /* Remove welcome */
-
-            const welcome =
-                document.getElementById(
-                    "welcomeScreen"
-                );
-
-            if(welcome){
-
-                chatBox.innerHTML =
-                    "";
-
-            }
+            const fileForSend =
+                selectedFile;
 
 
-            /* User message */
+            const imageForDisplay =
+                previewDataURL;
+
+
+            const titleFileName =
+                uploadedFileName;
+
+
+            /* ------------------------------------------------
+               USER MESSAGE
+            ------------------------------------------------ */
 
             let userHTML = "";
 
 
-            if(question){
+            if(question) {
 
                 userHTML += `
 
-                    <strong>You</strong><br>
+                    <strong>You</strong>
 
-                    ${escapeHTML(question)
-                        .replace(/\n/g,"<br>")}
+                    <br>
+
+                    ${escapeHTML(
+                        question
+                    ).replace(
+                        /\n/g,
+                        "<br>"
+                    )}
 
                 `;
 
             }
 
 
-            if(selectedFile){
+            if(fileForSend) {
 
                 if(
-                    selectedFile.type ===
+                    fileForSend.type
+                        ===
                     "application/pdf"
-                ){
+                ) {
 
                     userHTML =
-                        `<div class="pdf-badge">
-                            <i class="fa-solid fa-file-pdf"></i>
-                            ${escapeHTML(selectedFile.name)}
-                        </div>` +
+                        `
+
+                        <div
+                            class="pdf-preview">
+
+                            <i
+                                class="fa-solid fa-file-pdf">
+                            </i>
+
+                            ${escapeHTML(
+                                titleFileName
+                            )}
+
+                        </div>
+
+                        ` +
+
                         (
                             userHTML
-                            ? "<br>" + userHTML
-                            : ""
+                                ? "<br>" +
+                                  userHTML
+                                : ""
                         );
 
-                }else{
 
-                    const url =
-                        URL.createObjectURL(
-                            selectedFile
-                        );
+                } else if(
+                    imageForDisplay
+                ) {
+
+                    /*
+                     * IMPORTANT:
+                     * We use a Data URL instead of
+                     * URL.createObjectURL().
+                     *
+                     * This makes the image survive
+                     * refresh and localStorage session load.
+                     */
 
                     userHTML =
-                        `<img
-                            src="${url}"
+                        `
+
+                        <img
+                            src="${imageForDisplay}"
                             class="uploaded-img-preview"
-                        >` +
+                            alt="Uploaded image"
+                        >
+
+                        ` +
+
                         (
                             userHTML
-                            ? "<br>" + userHTML
-                            : ""
+                                ? "<br>" +
+                                  userHTML
+                                : ""
                         );
+
                 }
+
             }
 
 
@@ -2021,7 +2799,9 @@ document
                     </div>
 
                     <div class="bubble">
+
                         ${userHTML}
+
                     </div>
 
                 </div>
@@ -2029,15 +2809,19 @@ document
             `;
 
 
-            /* FormData */
+            /* ------------------------------------------------
+               FORM DATA
+            ------------------------------------------------ */
 
             const formData =
                 new FormData();
+
 
             formData.append(
                 "question",
                 question
             );
+
 
             formData.append(
                 "session_id",
@@ -2045,14 +2829,52 @@ document
             );
 
 
-            if(selectedFile){
+            if(fileForSend) {
 
                 formData.append(
                     "file",
-                    selectedFile
+                    fileForSend
                 );
 
             }
+
+
+            /* Clear UI file selection */
+
+            selectedFile = null;
+
+            previewDataURL = null;
+
+            uploadedFileName = null;
+
+
+            document
+                .getElementById(
+                    "filePreviewArea"
+                )
+                .style.display =
+                "none";
+
+
+            document
+                .getElementById(
+                    "galleryInput"
+                )
+                .value = "";
+
+
+            document
+                .getElementById(
+                    "cameraInput"
+                )
+                .value = "";
+
+
+            document
+                .getElementById(
+                    "pdfInput"
+                )
+                .value = "";
 
 
             questionInput.value = "";
@@ -2061,18 +2883,16 @@ document
                 "auto";
 
 
-            clearSelectedFile();
-
-
-            sendBtn.disabled =
-                true;
+            sendBtn.disabled = true;
 
 
             chatBox.scrollTop =
                 chatBox.scrollHeight;
 
 
-            /* Loading */
+            /* ------------------------------------------------
+               LOADING
+            ------------------------------------------------ */
 
             const loadingId =
                 "loading-" +
@@ -2083,16 +2903,18 @@ document
 
                 <div
                     class="message"
-                    id="${loadingId}"
-                >
+                    id="${loadingId}">
 
                     <div class="avatar ai-avatar">
                         AI
                     </div>
 
-                    <div class="bubble text-secondary">
+                    <div
+                        class="bubble text-secondary">
 
-                        <i class="fa-solid fa-circle-notch fa-spin me-2"></i>
+                        <i
+                            class="fa-solid fa-circle-notch fa-spin me-2">
+                        </i>
 
                         Thinking...
 
@@ -2107,7 +2929,11 @@ document
                 chatBox.scrollHeight;
 
 
-            try{
+            /* ------------------------------------------------
+               API
+            ------------------------------------------------ */
+
+            try {
 
                 const response =
                     await fetch(
@@ -2132,20 +2958,21 @@ document
                 if(
                     data.status ===
                     "success"
-                ){
+                ) {
 
                     let content =
-                        data.response || "";
+                        data.response ||
+                        "";
 
 
-                    try{
+                    try {
 
                         content =
                             marked.parse(
                                 content
                             );
 
-                    }catch(e){
+                    } catch(error) {
 
                         content =
                             escapeHTML(
@@ -2154,6 +2981,7 @@ document
                                 /\n/g,
                                 "<br>"
                             );
+
                     }
 
 
@@ -2165,7 +2993,11 @@ document
 
                     bubble.innerHTML = `
 
-                        <div class="d-flex justify-content-between align-items-center mb-1">
+                        <div
+                            class="d-flex
+                                   justify-content-between
+                                   align-items-center
+                                   mb-1">
 
                             <strong>
                                 Tuto AI
@@ -2174,15 +3006,15 @@ document
                             <button
                                 class="tts-btn"
                                 onclick="speakText(this)"
-                                title="Read Aloud"
-                            >
+                                title="Read Aloud">
 
-                                <i class="fa-solid fa-volume-high"></i>
+                                <i
+                                    class="fa-solid fa-volume-high">
+                                </i>
 
                             </button>
 
                         </div>
-
 
                         <div>
                             ${content}
@@ -2195,10 +3027,19 @@ document
                         bubble
                     );
 
+
                     renderMath(
                         bubble
                     );
 
+
+                    /*
+                     * SAVE FULL CHAT HTML.
+                     *
+                     * Because uploaded images are
+                     * Data URLs, they remain after
+                     * page refresh.
+                     */
 
                     allSessions[
                         currentSessionId
@@ -2209,45 +3050,53 @@ document
                     saveSessions();
 
 
-                    /* Generate title */
+                    /* ------------------------------------------------
+                       TITLE
+                    ------------------------------------------------ */
 
                     if(
                         allSessions[
                             currentSessionId
                         ].title ===
                         "New Chat"
-                    ){
+                    ) {
 
                         generateTitle(
                             question ||
-                            selectedFile?.name ||
+                            titleFileName ||
                             "Conversation"
                         );
 
                     }
 
-                }else{
 
-                    loading.querySelector(
-                        ".bubble"
-                    ).innerHTML = `
+                } else {
 
-                        <span class="text-danger">
+                    if(loading) {
 
-                            Error:
-                            ${escapeHTML(
-                                data.message ||
-                                "Something went wrong."
-                            )}
+                        loading.querySelector(
+                            ".bubble"
+                        ).innerHTML = `
 
-                        </span>
+                            <span
+                                class="text-danger">
 
-                    `;
+                                Error:
+                                ${escapeHTML(
+                                    data.message ||
+                                    "Something went wrong."
+                                )}
+
+                            </span>
+
+                        `;
+
+                    }
 
                 }
 
 
-            }catch(error){
+            } catch(error) {
 
                 const loading =
                     document.getElementById(
@@ -2255,13 +3104,14 @@ document
                     );
 
 
-                if(loading){
+                if(loading) {
 
                     loading.querySelector(
                         ".bubble"
                     ).innerHTML = `
 
-                        <span class="text-danger">
+                        <span
+                            class="text-danger">
 
                             Server connection error.
 
@@ -2271,7 +3121,7 @@ document
 
                 }
 
-            }finally{
+            } finally {
 
                 sendBtn.disabled =
                     false;
@@ -2286,27 +3136,31 @@ document
 
 
 /* =====================================================
-   SMART TITLE
+   TITLE GENERATOR
 ===================================================== */
 
-async function generateTitle(prompt){
+async function generateTitle(
+    prompt
+) {
 
-    try{
+    try {
+
+        const formData =
+            new FormData();
+
+
+        formData.append(
+            "prompt",
+            prompt
+        );
+
 
         const response =
             await fetch(
                 "/api/generate-title",
                 {
                     method:"POST",
-
-                    headers:{
-                        "Content-Type":
-                            "application/json"
-                    },
-
-                    body:JSON.stringify({
-                        prompt:prompt
-                    })
+                    body:formData
                 }
             );
 
@@ -2316,17 +3170,19 @@ async function generateTitle(prompt){
 
 
         if(
-            data.status === "success" &&
+            data.status ===
+                "success" &&
             data.title &&
             allSessions[
                 currentSessionId
             ]
-        ){
+        ) {
 
             allSessions[
                 currentSessionId
             ].title =
                 data.title;
+
 
             saveSessions();
 
@@ -2334,11 +3190,19 @@ async function generateTitle(prompt){
 
         }
 
-    }catch(error){}
+    } catch(error) {
+
+        console.error(
+            "Title error:",
+            error
+        );
+
+    }
 
 }
 
 </script>
 
 </body>
+
 </html>
