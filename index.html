@@ -7,20 +7,32 @@
 
 <meta
     name="viewport"
-    content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+    content="width=device-width,
+    initial-scale=1.0,
+    maximum-scale=1.0,
+    user-scalable=no"
 >
 
 <title>Tuto AI</title>
+
+
+<!-- Bootstrap -->
 
 <link
     href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
     rel="stylesheet"
 >
 
+
+<!-- Font Awesome -->
+
 <link
     rel="stylesheet"
     href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
 >
+
+
+<!-- KaTeX -->
 
 <link
     rel="stylesheet"
@@ -37,9 +49,15 @@
     src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js">
 </script>
 
+
+<!-- Markdown -->
+
 <script
     src="https://cdn.jsdelivr.net/npm/marked/marked.min.js">
 </script>
+
+
+<!-- Highlight.js -->
 
 <link
     rel="stylesheet"
@@ -71,8 +89,10 @@
     --bubble-text:#ffffff;
     --strong-color:#a8c7fa;
     --modal-bg:#1e1e20;
+    --menu-bg:#29292c;
 
 }
+
 
 :root[data-theme="light"] {
 
@@ -88,6 +108,7 @@
     --bubble-text:#1f1f1f;
     --strong-color:#0b57d0;
     --modal-bg:#ffffff;
+    --menu-bg:#ffffff;
 
 }
 
@@ -110,11 +131,9 @@ body {
 
     overflow:hidden;
 
-    background:
-        var(--bg-color);
+    background:var(--bg-color);
 
-    color:
-        var(--text-color);
+    color:var(--text-color);
 
     font-family:
         "Segoe UI",
@@ -139,10 +158,10 @@ body {
 .sidebar {
 
     width:260px;
+
     height:100%;
 
-    background:
-        var(--sidebar-bg);
+    background:var(--sidebar-bg);
 
     border-right:
         1px solid var(--border-color);
@@ -150,12 +169,13 @@ body {
     padding:20px;
 
     display:flex;
+
     flex-direction:column;
 
     flex-shrink:0;
 
     transition:
-        all .3s ease;
+        all .25s ease;
 
     z-index:1000;
 
@@ -177,8 +197,7 @@ body {
 
     inset:0;
 
-    background:
-        rgba(0,0,0,.5);
+    background:rgba(0,0,0,.5);
 
     z-index:999;
 
@@ -187,11 +206,9 @@ body {
 
 .new-chat-btn {
 
-    background:
-        var(--input-bg);
+    background:var(--input-bg);
 
-    color:
-        var(--text-color);
+    color:var(--text-color);
 
     border:
         1px solid var(--border-color);
@@ -205,14 +222,6 @@ body {
 }
 
 
-.new-chat-btn:hover {
-
-    background:
-        var(--btn-hover);
-
-}
-
-
 .history-list {
 
     flex:1;
@@ -221,7 +230,19 @@ body {
 
     margin-top:15px;
 
-    margin-bottom:15px;
+}
+
+
+.history-label {
+
+    color:var(--text-muted);
+
+    font-size:11px;
+
+    font-weight:700;
+
+    margin:
+        15px 8px 8px;
 
 }
 
@@ -232,12 +253,11 @@ body {
 
     align-items:center;
 
-    padding:10px 12px;
+    padding:11px 12px;
 
     border-radius:10px;
 
-    color:
-        var(--text-muted);
+    color:var(--text-muted);
 
     cursor:pointer;
 
@@ -249,20 +269,15 @@ body {
 
     position:relative;
 
-    transition:
-        background .15s ease;
-
 }
 
 
 .history-item:hover,
 .history-item.active {
 
-    background:
-        var(--btn-hover);
+    background:var(--btn-hover);
 
-    color:
-        var(--text-color);
+    color:var(--text-color);
 
 }
 
@@ -275,16 +290,14 @@ body {
 
     text-overflow:ellipsis;
 
-    max-width:210px;
+    width:100%;
 
 }
 
 
-.is-pinned-icon {
+.pinned-icon {
 
     color:#f59e0b;
-
-    font-size:12px;
 
     margin-left:5px;
 
@@ -292,94 +305,85 @@ body {
 
 
 /* ============================================================
-   LONG PRESS MENU
+   CONTEXT MENU
 ============================================================ */
 
 .chat-context-menu {
 
-    position:fixed;
-
     display:none;
+
+    position:fixed;
 
     min-width:190px;
 
-    background:
-        var(--modal-bg);
-
-    color:
-        var(--text-color);
+    background:var(--menu-bg);
 
     border:
         1px solid var(--border-color);
 
-    border-radius:14px;
-
-    padding:6px;
+    border-radius:13px;
 
     box-shadow:
-        0 10px 35px rgba(0,0,0,.30);
+        0 10px 35px rgba(0,0,0,.35);
 
-    z-index:99999;
+    padding:7px;
+
+    z-index:5000;
 
 }
 
 
-.chat-context-menu.active {
+.chat-context-menu.show {
 
     display:block;
 
 }
 
 
-.context-menu-item {
+.context-item {
+
+    display:flex;
+
+    align-items:center;
+
+    gap:12px;
 
     width:100%;
 
+    padding:10px 12px;
+
     border:none;
+
+    border-radius:8px;
 
     background:transparent;
 
-    color:
-        var(--text-color);
-
-    padding:11px 13px;
-
-    border-radius:9px;
+    color:var(--text-color);
 
     text-align:left;
-
-    font-size:14px;
 
     cursor:pointer;
 
 }
 
 
-.context-menu-item:hover {
+.context-item:hover {
 
-    background:
-        var(--btn-hover);
-
-}
-
-
-.context-menu-item i {
-
-    width:24px;
+    background:var(--btn-hover);
 
 }
 
 
-.context-menu-item.pin {
+.context-item.delete {
 
-    color:#f59e0b;
+    color:#ef4444;
 
 }
 
 
-.context-menu-item.delete {
+.context-item i {
 
-    color:#e11d48;
+    width:18px;
 
 }
 
@@ -409,7 +413,8 @@ body {
 
 .chat-header {
 
-    padding:15px 25px;
+    padding:
+        15px 25px;
 
     border-bottom:
         1px solid var(--border-color);
@@ -441,8 +446,7 @@ body {
 
     border:none;
 
-    color:
-        var(--text-color);
+    color:var(--text-color);
 
     cursor:pointer;
 
@@ -456,8 +460,7 @@ body {
 .toggle-btn:hover,
 .theme-btn:hover {
 
-    background:
-        var(--btn-hover);
+    background:var(--btn-hover);
 
 }
 
@@ -466,8 +469,6 @@ body {
 
     border:
         1px solid var(--border-color);
-
-    font-size:14px;
 
 }
 
@@ -605,12 +606,11 @@ body {
 
     max-width:88%;
 
-    color:
-        var(--bubble-text);
+    color:var(--bubble-text);
 
     font-size:16px;
 
-    line-height:1.65;
+    line-height:1.6;
 
     word-wrap:break-word;
 
@@ -619,8 +619,7 @@ body {
 
 .bubble strong {
 
-    color:
-        var(--strong-color);
+    color:var(--strong-color);
 
 }
 
@@ -649,8 +648,57 @@ body {
 
 .bubble th {
 
-    background:
-        var(--btn-hover);
+    background:var(--btn-hover);
+
+}
+
+
+/* ============================================================
+   IMAGE
+============================================================ */
+
+.uploaded-img-preview {
+
+    display:block;
+
+    max-width:350px;
+
+    max-height:500px;
+
+    width:auto;
+
+    height:auto;
+
+    object-fit:contain;
+
+    border-radius:12px;
+
+    border:
+        1px solid var(--border-color);
+
+    margin-bottom:10px;
+
+}
+
+
+.pdf-badge {
+
+    display:inline-flex;
+
+    align-items:center;
+
+    gap:8px;
+
+    background:var(--btn-hover);
+
+    border:
+        1px solid #e11d48;
+
+    color:#ff4d4d;
+
+    padding:7px 12px;
+
+    border-radius:8px;
 
 }
 
@@ -725,55 +773,6 @@ pre {
 
 
 /* ============================================================
-   FILE PREVIEW
-============================================================ */
-
-.uploaded-img-preview {
-
-    display:block;
-
-    max-width:320px;
-
-    max-height:400px;
-
-    width:auto;
-
-    height:auto;
-
-    border-radius:12px;
-
-    border:
-        1px solid var(--border-color);
-
-    margin-bottom:8px;
-
-}
-
-
-.pdf-badge {
-
-    display:inline-flex;
-
-    align-items:center;
-
-    gap:8px;
-
-    background:
-        var(--btn-hover);
-
-    border:
-        1px solid #e11d48;
-
-    color:#ff4d4d;
-
-    padding:7px 12px;
-
-    border-radius:8px;
-
-}
-
-
-/* ============================================================
    INPUT
 ============================================================ */
 
@@ -784,8 +783,7 @@ pre {
     padding:
         10px 15px 15px;
 
-    background:
-        var(--bg-color);
+    background:var(--bg-color);
 
     flex-shrink:0;
 
@@ -800,8 +798,7 @@ pre {
 
     margin:0 auto;
 
-    background:
-        var(--input-bg);
+    background:var(--input-bg);
 
     border:
         1px solid var(--input-border);
@@ -843,8 +840,7 @@ pre {
 
     display:none;
 
-    background:
-        var(--btn-hover);
+    background:var(--btn-hover);
 
     border:
         1px solid #e11d48;
@@ -903,8 +899,7 @@ pre {
 
     border:none;
 
-    color:
-        var(--accent-color);
+    color:var(--accent-color);
 
     font-size:18px;
 
@@ -949,8 +944,7 @@ pre {
 
     outline:none;
 
-    color:
-        var(--text-color);
+    color:var(--text-color);
 
     width:100%;
 
@@ -979,11 +973,9 @@ pre {
 
     border:none;
 
-    background:
-        var(--text-color);
+    background:var(--text-color);
 
-    color:
-        var(--bg-color);
+    color:var(--bg-color);
 
     display:flex;
 
@@ -1000,13 +992,9 @@ pre {
 
 .send-btn:disabled {
 
-    background:
-        var(--border-color);
+    background:var(--border-color);
 
-    color:
-        var(--text-muted);
-
-    cursor:not-allowed;
+    color:var(--text-muted);
 
 }
 
@@ -1017,8 +1005,7 @@ pre {
 
     border:none;
 
-    color:
-        var(--text-muted);
+    color:var(--text-muted);
 
     cursor:pointer;
 
@@ -1031,11 +1018,9 @@ pre {
 
 .modal-content {
 
-    background:
-        var(--modal-bg);
+    background:var(--modal-bg);
 
-    color:
-        var(--text-color);
+    color:var(--text-color);
 
     border:
         1px solid var(--border-color);
@@ -1056,11 +1041,9 @@ pre {
     border:
         1px solid var(--border-color);
 
-    background:
-        var(--input-bg);
+    background:var(--input-bg);
 
-    color:
-        var(--text-color);
+    color:var(--text-color);
 
     text-align:left;
 
@@ -1069,8 +1052,7 @@ pre {
 
 .modal-btn:hover {
 
-    background:
-        var(--btn-hover);
+    background:var(--btn-hover);
 
 }
 
@@ -1113,23 +1095,23 @@ pre {
 
     .chat-container {
 
-        padding:15px 10px;
+        padding:
+            15px 10px;
 
     }
 
 
     .chat-header {
 
-        padding:12px 15px;
+        padding:
+            12px 15px;
 
     }
 
 
     .bubble {
 
-        max-width:calc(
-            100% - 5px
-        );
+        max-width:100%;
 
     }
 
@@ -1167,12 +1149,11 @@ pre {
 
 <div
     class="sidebar"
-    id="sidebar"
->
+    id="sidebar">
+
 
     <div
-        class="d-flex justify-content-between align-items-center mb-3 d-md-none"
-    >
+        class="d-flex justify-content-between align-items-center mb-3 d-md-none">
 
         <span class="fw-bold">
             Menu
@@ -1180,8 +1161,7 @@ pre {
 
         <button
             class="btn btn-sm text-secondary"
-            onclick="toggleSidebar()"
-        >
+            onclick="toggleSidebar()">
 
             <i class="fa-solid fa-xmark fa-xl"></i>
 
@@ -1192,8 +1172,7 @@ pre {
 
     <button
         class="new-chat-btn w-100 mb-2"
-        onclick="startNewChat()"
-    >
+        onclick="startNewChat()">
 
         <i class="fa-solid fa-plus me-2"></i>
 
@@ -1204,8 +1183,9 @@ pre {
 
     <div
         class="history-list"
-        id="historyList"
-    ></div>
+        id="historyList">
+    </div>
+
 
 </div>
 
@@ -1217,15 +1197,16 @@ pre {
 <div class="main-chat">
 
 
+    <!-- HEADER -->
+
     <div class="chat-header">
+
 
         <div class="header-left">
 
             <button
                 class="toggle-btn"
-                onclick="toggleSidebar()"
-                title="Toggle Sidebar"
-            >
+                onclick="toggleSidebar()">
 
                 <i class="fa-solid fa-bars"></i>
 
@@ -1248,8 +1229,7 @@ pre {
         <button
             class="theme-btn"
             onclick="toggleTheme()"
-            id="themeToggleBtn"
-        >
+            id="themeToggleBtn">
 
             <i
                 class="fa-solid fa-sun"
@@ -1262,29 +1242,28 @@ pre {
 
         </button>
 
+
     </div>
 
 
-    <!-- ========================================================
-         CHAT BOX
-    ========================================================= -->
+    <!-- CHAT -->
 
     <div
         class="chat-container"
-        id="chatBox"
-    ></div>
+        id="chatBox">
+    </div>
 
 
-    <!-- ========================================================
-         INPUT
-    ========================================================= -->
+    <!-- INPUT -->
 
     <div class="input-container-box">
+
 
         <div class="input-wrapper">
 
 
             <div id="filePreviewArea">
+
 
                 <img
                     id="previewImgThumb"
@@ -1309,14 +1288,12 @@ pre {
 
                 <button
                     class="close-img-btn"
-                    onclick="clearSelectedFile()"
-                >
+                    onclick="clearSelectedFile()">
 
-                    <i
-                        class="fa-solid fa-xmark">
-                    </i>
+                    <i class="fa-solid fa-xmark"></i>
 
                 </button>
+
 
             </div>
 
@@ -1327,8 +1304,7 @@ pre {
                 <button
                     class="plus-btn"
                     data-bs-toggle="modal"
-                    data-bs-target="#uploadModal"
-                >
+                    data-bs-target="#uploadModal">
 
                     <i
                         class="fa-solid fa-circle-plus">
@@ -1339,8 +1315,8 @@ pre {
 
                 <form
                     id="chatForm"
-                    class="d-flex w-100 align-items-center gap-2"
-                >
+                    class="d-flex w-100 align-items-center gap-2">
+
 
                     <textarea
                         id="question"
@@ -1354,8 +1330,7 @@ pre {
                         type="button"
                         class="mic-btn"
                         id="micBtn"
-                        onclick="toggleVoiceRecording()"
-                    >
+                        onclick="toggleVoiceRecording()">
 
                         <i
                             class="fa-solid fa-microphone">
@@ -1367,8 +1342,7 @@ pre {
                     <button
                         type="submit"
                         class="send-btn"
-                        id="sendBtn"
-                    >
+                        id="sendBtn">
 
                         <i
                             class="fa-solid fa-arrow-up">
@@ -1376,13 +1350,71 @@ pre {
 
                     </button>
 
+
                 </form>
+
 
             </div>
 
+
         </div>
 
+
     </div>
+
+
+</div>
+
+
+<!-- ============================================================
+     CONTEXT MENU
+============================================================ -->
+
+<div
+    class="chat-context-menu"
+    id="chatContextMenu">
+
+
+    <button
+        class="context-item"
+        onclick="contextPin()">
+
+        <i
+            class="fa-solid fa-thumbtack">
+        </i>
+
+        <span id="contextPinText">
+            Pin
+        </span>
+
+    </button>
+
+
+    <button
+        class="context-item"
+        onclick="contextRename()">
+
+        <i
+            class="fa-solid fa-pen">
+        </i>
+
+        Rename
+
+    </button>
+
+
+    <button
+        class="context-item delete"
+        onclick="contextDelete()">
+
+        <i
+            class="fa-solid fa-trash">
+        </i>
+
+        Delete
+
+    </button>
+
 
 </div>
 
@@ -1395,7 +1427,7 @@ pre {
     type="file"
     id="galleryInput"
     accept="image/*"
-    style="display:none;"
+    style="display:none"
     onchange="handleFileSelect(this)"
 >
 
@@ -1405,7 +1437,7 @@ pre {
     id="cameraInput"
     accept="image/*"
     capture="environment"
-    style="display:none;"
+    style="display:none"
     onchange="handleFileSelect(this)"
 >
 
@@ -1414,7 +1446,7 @@ pre {
     type="file"
     id="pdfInput"
     accept="application/pdf"
-    style="display:none;"
+    style="display:none"
     onchange="handleFileSelect(this)"
 >
 
@@ -1426,23 +1458,20 @@ pre {
 <div
     class="modal fade"
     id="uploadModal"
-    tabindex="-1"
->
+    tabindex="-1">
+
 
     <div
-        class="modal-dialog modal-dialog-centered"
-    >
+        class="modal-dialog modal-dialog-centered">
+
 
         <div class="modal-content">
 
 
-            <div
-                class="modal-header border-0"
-            >
+            <div class="modal-header border-0">
 
-                <h5
-                    class="modal-title fw-bold"
-                >
+
+                <h5 class="modal-title fw-bold">
 
                     <i
                         class="fa-solid fa-paperclip me-2 text-primary">
@@ -1456,9 +1485,9 @@ pre {
                 <button
                     type="button"
                     class="btn-close"
-                    data-bs-dismiss="modal"
-                >
+                    data-bs-dismiss="modal">
                 </button>
+
 
             </div>
 
@@ -1468,8 +1497,7 @@ pre {
 
                 <button
                     class="modal-btn"
-                    onclick="triggerCamera()"
-                >
+                    onclick="triggerCamera()">
 
                     <i
                         class="fa-solid fa-camera fa-lg me-3 text-warning">
@@ -1484,8 +1512,7 @@ pre {
 
                 <button
                     class="modal-btn"
-                    onclick="triggerGallery()"
-                >
+                    onclick="triggerGallery()">
 
                     <i
                         class="fa-solid fa-images fa-lg me-3 text-info">
@@ -1500,8 +1527,7 @@ pre {
 
                 <button
                     class="modal-btn"
-                    onclick="triggerPDF()"
-                >
+                    onclick="triggerPDF()">
 
                     <i
                         class="fa-solid fa-file-pdf fa-lg me-3 text-danger">
@@ -1513,7 +1539,9 @@ pre {
 
                 </button>
 
+
             </div>
+
 
         </div>
 
@@ -1522,64 +1550,7 @@ pre {
 </div>
 
 
-<!-- ============================================================
-     CHAT CONTEXT MENU
-============================================================ -->
-
-<div
-    id="chatContextMenu"
-    class="chat-context-menu"
->
-
-    <button
-        class="context-menu-item"
-        onclick="contextRename()"
-    >
-
-        <i
-            class="fa-solid fa-pen">
-        </i>
-
-        Rename
-
-    </button>
-
-
-    <button
-        class="context-menu-item pin"
-        onclick="contextPin()"
-    >
-
-        <i
-            class="fa-solid fa-star">
-        </i>
-
-        <span id="contextPinText">
-            Pin
-        </span>
-
-    </button>
-
-
-    <button
-        class="context-menu-item delete"
-        onclick="contextDelete()"
-    >
-
-        <i
-            class="fa-solid fa-trash">
-        </i>
-
-        Delete
-
-    </button>
-
-</div>
-
-
-<!-- ============================================================
-     BOOTSTRAP
-============================================================ -->
+<!-- Bootstrap -->
 
 <script
     src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js">
@@ -1589,34 +1560,36 @@ pre {
 <script>
 
 /* ============================================================
-   GLOBAL VARIABLES
+   VARIABLES
 ============================================================ */
 
 let selectedFile = null;
 
+let selectedFileDataURL = null;
+
+let contextSessionId = null;
+
+let longPressTimer = null;
+
+
 const questionInput =
-    document.getElementById(
-        "question"
-    );
+    document.getElementById("question");
+
 
 const chatBox =
-    document.getElementById(
-        "chatBox"
-    );
+    document.getElementById("chatBox");
+
 
 const historyList =
-    document.getElementById(
-        "historyList"
-    );
+    document.getElementById("historyList");
+
 
 const micBtn =
-    document.getElementById(
-        "micBtn"
-    );
+    document.getElementById("micBtn");
 
 
 /* ============================================================
-   SESSION STORAGE
+   STORAGE
 ============================================================ */
 
 let allSessions =
@@ -1645,12 +1618,35 @@ let isRecording = false;
 
 
 /* ============================================================
-   CONTEXT MENU
+   DEFAULT WELCOME
 ============================================================ */
 
-let longPressTimer = null;
+const DEFAULT_WELCOME = `
 
-let contextSessionId = null;
+<div
+    class="welcome-screen"
+    id="welcomeScreen">
+
+    <div class="welcome-avatar">
+        AI
+    </div>
+
+    <h2 class="fw-bold mb-2">
+        Hello there!
+    </h2>
+
+    <p class="text-secondary fs-5">
+        How can I help you today?
+    </p>
+
+    <small class="text-secondary">
+        Ask me anything — study, coding, writing,
+        ideas, math, science, technology and more.
+    </small>
+
+</div>
+
+`;
 
 
 /* ============================================================
@@ -1664,10 +1660,7 @@ function initTheme(){
             "tuto_theme"
         ) || "dark";
 
-    setTheme(
-        savedTheme
-    );
-
+    setTheme(savedTheme);
 }
 
 
@@ -1680,11 +1673,9 @@ function toggleTheme(){
         );
 
     setTheme(
-
         current === "dark"
-            ? "light"
-            : "dark"
-
+        ? "light"
+        : "dark"
     );
 
 }
@@ -1698,7 +1689,6 @@ function setTheme(theme){
             theme
         );
 
-
     localStorage.setItem(
         "tuto_theme",
         theme
@@ -1709,6 +1699,7 @@ function setTheme(theme){
         document.getElementById(
             "themeIcon"
         );
+
 
     const text =
         document.getElementById(
@@ -1748,6 +1739,7 @@ function toggleSidebar(){
             "sidebar"
         );
 
+
     const overlay =
         document.getElementById(
             "sidebarOverlay"
@@ -1786,14 +1778,10 @@ function toggleSidebar(){
 
 function mobileSidebarCheck(){
 
-    if(
-        window.innerWidth <= 768
-    ){
+    if(window.innerWidth <= 768){
 
         document
-            .getElementById(
-                "sidebar"
-            )
+            .getElementById("sidebar")
             .classList.add(
                 "collapsed"
             );
@@ -1804,42 +1792,12 @@ function mobileSidebarCheck(){
 
 
 /* ============================================================
-   WELCOME
-============================================================ */
-
-const DEFAULT_WELCOME = `
-
-<div class="welcome-screen">
-
-    <div class="welcome-avatar">
-        AI
-    </div>
-
-    <h2 class="fw-bold mb-2">
-        Hello there!
-    </h2>
-
-    <p class="text-secondary fs-5">
-        How can I help you today?
-    </p>
-
-    <small class="text-secondary">
-        Ask me anything — study, coding, writing,
-        ideas, math, science, technology and more.
-    </small>
-
-</div>
-
-`;
-
-
-/* ============================================================
    INIT
 ============================================================ */
 
 window.addEventListener(
     "DOMContentLoaded",
-    () => {
+    function(){
 
         initTheme();
 
@@ -1881,8 +1839,10 @@ questionInput.addEventListener(
             "auto";
 
         this.style.height =
-            this.scrollHeight +
-            "px";
+            Math.min(
+                this.scrollHeight,
+                120
+            ) + "px";
 
     }
 );
@@ -1916,6 +1876,24 @@ questionInput.addEventListener(
 
 
 /* ============================================================
+   SAFE HTML
+============================================================ */
+
+function escapeHTML(text){
+
+    const div =
+        document.createElement(
+            "div"
+        );
+
+    div.innerText =
+        text || "";
+
+    return div.innerHTML;
+}
+
+
+/* ============================================================
    MATH
 ============================================================ */
 
@@ -1928,9 +1906,7 @@ function renderMath(element){
         try{
 
             renderMathInElement(
-
                 element,
-
                 {
 
                     delimiters:[
@@ -1964,7 +1940,6 @@ function renderMath(element){
                     throwOnError:false
 
                 }
-
             );
 
         }catch(e){}
@@ -1975,7 +1950,7 @@ function renderMath(element){
 
 
 /* ============================================================
-   CODE BLOCK
+   CODE BLOCKS
 ============================================================ */
 
 function processCodeBlocks(element){
@@ -1987,7 +1962,7 @@ function processCodeBlocks(element){
     element
         .querySelectorAll("pre")
         .forEach(
-            pre => {
+            function(pre){
 
                 if(
                     pre.closest(
@@ -2023,13 +1998,9 @@ function processCodeBlocks(element){
                             /language-(\w+)/
                         );
 
-
-                    if(match){
-
+                    if(match)
                         language =
                             match[1];
-
-                    }
 
                 }
 
@@ -2038,6 +2009,7 @@ function processCodeBlocks(element){
                     document.createElement(
                         "div"
                     );
+
 
                 container.className =
                     "code-container";
@@ -2048,6 +2020,7 @@ function processCodeBlocks(element){
                         "div"
                     );
 
+
                 header.className =
                     "code-header";
 
@@ -2057,6 +2030,7 @@ function processCodeBlocks(element){
                         "span"
                     );
 
+
                 label.innerText =
                     language;
 
@@ -2065,6 +2039,7 @@ function processCodeBlocks(element){
                     document.createElement(
                         "button"
                     );
+
 
                 copyBtn.className =
                     "copy-code-btn";
@@ -2091,16 +2066,13 @@ function processCodeBlocks(element){
 
 
                             setTimeout(
-
-                                () => {
+                                function(){
 
                                     copyBtn.innerHTML =
                                         '<i class="fa-regular fa-copy"></i> Copy';
 
                                 },
-
                                 2000
-
                             );
 
                         }catch(e){}
@@ -2176,48 +2148,14 @@ function saveSessions(){
     }catch(error){
 
         console.error(
-            "Could not save chats:",
+            "Storage error:",
             error
         );
 
-        /*
-         If browser storage becomes full,
-         remove old sessions except current.
-        */
-
-        try{
-
-            const ids =
-                Object.keys(
-                    allSessions
-                );
-
-
-            if(ids.length > 5){
-
-                ids
-                    .filter(
-                        id =>
-                            id !==
-                            currentSessionId
-                    )
-                    .slice(0,2)
-                    .forEach(
-                        id =>
-                            delete allSessions[id]
-                    );
-
-
-                localStorage.setItem(
-                    "tuto_all_sessions",
-                    JSON.stringify(
-                        allSessions
-                    )
-                );
-
-            }
-
-        }catch(e){}
+        alert(
+            "Chat storage is full. "
+            + "Try deleting some old chats."
+        );
 
     }
 
@@ -2243,8 +2181,7 @@ function startNewChat(
 
         title:"New Chat",
 
-        html:
-            DEFAULT_WELCOME,
+        html:DEFAULT_WELCOME,
 
         isPinned:false
 
@@ -2271,7 +2208,7 @@ function startNewChat(
 
 
 /* ============================================================
-   LOAD CHAT
+   LOAD SESSION
 ============================================================ */
 
 function loadSession(id){
@@ -2280,9 +2217,6 @@ function loadSession(id){
         !allSessions[id]
     )
         return;
-
-
-    hideChatContextMenu();
 
 
     currentSessionId =
@@ -2302,7 +2236,7 @@ function loadSession(id){
             ".bubble"
         )
         .forEach(
-            bubble => {
+            function(bubble){
 
                 renderMath(
                     bubble
@@ -2328,10 +2262,17 @@ function loadSession(id){
 
 
 /* ============================================================
-   DIRECT DELETE
+   DELETE
 ============================================================ */
 
-function deleteSessionDirect(id){
+function deleteSession(
+    event,
+    id
+){
+
+    if(event)
+        event.stopPropagation();
+
 
     if(
         !allSessions[id]
@@ -2339,13 +2280,11 @@ function deleteSessionDirect(id){
         return;
 
 
-    const confirmed =
-        confirm(
+    if(
+        !confirm(
             "Delete this chat?"
-        );
-
-
-    if(!confirmed)
+        )
+    )
         return;
 
 
@@ -2365,15 +2304,11 @@ function deleteSessionDirect(id){
         if(keys.length){
 
             currentSessionId =
-                keys[
-                    keys.length - 1
-                ];
+                keys[keys.length - 1];
 
         }else{
 
-            startNewChat(
-                false
-            );
+            startNewChat(false);
 
         }
 
@@ -2392,312 +2327,21 @@ function deleteSessionDirect(id){
 
 
 /* ============================================================
-   LONG PRESS
-============================================================ */
-
-function setupLongPress(
-    element,
-    id
-){
-
-    if(!element)
-        return;
-
-
-    let startX = 0;
-
-    let startY = 0;
-
-
-    function start(event){
-
-        const point =
-            event.touches
-            ? event.touches[0]
-            : event;
-
-
-        startX =
-            point.clientX;
-
-        startY =
-            point.clientY;
-
-
-        clearTimeout(
-            longPressTimer
-        );
-
-
-        longPressTimer =
-            setTimeout(
-                () => {
-
-                    contextSessionId =
-                        id;
-
-
-                    showChatContextMenu(
-                        startX,
-                        startY,
-                        id
-                    );
-
-                },
-                600
-            );
-
-    }
-
-
-    function cancel(){
-
-        clearTimeout(
-            longPressTimer
-        );
-
-    }
-
-
-    element.addEventListener(
-        "touchstart",
-        start,
-        {
-            passive:true
-        }
-    );
-
-
-    element.addEventListener(
-        "touchend",
-        cancel
-    );
-
-
-    element.addEventListener(
-        "touchmove",
-        cancel
-    );
-
-
-    element.addEventListener(
-        "mousedown",
-        start
-    );
-
-
-    element.addEventListener(
-        "mouseup",
-        cancel
-    );
-
-
-    element.addEventListener(
-        "mouseleave",
-        cancel
-    );
-
-}
-
-
-function showChatContextMenu(
-    x,
-    y,
-    id
-){
-
-    const menu =
-        document.getElementById(
-            "chatContextMenu"
-        );
-
-
-    const pinText =
-        document.getElementById(
-            "contextPinText"
-        );
-
-
-    if(
-        allSessions[id] &&
-        allSessions[id].isPinned
-    ){
-
-        pinText.innerText =
-            "Unpin";
-
-    }else{
-
-        pinText.innerText =
-            "Pin";
-
-    }
-
-
-    menu.classList.add(
-        "active"
-    );
-
-
-    const menuWidth =
-        menu.offsetWidth ||
-        190;
-
-
-    const menuHeight =
-        menu.offsetHeight ||
-        140;
-
-
-    let left = x;
-
-    let top = y;
-
-
-    if(
-        left + menuWidth >
-        window.innerWidth - 10
-    ){
-
-        left =
-            window.innerWidth -
-            menuWidth -
-            10;
-
-    }
-
-
-    if(
-        top + menuHeight >
-        window.innerHeight - 10
-    ){
-
-        top =
-            window.innerHeight -
-            menuHeight -
-            10;
-
-    }
-
-
-    menu.style.left =
-        Math.max(
-            10,
-            left
-        ) + "px";
-
-
-    menu.style.top =
-        Math.max(
-            10,
-            top
-        ) + "px";
-
-}
-
-
-function hideChatContextMenu(){
-
-    const menu =
-        document.getElementById(
-            "chatContextMenu"
-        );
-
-
-    if(menu){
-
-        menu.classList.remove(
-            "active"
-        );
-
-    }
-
-
-    contextSessionId =
-        null;
-
-}
-
-
-/* ============================================================
-   RENAME
-============================================================ */
-
-function contextRename(){
-
-    if(!contextSessionId)
-        return;
-
-
-    const id =
-        contextSessionId;
-
-
-    const session =
-        allSessions[id];
-
-
-    hideChatContextMenu();
-
-
-    if(!session)
-        return;
-
-
-    const newTitle =
-        prompt(
-            "Rename chat:",
-            session.title ||
-            "New Chat"
-        );
-
-
-    if(
-        newTitle === null
-    )
-        return;
-
-
-    const cleanTitle =
-        newTitle.trim();
-
-
-    if(!cleanTitle)
-        return;
-
-
-    session.title =
-        cleanTitle.substring(
-            0,
-            60
-        );
-
-
-    saveSessions();
-
-    renderSidebarHistory();
-
-}
-
-
-/* ============================================================
    PIN
 ============================================================ */
 
-function contextPin(){
+function togglePin(
+    event,
+    id
+){
 
-    if(!contextSessionId)
-        return;
-
-
-    const id =
-        contextSessionId;
-
-
-    hideChatContextMenu();
+    if(event)
+        event.stopPropagation();
 
 
-    if(allSessions[id]){
+    if(
+        allSessions[id]
+    ){
 
         allSessions[id].isPinned =
             !allSessions[id].isPinned;
@@ -2713,76 +2357,57 @@ function contextPin(){
 
 
 /* ============================================================
-   DELETE
+   RENAME
 ============================================================ */
 
-function contextDelete(){
+function renameSession(id){
 
-    if(!contextSessionId)
+    if(
+        !allSessions[id]
+    )
         return;
 
 
-    const id =
-        contextSessionId;
+    const oldTitle =
+        allSessions[id].title ||
+        "New Chat";
 
 
-    hideChatContextMenu();
+    const newTitle =
+        prompt(
+            "Rename chat:",
+            oldTitle
+        );
 
 
-    deleteSessionDirect(
-        id
-    );
+    if(
+        newTitle === null
+    )
+        return;
+
+
+    const cleanTitle =
+        newTitle.trim();
+
+
+    if(
+        !cleanTitle
+    )
+        return;
+
+
+    allSessions[id].title =
+        cleanTitle.substring(
+            0,
+            80
+        );
+
+
+    saveSessions();
+
+    renderSidebarHistory();
 
 }
-
-
-/* ============================================================
-   CLOSE CONTEXT MENU
-============================================================ */
-
-document.addEventListener(
-    "click",
-    function(event){
-
-        const menu =
-            document.getElementById(
-                "chatContextMenu"
-            );
-
-
-        if(
-            menu &&
-            !menu.contains(
-                event.target
-            )
-        ){
-
-            hideChatContextMenu();
-
-        }
-
-    }
-);
-
-
-document.addEventListener(
-    "contextmenu",
-    function(event){
-
-        const item =
-            event.target.closest(
-                ".history-item"
-            );
-
-
-        if(item){
-
-            event.preventDefault();
-
-        }
-
-    }
-);
 
 
 /* ============================================================
@@ -2791,8 +2416,7 @@ document.addEventListener(
 
 function renderSidebarHistory(){
 
-    historyList.innerHTML =
-        "";
+    historyList.innerHTML = "";
 
 
     const keys =
@@ -2803,17 +2427,25 @@ function renderSidebarHistory(){
 
     const pinned =
         keys.filter(
-            id =>
-                allSessions[id]
-                .isPinned
+            function(id){
+
+                return allSessions[
+                    id
+                ].isPinned;
+
+            }
         );
 
 
     const recent =
         keys.filter(
-            id =>
-                !allSessions[id]
-                .isPinned
+            function(id){
+
+                return !allSessions[
+                    id
+                ].isPinned;
+
+            }
         );
 
 
@@ -2821,24 +2453,21 @@ function renderSidebarHistory(){
 
         historyList.innerHTML += `
 
-            <div
-                class="text-warning small fw-bold mt-2 mb-1"
-            >
-
-                <i
-                    class="fa-solid fa-star me-1">
-                </i>
-
-                PINNED CHATS
-
+            <div class="history-label">
+                PINNED
             </div>
 
         `;
 
 
         pinned.forEach(
-            id =>
-                renderHistoryItem(id)
+            function(id){
+
+                renderHistoryItem(
+                    id
+                );
+
+            }
         );
 
     }
@@ -2848,20 +2477,21 @@ function renderSidebarHistory(){
 
         historyList.innerHTML += `
 
-            <div
-                class="text-secondary small fw-bold mt-3 mb-1"
-            >
-
+            <div class="history-label">
                 RECENT CHATS
-
             </div>
 
         `;
 
 
         recent.forEach(
-            id =>
-                renderHistoryItem(id)
+            function(id){
+
+                renderHistoryItem(
+                    id
+                );
+
+            }
         );
 
     }
@@ -2885,285 +2515,316 @@ function renderHistoryItem(id){
         : "";
 
 
-    historyList.innerHTML += `
+    const item =
+        document.createElement(
+            "div"
+        );
 
-        <div
-            class="history-item ${active}"
-            data-session-id="${id}"
-            onclick="loadSession('${id}')"
-        >
 
-            <div class="history-title">
+    item.className =
+        "history-item " +
+        active;
 
-                <i
-                    class="fa-regular fa-message me-2">
-                </i>
 
-                ${escapeHTML(
-                    session.title
-                )}
+    item.dataset.id =
+        id;
 
-                ${
-                    session.isPinned
-                    ?
-                    '<i class="fa-solid fa-star is-pinned-icon"></i>'
-                    :
-                    ''
-                }
 
-            </div>
+    item.innerHTML = `
+
+        <div class="history-title">
+
+            <i
+                class="fa-regular fa-message me-2">
+            </i>
+
+            ${escapeHTML(
+                session.title ||
+                "New Chat"
+            )}
+
+            ${
+                session.isPinned
+                ?
+                '<i class="fa-solid fa-thumbtack pinned-icon"></i>'
+                :
+                ''
+            }
 
         </div>
 
     `;
 
 
-    const item =
-        historyList.querySelector(
-            `.history-item[data-session-id="${id}"]`
-        );
+    /* Normal click */
 
+    item.addEventListener(
+        "click",
+        function(){
 
-    setupLongPress(
-        item,
-        id
-    );
+            loadSession(id);
 
-}
-
-
-/* ============================================================
-   SAFE HTML
-============================================================ */
-
-function escapeHTML(text){
-
-    const div =
-        document.createElement(
-            "div"
-        );
-
-
-    div.innerText =
-        text || "";
-
-
-    return div.innerHTML;
-
-}
-
-
-/* ============================================================
-   VOICE
-============================================================ */
-
-async function toggleVoiceRecording(){
-
-    if(isRecording){
-
-        stopRecording();
-
-    }else{
-
-        startRecording();
-
-    }
-
-}
-
-
-async function startRecording(){
-
-    try{
-
-        const stream =
-            await navigator
-                .mediaDevices
-                .getUserMedia({
-                    audio:true
-                });
-
-
-        mediaRecorder =
-            new MediaRecorder(
-                stream
-            );
-
-
-        audioChunks = [];
-
-
-        mediaRecorder.ondataavailable =
-            event => {
-
-                if(
-                    event.data.size > 0
-                ){
-
-                    audioChunks.push(
-                        event.data
-                    );
-
-                }
-
-            };
-
-
-        mediaRecorder.onstop =
-            async () => {
-
-                const blob =
-                    new Blob(
-                        audioChunks,
-                        {
-                            type:
-                                "audio/webm"
-                        }
-                    );
-
-
-                stream
-                    .getTracks()
-                    .forEach(
-                        track =>
-                            track.stop()
-                    );
-
-
-                await transcribeAudio(
-                    blob
-                );
-
-            };
-
-
-        mediaRecorder.start();
-
-
-        isRecording = true;
-
-
-        micBtn.classList.add(
-            "recording"
-        );
-
-
-        questionInput.placeholder =
-            "Recording... Tap microphone to stop";
-
-    }catch(error){
-
-        alert(
-            "Microphone permission denied or unavailable."
-        );
-
-    }
-
-}
-
-
-function stopRecording(){
-
-    if(
-        mediaRecorder &&
-        isRecording
-    ){
-
-        mediaRecorder.stop();
-
-
-        isRecording = false;
-
-
-        micBtn.classList.remove(
-            "recording"
-        );
-
-
-        questionInput.placeholder =
-            "Processing voice...";
-
-    }
-
-}
-
-
-async function transcribeAudio(
-    blob
-){
-
-    const formData =
-        new FormData();
-
-
-    formData.append(
-        "audio",
-        blob,
-        "audio.webm"
+        }
     );
 
 
-    try{
+    /* Right click */
 
-        const response =
-            await fetch(
-                "/api/transcribe",
-                {
-                    method:"POST",
-                    body:formData
-                }
-            );
+    item.addEventListener(
+        "contextmenu",
+        function(e){
 
+            e.preventDefault();
 
-        const data =
-            await response.json();
-
-
-        if(
-            data.status ===
-                "success" &&
-            data.text
-        ){
-
-            questionInput.value =
-                data.text;
-
-
-            questionInput.style.height =
-                "auto";
-
-
-            questionInput.style.height =
-                questionInput.scrollHeight +
-                "px";
-
-        }else{
-
-            alert(
-                data.message ||
-                "Voice recognition failed."
+            showContextMenu(
+                e.clientX,
+                e.clientY,
+                id
             );
 
         }
+    );
 
-    }catch(error){
 
-        alert(
-            "Could not connect to voice service."
-        );
+    /* Long press */
 
-    }finally{
+    item.addEventListener(
+        "touchstart",
+        function(e){
 
-        questionInput.placeholder =
-            "Message Tuto AI...";
+            const touch =
+                e.touches[0];
 
-    }
+
+            longPressTimer =
+                setTimeout(
+                    function(){
+
+                        showContextMenu(
+                            touch.clientX,
+                            touch.clientY,
+                            id
+                        );
+
+                    },
+                    600
+                );
+
+        },
+        {
+            passive:true
+        }
+    );
+
+
+    item.addEventListener(
+        "touchend",
+        function(){
+
+            clearTimeout(
+                longPressTimer
+            );
+
+        }
+    );
+
+
+    item.addEventListener(
+        "touchmove",
+        function(){
+
+            clearTimeout(
+                longPressTimer
+            );
+
+        }
+    );
+
+
+    historyList.appendChild(
+        item
+    );
 
 }
 
 
 /* ============================================================
-   FILE UPLOAD
+   CONTEXT MENU
+============================================================ */
+
+function showContextMenu(
+    x,
+    y,
+    id
+){
+
+    contextSessionId =
+        id;
+
+
+    const menu =
+        document.getElementById(
+            "chatContextMenu"
+        );
+
+
+    const pinText =
+        document.getElementById(
+            "contextPinText"
+        );
+
+
+    pinText.innerText =
+        allSessions[id] &&
+        allSessions[id].isPinned
+        ? "Unpin"
+        : "Pin";
+
+
+    menu.classList.add(
+        "show"
+    );
+
+
+    const width =
+        190;
+
+
+    const height =
+        145;
+
+
+    const safeX =
+        Math.min(
+            x,
+            window.innerWidth -
+            width -
+            10
+        );
+
+
+    const safeY =
+        Math.min(
+            y,
+            window.innerHeight -
+            height -
+            10
+        );
+
+
+    menu.style.left =
+        Math.max(
+            10,
+            safeX
+        ) + "px";
+
+
+    menu.style.top =
+        Math.max(
+            10,
+            safeY
+        ) + "px";
+
+}
+
+
+function hideContextMenu(){
+
+    document
+        .getElementById(
+            "chatContextMenu"
+        )
+        .classList.remove(
+            "show"
+        );
+
+    contextSessionId =
+        null;
+
+}
+
+
+document.addEventListener(
+    "click",
+    function(e){
+
+        const menu =
+            document.getElementById(
+                "chatContextMenu"
+            );
+
+
+        if(
+            !menu.contains(e.target)
+        ){
+
+            hideContextMenu();
+
+        }
+
+    }
+);
+
+
+/* ============================================================
+   CONTEXT ACTIONS
+============================================================ */
+
+function contextPin(){
+
+    if(
+        contextSessionId
+    ){
+
+        togglePin(
+            null,
+            contextSessionId
+        );
+
+    }
+
+    hideContextMenu();
+
+}
+
+
+function contextRename(){
+
+    if(
+        contextSessionId
+    ){
+
+        renameSession(
+            contextSessionId
+        );
+
+    }
+
+    hideContextMenu();
+
+}
+
+
+function contextDelete(){
+
+    if(
+        contextSessionId
+    ){
+
+        deleteSession(
+            null,
+            contextSessionId
+        );
+
+    }
+
+    hideContextMenu();
+
+}
+
+
+/* ============================================================
+   FILE MODAL
 ============================================================ */
 
 function closeUploadModal(){
@@ -3190,7 +2851,6 @@ function triggerCamera(){
 
     closeUploadModal();
 
-
     document
         .getElementById(
             "cameraInput"
@@ -3203,7 +2863,6 @@ function triggerCamera(){
 function triggerGallery(){
 
     closeUploadModal();
-
 
     document
         .getElementById(
@@ -3218,7 +2877,6 @@ function triggerPDF(){
 
     closeUploadModal();
 
-
     document
         .getElementById(
             "pdfInput"
@@ -3229,10 +2887,47 @@ function triggerPDF(){
 
 
 /* ============================================================
+   FILE TO DATA URL
+============================================================ */
+
+function fileToDataURL(file){
+
+    return new Promise(
+        function(resolve, reject){
+
+            const reader =
+                new FileReader();
+
+
+            reader.onload =
+                function(){
+
+                    resolve(
+                        reader.result
+                    );
+
+                };
+
+
+            reader.onerror =
+                reject;
+
+
+            reader.readAsDataURL(
+                file
+            );
+
+        }
+    );
+
+}
+
+
+/* ============================================================
    FILE SELECT
 ============================================================ */
 
-function handleFileSelect(
+async function handleFileSelect(
     input
 ){
 
@@ -3245,6 +2940,21 @@ function handleFileSelect(
 
     selectedFile =
         input.files[0];
+
+
+    try{
+
+        selectedFileDataURL =
+            await fileToDataURL(
+                selectedFile
+            );
+
+    }catch(error){
+
+        selectedFileDataURL =
+            null;
+
+    }
 
 
     const previewArea =
@@ -3294,6 +3004,7 @@ function handleFileSelect(
 
 
         imageThumb.src =
+            selectedFileDataURL ||
             URL.createObjectURL(
                 selectedFile
             );
@@ -3314,6 +3025,10 @@ function handleFileSelect(
 function clearSelectedFile(){
 
     selectedFile =
+        null;
+
+
+    selectedFileDataURL =
         null;
 
 
@@ -3340,134 +3055,224 @@ function clearSelectedFile(){
 
     document.getElementById(
         "previewImgThumb"
-    ).src =
-        "";
+    ).src = "";
 
 }
 
 
 /* ============================================================
-   IMAGE TO DATA URL
+   VOICE
 ============================================================ */
 
-function imageFileToDataURL(
-    file
+async function toggleVoiceRecording(){
+
+    if(isRecording){
+
+        stopRecording();
+
+    }else{
+
+        startRecording();
+
+    }
+
+}
+
+
+async function startRecording(){
+
+    try{
+
+        const stream =
+            await navigator
+                .mediaDevices
+                .getUserMedia({
+                    audio:true
+                });
+
+
+        mediaRecorder =
+            new MediaRecorder(
+                stream
+            );
+
+
+        audioChunks = [];
+
+
+        mediaRecorder.ondataavailable =
+            function(event){
+
+                if(
+                    event.data.size > 0
+                ){
+
+                    audioChunks.push(
+                        event.data
+                    );
+
+                }
+
+            };
+
+
+        mediaRecorder.onstop =
+            async function(){
+
+                const blob =
+                    new Blob(
+                        audioChunks,
+                        {
+                            type:
+                                "audio/webm"
+                        }
+                    );
+
+
+                stream
+                    .getTracks()
+                    .forEach(
+                        function(track){
+
+                            track.stop();
+
+                        }
+                    );
+
+
+                await transcribeAudio(
+                    blob
+                );
+
+            };
+
+
+        mediaRecorder.start();
+
+
+        isRecording =
+            true;
+
+
+        micBtn.classList.add(
+            "recording"
+        );
+
+
+        questionInput.placeholder =
+            "Recording... Tap microphone to stop";
+
+    }catch(error){
+
+        alert(
+            "Microphone permission denied or unavailable."
+        );
+
+    }
+
+}
+
+
+function stopRecording(){
+
+    if(
+        mediaRecorder &&
+        isRecording
+    ){
+
+        mediaRecorder.stop();
+
+
+        isRecording =
+            false;
+
+
+        micBtn.classList.remove(
+            "recording"
+        );
+
+
+        questionInput.placeholder =
+            "Processing voice...";
+
+    }
+
+}
+
+
+async function transcribeAudio(
+    blob
 ){
 
-    return new Promise(
-        (
-            resolve,
-            reject
-        ) => {
-
-            const reader =
-                new FileReader();
+    const formData =
+        new FormData();
 
 
-            reader.onload =
-                () => {
-
-                    const img =
-                        new Image();
-
-
-                    img.onload =
-                        () => {
-
-                            const maxWidth =
-                                900;
+    formData.append(
+        "audio",
+        blob,
+        "audio.webm"
+    );
 
 
-                            let width =
-                                img.width;
+    try{
+
+        const response =
+            await fetch(
+                "/api/transcribe",
+                {
+                    method:"POST",
+                    body:formData
+                }
+            );
 
 
-                            let height =
-                                img.height;
+        const data =
+            await response.json();
 
 
-                            if(
-                                width >
-                                maxWidth
-                            ){
+        if(
+            data.status ===
+                "success"
+            &&
+            data.text
+        ){
 
-                                height =
-                                    height *
-                                    (
-                                        maxWidth /
-                                        width
-                                    );
+            questionInput.value =
+                data.text;
 
 
-                                width =
-                                    maxWidth;
-
-                            }
+            questionInput.style.height =
+                "auto";
 
 
-                            const canvas =
-                                document.createElement(
-                                    "canvas"
-                                );
+            questionInput.style.height =
+                Math.min(
+                    questionInput.scrollHeight,
+                    120
+                ) + "px";
 
+        }else{
 
-                            canvas.width =
-                                width;
-
-
-                            canvas.height =
-                                height;
-
-
-                            const ctx =
-                                canvas.getContext(
-                                    "2d"
-                                );
-
-
-                            ctx.drawImage(
-                                img,
-                                0,
-                                0,
-                                width,
-                                height
-                            );
-
-
-                            const dataURL =
-                                canvas.toDataURL(
-                                    "image/jpeg",
-                                    0.72
-                                );
-
-
-                            resolve(
-                                dataURL
-                            );
-
-                        };
-
-
-                    img.onerror =
-                        reject;
-
-
-                    img.src =
-                        reader.result;
-
-                };
-
-
-            reader.onerror =
-                reject;
-
-
-            reader.readAsDataURL(
-                file
+            alert(
+                data.message ||
+                "Voice recognition failed."
             );
 
         }
-    );
+
+    }catch(error){
+
+        alert(
+            "Could not connect to voice service."
+        );
+
+    }finally{
+
+        questionInput.placeholder =
+            "Message Tuto AI...";
+
+    }
 
 }
 
@@ -3497,7 +3302,7 @@ function speakText(button){
         );
 
 
-    let text =
+    const text =
         bubble
         ? bubble.innerText
         : "";
@@ -3547,7 +3352,7 @@ function speakText(button){
 
 
     utterance.onend =
-        () => {
+        function(){
 
             button.innerHTML =
                 '<i class="fa-solid fa-volume-high"></i>';
@@ -3597,23 +3402,18 @@ document
             }
 
 
-            /* ------------------------------------------------
+            /* ----------------------------------------------
                USER MESSAGE
-            ------------------------------------------------ */
+            ---------------------------------------------- */
 
-            let userHTML =
-                "";
+            let userHTML = "";
 
 
             if(question){
 
                 userHTML += `
 
-                    <strong>
-                        You
-                    </strong>
-
-                    <br>
+                    <strong>You</strong><br>
 
                     ${escapeHTML(
                         question
@@ -3627,41 +3427,6 @@ document
             }
 
 
-            /*
-             Convert image to permanent
-             data URL BEFORE clearing file.
-            */
-
-            let permanentImage =
-                null;
-
-
-            if(
-                selectedFile &&
-                selectedFile.type.startsWith(
-                    "image/"
-                )
-            ){
-
-                try{
-
-                    permanentImage =
-                        await imageFileToDataURL(
-                            selectedFile
-                        );
-
-                }catch(error){
-
-                    console.error(
-                        "Image conversion failed:",
-                        error
-                    );
-
-                }
-
-            }
-
-
             if(selectedFile){
 
                 if(
@@ -3670,7 +3435,9 @@ document
                 ){
 
                     userHTML =
-                        `<div class="pdf-badge">
+                        `
+
+                        <div class="pdf-badge">
 
                             <i
                                 class="fa-solid fa-file-pdf">
@@ -3680,28 +3447,43 @@ document
                                 selectedFile.name
                             )}
 
-                        </div>` +
+                        </div>
 
+                        ` +
                         (
                             userHTML
-                            ? "<br>" +
-                                userHTML
-                            : ""
+                            ?
+                            "<br>" + userHTML
+                            :
+                            ""
                         );
+
 
                 }else{
 
-                    userHTML =
-                        `<img
-                            src="${permanentImage || ""}"
-                            class="uploaded-img-preview"
-                        >` +
+                    const imageSrc =
+                        selectedFileDataURL ||
+                        URL.createObjectURL(
+                            selectedFile
+                        );
 
+
+                    userHTML =
+                        `
+
+                        <img
+                            src="${imageSrc}"
+                            class="uploaded-img-preview"
+                            alt="Uploaded image"
+                        >
+
+                        ` +
                         (
                             userHTML
-                            ? "<br>" +
-                                userHTML
-                            : ""
+                            ?
+                            "<br>" + userHTML
+                            :
+                            ""
                         );
 
                 }
@@ -3728,9 +3510,9 @@ document
             `;
 
 
-            /* ------------------------------------------------
+            /* ----------------------------------------------
                FORM DATA
-            ------------------------------------------------ */
+            ---------------------------------------------- */
 
             const formData =
                 new FormData();
@@ -3758,9 +3540,7 @@ document
             }
 
 
-            questionInput.value =
-                "";
-
+            questionInput.value = "";
 
             questionInput.style.height =
                 "auto";
@@ -3777,9 +3557,9 @@ document
                 chatBox.scrollHeight;
 
 
-            /* ------------------------------------------------
+            /* ----------------------------------------------
                LOADING
-            ------------------------------------------------ */
+            ---------------------------------------------- */
 
             const loadingId =
                 "loading-" +
@@ -3790,14 +3570,14 @@ document
 
                 <div
                     class="message"
-                    id="${loadingId}"
-                >
+                    id="${loadingId}">
 
                     <div class="avatar ai-avatar">
                         AI
                     </div>
 
-                    <div class="bubble text-secondary">
+                    <div
+                        class="bubble text-secondary">
 
                         <i
                             class="fa-solid fa-circle-notch fa-spin me-2">
@@ -3855,7 +3635,7 @@ document
                                 content
                             );
 
-                    }catch(e){
+                    }catch(error){
 
                         content =
                             escapeHTML(
@@ -3868,63 +3648,63 @@ document
                     }
 
 
-                    if(loading){
+                    if(!loading){
 
-                        const bubble =
-                            loading.querySelector(
-                                ".bubble"
-                            );
-
-
-                        bubble.innerHTML = `
-
-                            <div
-                                class="d-flex justify-content-between align-items-center mb-1"
-                            >
-
-                                <strong>
-                                    Tuto AI
-                                </strong>
-
-
-                                <button
-                                    class="tts-btn"
-                                    onclick="speakText(this)"
-                                    title="Read Aloud"
-                                >
-
-                                    <i
-                                        class="fa-solid fa-volume-high">
-                                    </i>
-
-                                </button>
-
-                            </div>
-
-
-                            <div>
-                                ${content}
-                            </div>
-
-                        `;
-
-
-                        processCodeBlocks(
-                            bubble
-                        );
-
-
-                        renderMath(
-                            bubble
-                        );
+                        return;
 
                     }
 
 
-                    /*
-                     Save chat AFTER response.
-                     Image is already a permanent data URL.
-                    */
+                    const bubble =
+                        loading.querySelector(
+                            ".bubble"
+                        );
+
+
+                    bubble.innerHTML = `
+
+                        <div
+                            class="d-flex
+                            justify-content-between
+                            align-items-center
+                            mb-1">
+
+                            <strong>
+                                Tuto AI
+                            </strong>
+
+                            <button
+                                class="tts-btn"
+                                onclick="speakText(this)"
+                                title="Read Aloud">
+
+                                <i
+                                    class="fa-solid fa-volume-high">
+                                </i>
+
+                            </button>
+
+                        </div>
+
+
+                        <div>
+                            ${content}
+                        </div>
+
+                    `;
+
+
+                    processCodeBlocks(
+                        bubble
+                    );
+
+
+                    renderMath(
+                        bubble
+                    );
+
+
+                    /* Save current chat */
 
                     allSessions[
                         currentSessionId
@@ -3935,9 +3715,7 @@ document
                     saveSessions();
 
 
-                    /* ------------------------------------------------
-                       GENERATE TITLE
-                    ------------------------------------------------ */
+                    /* Generate title */
 
                     if(
                         allSessions[
@@ -3948,11 +3726,11 @@ document
 
                         generateTitle(
                             question ||
-                            selectedFile?.name ||
-                            "Conversation"
+                            "Image conversation"
                         );
 
                     }
+
 
                 }else{
 
@@ -3980,11 +3758,6 @@ document
 
 
             }catch(error){
-
-                console.error(
-                    error
-                );
-
 
                 const loading =
                     document.getElementById(
@@ -4024,7 +3797,7 @@ document
 
 
 /* ============================================================
-   SMART TITLE
+   TITLE GENERATION
 ============================================================ */
 
 async function generateTitle(
@@ -4032,12 +3805,6 @@ async function generateTitle(
 ){
 
     try{
-
-        /*
-         IMPORTANT:
-         Backend uses Form(...),
-         so frontend must send FormData.
-        */
 
         const formData =
             new FormData();
@@ -4065,8 +3832,10 @@ async function generateTitle(
 
         if(
             data.status ===
-                "success" &&
-            data.title &&
+                "success"
+            &&
+            data.title
+            &&
             allSessions[
                 currentSessionId
             ]
@@ -4080,21 +3849,31 @@ async function generateTitle(
 
             saveSessions();
 
-
             renderSidebarHistory();
 
         }
 
-    }catch(error){
-
-        console.error(
-            "Title generation failed:",
-            error
-        );
-
-    }
+    }catch(error){}
 
 }
+
+
+/* ============================================================
+   CLOSE MENU ON ESC
+============================================================ */
+
+document.addEventListener(
+    "keydown",
+    function(e){
+
+        if(e.key === "Escape"){
+
+            hideContextMenu();
+
+        }
+
+    }
+);
 
 </script>
 
