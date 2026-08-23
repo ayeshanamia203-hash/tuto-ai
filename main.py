@@ -1,20 +1,20 @@
 # main.py
-# Tuto AI - Groq Text + Groq Vision + Groq Whisper
+# Tuto AI - Groq Text + Gemini Vision + Groq Whisper
 
-import base64
 import io
 import os
 import re
 import tempfile
 from pathlib import Path
 
-from fastapi import FastAPI, File, Form, UploadFile
+from fastapi import FastAPI, File, Form, UploadFile, Request
 from fastapi.responses import HTMLResponse
 from groq import Groq
+import google.generativeai as genai
 import uvicorn
 
 from ai_brain import ask_ai
-from config import GROQ_API_KEY
+from config import GROQ_API_KEY, GEMINI_API_KEY
 
 
 # ============================================================
@@ -24,12 +24,12 @@ from config import GROQ_API_KEY
 app = FastAPI(
     title="Tuto AI",
     description="Tuto AI - General Purpose AI",
-    version="3.0.0"
+    version="4.0.0"
 )
 
 
 # ============================================================
-# GROQ CLIENT
+# API CLIENTS
 # ============================================================
 
 groq_client = None
@@ -41,11 +41,20 @@ if GROQ_API_KEY:
 
 
 # ============================================================
-# GROQ VISION MODEL
+# GEMINI CONFIGURATION
 # ============================================================
 
-# Current Groq vision-capable model
-VISION_MODEL = "qwen/qwen3.6-27b"
+if GEMINI_API_KEY:
+    genai.configure(
+        api_key=GEMINI_API_KEY
+    )
+
+
+# Gemini vision models
+GEMINI_VISION_MODELS = [
+    "gemini-2.0-flash",
+    "gemini-1.5-flash"
+]
 
 
 # ============================================================
@@ -56,7 +65,7 @@ chat_sessions = {}
 
 
 # ============================================================
-# CLEAN RESPONSE
+# CLEAN AI RESPONSE
 # ============================================================
 
 def clean_ai_response(text: str) -> str:
@@ -64,6 +73,7 @@ def clean_ai_response(text: str) -> str:
     if not text:
         return ""
 
+    # Remove hidden thinking tags if any model returns them
     text = re.sub(
         r"<think>.*?</think>",
         "",
@@ -109,7 +119,7 @@ def extract_pdf_text(contents: bytes) -> str:
 
 
 # ============================================================
-# SESSION
+# SESSION FUNCTIONS
 # ============================================================
 
 def get_session_history(session_id: str):
@@ -157,42 +167,58 @@ async def home():
 
     try:
 
-        index_file = (
+        base_dir = (
             Path(__file__).resolve().parent
-            / "index.html"
         )
 
+        index_file = (
+            base_dir / "index.html"
+        )
+
+        # Fallback to current directory
         if not index_file.exists():
 
-            return HTMLResponse(
-
-                f"""
-                <html>
-                <body style="
-                    background:#131314;
-                    color:white;
-                    font-family:Arial;
-                    padding:40px;
-                ">
-
-                    <h2>
-                        Tuto AI frontend not found.
-                    </h2>
-
-                    <p>
-                        Expected:
-                    </p>
-
-                    <code>
-                        {index_file}
-                    </code>
-
-                </body>
-                </html>
-                """,
-
-                status_code=500
+            current_file = (
+                Path.cwd() / "index.html"
             )
+
+            if current_file.exists():
+
+                index_file = current_file
+
+            else:
+
+                return HTMLResponse(
+
+                    f"""
+                    <html>
+
+                    <body style="
+                        background:#131314;
+                        color:white;
+                        font-family:Arial;
+                        padding:40px;
+                    ">
+
+                        <h2>
+                            Tuto AI frontend not found.
+                        </h2>
+
+                        <p>
+                            Expected:
+                        </p>
+
+                        <code>
+                            {index_file}
+                        </code>
+
+                    </body>
+
+                    </html>
+                    """,
+
+                    status_code=500
+                )
 
         html = index_file.read_text(
             encoding="utf-8"
@@ -209,6 +235,7 @@ async def home():
 
             f"""
             <html>
+
             <body style="
                 background:#131314;
                 color:white;
@@ -225,6 +252,7 @@ async def home():
                 </p>
 
             </body>
+
             </html>
             """,
 
@@ -245,7 +273,11 @@ async def health():
 
         "service": "Tuto AI",
 
-        "vision": VISION_MODEL
+        "text_ai": "Groq / ai_brain",
+
+        "vision": "Google Gemini",
+
+        "voice": "Groq Whisper"
 
     }
 
@@ -273,6 +305,17 @@ async def transcribe_audio(
             }
 
         audio_content = await audio.read()
+
+        if not audio_content:
+
+            return {
+
+                "status": "error",
+
+                "message":
+                    "Audio file is empty."
+
+            }
 
         with tempfile.NamedTemporaryFile(
             delete=False,
@@ -321,7 +364,8 @@ async def transcribe_audio(
 
                 "status": "success",
 
-                "text": transcription.text
+                "text":
+                    transcription.text
 
             }
 
@@ -352,10 +396,49 @@ async def transcribe_audio(
 
 @app.post("/api/generate-title")
 async def generate_title(
-    prompt: str = Form(...)
+    request: Request
 ):
 
     try:
+
+        # Accept JSON from frontend
+        # and also support form data.
+
+        prompt = ""
+
+        content_type = (
+            request.headers
+            .get("content-type", "")
+            .lower()
+        )
+
+        if "application/json" in content_type:
+
+            body = await request.json()
+
+            prompt = str(
+                body.get("prompt", "")
+            )
+
+        else:
+
+            form = await request.form()
+
+            prompt = str(
+                form.get("prompt", "")
+            )
+
+        prompt = prompt.strip()
+
+        if not prompt:
+
+            return {
+
+                "status": "success",
+
+                "title": "New Chat"
+
+            }
 
         if not GROQ_API_KEY or not groq_client:
 
@@ -368,20 +451,17 @@ async def generate_title(
             }
 
         title_prompt = f"""
-
 Create a short 2-5 word title for this conversation.
 
 User message:
-
 {prompt}
 
 Rules:
-
 - Output ONLY the title.
+- 2-5 words.
 - No quotation marks.
 - No explanation.
 - No punctuation at the end.
-
 """
 
         completion = (
@@ -396,7 +476,10 @@ Rules:
 
                     {
                         "role": "user",
-                        "content": title_prompt
+
+                        "content":
+                            title_prompt
+
                     }
 
                 ],
@@ -426,11 +509,17 @@ Rules:
             ""
         )
 
+        title = title.replace(
+            "\n",
+            " "
+        )
+
         return {
 
             "status": "success",
 
-            "title": title[:80]
+            "title":
+                title[:80]
 
         }
 
@@ -446,7 +535,7 @@ Rules:
 
 
 # ============================================================
-# GROQ VISION
+# GEMINI IMAGE AI
 # ============================================================
 
 async def analyze_image(
@@ -455,15 +544,28 @@ async def analyze_image(
     mime_type: str
 ):
 
-    if not GROQ_API_KEY or not groq_client:
+    if not GEMINI_API_KEY:
 
         return (
+
             None,
-            "GROQ_API_KEY missing."
+
+            "GEMINI_API_KEY missing."
+
         )
 
-    # Groq base64 image request limit is 4 MB.
-    if len(image_bytes) > 4 * 1024 * 1024:
+    if not image_bytes:
+
+        return (
+
+            None,
+
+            "Image file is empty."
+
+        )
+
+    # 10 MB safety limit
+    if len(image_bytes) > 10 * 1024 * 1024:
 
         return (
 
@@ -476,26 +578,6 @@ async def analyze_image(
 
     try:
 
-        # ----------------------------------------------------
-        # BASE64
-        # ----------------------------------------------------
-
-        image_base64 = (
-            base64
-            .b64encode(image_bytes)
-            .decode("utf-8")
-        )
-
-        image_url = (
-            f"data:{mime_type};"
-            f"base64,{image_base64}"
-        )
-
-
-        # ----------------------------------------------------
-        # QUESTION
-        # ----------------------------------------------------
-
         user_question = (
             question.strip()
         )
@@ -503,130 +585,155 @@ async def analyze_image(
         if not user_question:
 
             user_question = (
-                "Briefly describe the "
-                "important things visible "
-                "in this image."
+                "Briefly describe what "
+                "is visible in this image."
             )
 
 
-        # ----------------------------------------------------
-        # IMAGE PROMPT
-        # ----------------------------------------------------
+        # ====================================================
+        # GEMINI IMAGE PROMPT
+        # ====================================================
 
         prompt = f"""
+You are Tuto AI, a helpful general-purpose AI assistant.
 
-You are Tuto AI, a helpful general-purpose
-AI assistant.
+Look at the provided image and answer the user's request.
 
-Analyze the image and answer the user's request.
-
-User request:
-
+USER REQUEST:
 {user_question}
 
-IMPORTANT RESPONSE STYLE:
+IMPORTANT RESPONSE RULES:
 
-- Be concise and natural.
-- Usually use 3-6 short bullet points.
-- Aim for around 60-150 words.
-- Do NOT write a long essay.
-- Do NOT repeat the user's question.
-- Only describe things that can reasonably be seen.
-- Do not invent information.
-- If something is uncertain, say so.
-- Match the user's language.
-- If the user writes Bangla, answer in Bangla.
-- If the user asks a simple question,
-  give a simple answer.
-- Only give a detailed answer if the user
-  specifically asks for details.
+1. Answer the user's actual question directly.
 
+2. Keep the answer concise and natural.
+
+3. If the user asks a simple question, give a simple
+   answer. Do NOT automatically perform a long image analysis.
+
+4. For a simple question, normally answer in 1-3 short
+   sentences.
+
+5. Only give a detailed visual analysis when the user
+   specifically asks for detailed analysis.
+
+6. Do not create unnecessary sections such as:
+   "Analyze the visual cues", "Subject", "Background",
+   "Clothing", etc. unless the user asks for that.
+
+7. Do not repeat the user's question.
+
+8. Only mention things that can reasonably be observed
+   in the image.
+
+9. Never invent details.
+
+10. If something cannot be determined reliably from the
+    image, say that it cannot be determined with certainty.
+
+11. Do not identify a real person's name or identity from
+    the image.
+
+12. For sensitive or uncertain characteristics, do not state
+    guesses as facts.
+
+13. If the user asks whether the person appears to be a
+    boy or girl, do not claim certainty from appearance alone.
+    If useful, say that the person's gender cannot be reliably
+    determined from the image.
+
+14. Match the user's language.
+    If the user asks in Bangla, answer in Bangla.
+    If the user asks in English, answer in English.
+
+15. Do not reveal hidden reasoning or chain-of-thought.
+
+16. Do not use long essays unless specifically requested.
+
+USER'S QUESTION:
+{user_question}
 """
 
-        # ----------------------------------------------------
-        # GROQ VISION REQUEST
-        # ----------------------------------------------------
 
-        response = (
-            groq_client
-            .chat
-            .completions
-            .create(
+        image_part = {
 
-                model=VISION_MODEL,
+            "mime_type":
+                mime_type,
 
-                messages=[
+            "data":
+                image_bytes
 
-                    {
+        }
 
-                        "role": "user",
 
-                        "content": [
+        last_error = ""
 
-                            {
 
-                                "type": "text",
+        # ====================================================
+        # TRY GEMINI MODELS
+        # ====================================================
 
-                                "text": prompt
+        for model_name in GEMINI_VISION_MODELS:
 
-                            },
+            try:
 
-                            {
+                model = (
+                    genai
+                    .GenerativeModel(
+                        model_name
+                    )
+                )
 
-                                "type": "image_url",
-
-                                "image_url": {
-
-                                    "url": image_url
-
-                                }
-
-                            }
-
+                response = (
+                    model
+                    .generate_content(
+                        [
+                            prompt,
+                            image_part
                         ]
-
-                    }
-
-                ],
-
-                temperature=0.3,
-
-                max_completion_tokens=350,
-
-                stream=False
-
-            )
-        )
+                    )
+                )
 
 
-        answer = (
-            response
-            .choices[0]
-            .message
-            .content
-            or ""
-        ).strip()
+                if (
+                    response
+                    and
+                    getattr(
+                        response,
+                        "text",
+                        None
+                    )
+                ):
 
+                    answer = (
+                        response
+                        .text
+                        .strip()
+                    )
 
-        if not answer:
+                    return (
 
-            return (
+                        clean_ai_response(
+                            answer
+                        ),
 
-                None,
+                        None
 
-                "Groq vision returned "
-                "an empty response."
+                    )
 
-            )
+            except Exception as e:
+
+                last_error = str(e)
 
 
         return (
 
-            clean_ai_response(
-                answer
-            ),
+            None,
 
-            None
+            (
+                "Gemini vision error: "
+                f"{last_error}"
+            )
 
         )
 
@@ -636,7 +743,7 @@ IMPORTANT RESPONSE STYLE:
 
             None,
 
-            f"Groq vision error: {str(e)}"
+            str(e)
 
         )
 
@@ -670,7 +777,7 @@ async def chat_endpoint(
 
 
         # ====================================================
-        # FILE
+        # FILE HANDLING
         # ====================================================
 
         if file and file.filename:
@@ -693,6 +800,7 @@ async def chat_endpoint(
                 filename.endswith(".pdf")
 
                 or
+
                 file.content_type
                 == "application/pdf"
 
@@ -719,11 +827,15 @@ async def chat_endpoint(
 
 
                 user_question = (
+
                     question
+
                     or
+
                     "Please analyze this document "
                     "and summarize the most important "
                     "information."
+
                 )
 
 
@@ -741,26 +853,33 @@ async def chat_endpoint(
                 if grade:
 
                     document_context += (
+
                         f"\n\nUser level/context: "
                         f"{grade}"
+
                     )
 
 
                 if subject:
 
                     document_context += (
+
                         f"\nSubject/context: "
                         f"{subject}"
+
                     )
 
 
                 response = ask_ai(
 
-                    user_question=user_question,
+                    user_question=
+                        user_question,
 
-                    chat_history=history,
+                    chat_history=
+                        history,
 
-                    context_text=document_context
+                    context_text=
+                        document_context
 
                 )
 
@@ -799,9 +918,11 @@ async def chat_endpoint(
 
                     "status": "success",
 
-                    "question": user_question,
+                    "question":
+                        user_question,
 
-                    "response": response
+                    "response":
+                        response
 
                 }
 
@@ -828,7 +949,8 @@ async def chat_endpoint(
 
                     or
 
-                    "Briefly analyze this image."
+                    "Briefly describe what "
+                    "is visible in this image."
 
                 )
 
@@ -852,7 +974,8 @@ async def chat_endpoint(
 
                         "status": "error",
 
-                        "message": error
+                        "message":
+                            error
 
                     }
 
@@ -886,15 +1009,17 @@ async def chat_endpoint(
 
                     "status": "success",
 
-                    "question": user_question,
+                    "question":
+                        user_question,
 
-                    "response": image_response
+                    "response":
+                        image_response
 
                 }
 
 
             # =================================================
-            # UNSUPPORTED
+            # UNSUPPORTED FILE
             # =================================================
 
             return {
@@ -923,30 +1048,40 @@ async def chat_endpoint(
             }
 
 
-        contextual_question = question
+        contextual_question = (
+            question
+        )
 
 
         if grade:
 
             contextual_question += (
+
                 f"\n\n"
-                f"[Optional user context: {grade}]"
+                f"[Optional user context: "
+                f"{grade}]"
+
             )
 
 
         if subject:
 
             contextual_question += (
+
                 f"\n"
-                f"[Optional subject context: {subject}]"
+                f"[Optional subject context: "
+                f"{subject}]"
+
             )
 
 
         response = ask_ai(
 
-            user_question=contextual_question,
+            user_question=
+                contextual_question,
 
-            chat_history=history
+            chat_history=
+                history
 
         )
 
@@ -982,9 +1117,11 @@ async def chat_endpoint(
 
             "status": "success",
 
-            "question": question,
+            "question":
+                question,
 
-            "response": response
+            "response":
+                response
 
         }
 
@@ -995,7 +1132,8 @@ async def chat_endpoint(
 
             "status": "error",
 
-            "message": str(e)
+            "message":
+                str(e)
 
         }
 
