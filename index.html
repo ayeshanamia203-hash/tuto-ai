@@ -3,54 +3,70 @@
 
 <head>
 
-    <meta charset="UTF-8">
+<meta charset="UTF-8">
 
-    <meta name="viewport"
-          content="width=device-width,
-                   initial-scale=1.0,
-                   maximum-scale=1.0,
-                   user-scalable=no">
+<meta
+    name="viewport"
+    content="width=device-width,
+    initial-scale=1.0,
+    maximum-scale=1.0,
+    user-scalable=no"
+>
 
-    <title>Tuto AI</title>
+<title>Tuto AI</title>
 
-    <!-- Bootstrap -->
-    <link
-        href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
-        rel="stylesheet">
 
-    <!-- Font Awesome -->
-    <link
-        rel="stylesheet"
-        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<!-- Bootstrap -->
 
-    <!-- KaTeX -->
-    <link
-        rel="stylesheet"
-        href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
+<link
+    href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+    rel="stylesheet"
+>
 
-    <script
-        defer
-        src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js">
-    </script>
 
-    <script
-        defer
-        src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js">
-    </script>
+<!-- Font Awesome -->
 
-    <!-- Markdown -->
-    <script
-        src="https://cdn.jsdelivr.net/npm/marked/marked.min.js">
-    </script>
+<link
+    rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+>
 
-    <!-- Highlight.js -->
-    <link
-        rel="stylesheet"
-        href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/atom-one-dark.min.css">
 
-    <script
-        src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js">
-    </script>
+<!-- KaTeX -->
+
+<link
+    rel="stylesheet"
+    href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css"
+>
+
+<script
+    defer
+    src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js">
+</script>
+
+<script
+    defer
+    src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js">
+</script>
+
+
+<!-- Markdown -->
+
+<script
+    src="https://cdn.jsdelivr.net/npm/marked/marked.min.js">
+</script>
+
+
+<!-- Highlight.js -->
+
+<link
+    rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/atom-one-dark.min.css"
+>
+
+<script
+    src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js">
+</script>
 
 
 <style>
@@ -73,8 +89,10 @@
     --bubble-text:#ffffff;
     --strong-color:#a8c7fa;
     --modal-bg:#1e1e20;
+    --menu-bg:#29292c;
 
 }
+
 
 :root[data-theme="light"] {
 
@@ -90,12 +108,17 @@
     --bubble-text:#1f1f1f;
     --strong-color:#0b57d0;
     --modal-bg:#ffffff;
+    --menu-bg:#ffffff;
 
 }
+
 
 * {
+
     box-sizing:border-box;
+
 }
+
 
 html,
 body {
@@ -109,6 +132,7 @@ body {
     overflow:hidden;
 
     background:var(--bg-color);
+
     color:var(--text-color);
 
     font-family:
@@ -116,10 +140,14 @@ body {
         system-ui,
         -apple-system,
         sans-serif;
+
 }
 
+
 body {
+
     display:flex;
+
 }
 
 
@@ -130,6 +158,7 @@ body {
 .sidebar {
 
     width:260px;
+
     height:100%;
 
     background:var(--sidebar-bg);
@@ -140,22 +169,25 @@ body {
     padding:20px;
 
     display:flex;
+
     flex-direction:column;
 
     flex-shrink:0;
 
     transition:
-        all .3s ease;
+        all .25s ease;
 
     z-index:1000;
 
 }
+
 
 .sidebar.collapsed {
 
     margin-left:-260px;
 
 }
+
 
 .sidebar-overlay {
 
@@ -165,12 +197,12 @@ body {
 
     inset:0;
 
-    background:
-        rgba(0,0,0,.5);
+    background:rgba(0,0,0,.5);
 
     z-index:999;
 
 }
+
 
 .new-chat-btn {
 
@@ -187,15 +219,8 @@ body {
 
     font-weight:500;
 
-    transition:.2s;
-
 }
 
-.new-chat-btn:hover {
-
-    background:var(--btn-hover);
-
-}
 
 .history-list {
 
@@ -205,9 +230,22 @@ body {
 
     margin-top:15px;
 
-    margin-bottom:15px;
+}
+
+
+.history-label {
+
+    color:var(--text-muted);
+
+    font-size:11px;
+
+    font-weight:700;
+
+    margin:
+        15px 8px 8px;
 
 }
+
 
 .history-item {
 
@@ -215,9 +253,7 @@ body {
 
     align-items:center;
 
-    justify-content:space-between;
-
-    padding:9px 12px;
+    padding:11px 12px;
 
     border-radius:10px;
 
@@ -235,6 +271,7 @@ body {
 
 }
 
+
 .history-item:hover,
 .history-item.active {
 
@@ -244,6 +281,7 @@ body {
 
 }
 
+
 .history-title {
 
     white-space:nowrap;
@@ -252,60 +290,100 @@ body {
 
     text-overflow:ellipsis;
 
-    max-width:150px;
+    width:100%;
 
 }
 
-.action-btns-group {
+
+.pinned-icon {
+
+    color:#f59e0b;
+
+    margin-left:5px;
+
+}
+
+
+/* ============================================================
+   CONTEXT MENU
+============================================================ */
+
+.chat-context-menu {
 
     display:none;
 
-    align-items:center;
+    position:fixed;
 
-    gap:6px;
+    min-width:190px;
+
+    background:var(--menu-bg);
+
+    border:
+        1px solid var(--border-color);
+
+    border-radius:13px;
+
+    box-shadow:
+        0 10px 35px rgba(0,0,0,.35);
+
+    padding:7px;
+
+    z-index:5000;
 
 }
 
-.history-item.show-actions
-.action-btns-group {
+
+.chat-context-menu.show {
+
+    display:block;
+
+}
+
+
+.context-item {
 
     display:flex;
 
-}
+    align-items:center;
 
-.action-icon-btn {
+    gap:12px;
+
+    width:100%;
+
+    padding:10px 12px;
 
     border:none;
 
+    border-radius:8px;
+
     background:transparent;
 
-    font-size:13px;
+    color:var(--text-color);
+
+    text-align:left;
 
     cursor:pointer;
 
-    padding:3px 5px;
+}
+
+
+.context-item:hover {
+
+    background:var(--btn-hover);
 
 }
 
-.delete-btn-icon {
 
-    color:#e11d48;
+.context-item.delete {
 
-}
-
-.star-btn-icon {
-
-    color:#f59e0b;
+    color:#ef4444;
 
 }
 
-.is-pinned-icon {
 
-    color:#f59e0b;
+.context-item i {
 
-    font-size:12px;
-
-    margin-left:4px;
+    width:18px;
 
 }
 
@@ -332,9 +410,11 @@ body {
 
 }
 
+
 .chat-header {
 
-    padding:15px 25px;
+    padding:
+        15px 25px;
 
     border-bottom:
         1px solid var(--border-color);
@@ -349,6 +429,7 @@ body {
 
 }
 
+
 .header-left {
 
     display:flex;
@@ -356,6 +437,7 @@ body {
     align-items:center;
 
 }
+
 
 .toggle-btn,
 .theme-btn {
@@ -374,6 +456,7 @@ body {
 
 }
 
+
 .toggle-btn:hover,
 .theme-btn:hover {
 
@@ -381,12 +464,11 @@ body {
 
 }
 
+
 .theme-btn {
 
     border:
         1px solid var(--border-color);
-
-    font-size:14px;
 
 }
 
@@ -411,6 +493,7 @@ body {
 
 }
 
+
 .welcome-screen {
 
     min-height:100%;
@@ -426,6 +509,7 @@ body {
     text-align:center;
 
 }
+
 
 .welcome-avatar {
 
@@ -458,6 +542,7 @@ body {
 
 }
 
+
 .message {
 
     display:flex;
@@ -467,6 +552,7 @@ body {
     margin-bottom:28px;
 
 }
+
 
 .avatar {
 
@@ -490,6 +576,7 @@ body {
 
 }
 
+
 .user-avatar {
 
     background:#5436da;
@@ -497,6 +584,7 @@ body {
     color:white;
 
 }
+
 
 .ai-avatar {
 
@@ -511,6 +599,7 @@ body {
 
 }
 
+
 .bubble {
 
     width:100%;
@@ -521,17 +610,19 @@ body {
 
     font-size:16px;
 
-    line-height:1.65;
+    line-height:1.6;
 
     word-wrap:break-word;
 
 }
+
 
 .bubble strong {
 
     color:var(--strong-color);
 
 }
+
 
 .bubble table {
 
@@ -543,6 +634,7 @@ body {
 
 }
 
+
 .bubble th,
 .bubble td {
 
@@ -553,6 +645,7 @@ body {
 
 }
 
+
 .bubble th {
 
     background:var(--btn-hover);
@@ -561,91 +654,32 @@ body {
 
 
 /* ============================================================
-   CODE
-============================================================ */
-
-.code-container {
-
-    margin:12px 0;
-
-    border-radius:8px;
-
-    overflow:hidden;
-
-    border:
-        1px solid #3e4451;
-
-    background:#282c34;
-
-}
-
-.code-header {
-
-    display:flex;
-
-    justify-content:space-between;
-
-    align-items:center;
-
-    background:#21252b;
-
-    padding:6px 12px;
-
-    font-size:12px;
-
-    color:#abb2bf;
-
-}
-
-pre {
-
-    margin:0 !important;
-
-    padding:12px !important;
-
-    overflow-x:auto;
-
-}
-
-.copy-code-btn {
-
-    background:#3e4451;
-
-    color:white;
-
-    border:none;
-
-    border-radius:4px;
-
-    padding:3px 8px;
-
-    font-size:12px;
-
-    cursor:pointer;
-
-}
-
-
-/* ============================================================
-   FILE PREVIEW
+   IMAGE
 ============================================================ */
 
 .uploaded-img-preview {
 
-    max-width:220px;
+    display:block;
 
-    max-height:320px;
+    max-width:350px;
+
+    max-height:500px;
+
+    width:auto;
+
+    height:auto;
 
     object-fit:contain;
 
-    border-radius:10px;
+    border-radius:12px;
 
     border:
         1px solid var(--border-color);
 
-    margin-bottom:8px;
+    margin-bottom:10px;
 
 }
+
 
 .pdf-badge {
 
@@ -670,6 +704,75 @@ pre {
 
 
 /* ============================================================
+   CODE
+============================================================ */
+
+.code-container {
+
+    margin:12px 0;
+
+    border-radius:8px;
+
+    overflow:hidden;
+
+    border:
+        1px solid #3e4451;
+
+    background:#282c34;
+
+}
+
+
+.code-header {
+
+    display:flex;
+
+    justify-content:space-between;
+
+    align-items:center;
+
+    background:#21252b;
+
+    padding:6px 12px;
+
+    font-size:12px;
+
+    color:#abb2bf;
+
+}
+
+
+pre {
+
+    margin:0 !important;
+
+    padding:12px !important;
+
+    overflow-x:auto;
+
+}
+
+
+.copy-code-btn {
+
+    background:#3e4451;
+
+    color:white;
+
+    border:none;
+
+    border-radius:4px;
+
+    padding:3px 8px;
+
+    font-size:12px;
+
+    cursor:pointer;
+
+}
+
+
+/* ============================================================
    INPUT
 ============================================================ */
 
@@ -677,13 +780,15 @@ pre {
 
     width:100%;
 
-    padding:10px 15px 15px;
+    padding:
+        10px 15px 15px;
 
     background:var(--bg-color);
 
     flex-shrink:0;
 
 }
+
 
 .input-wrapper {
 
@@ -704,6 +809,7 @@ pre {
 
 }
 
+
 #filePreviewArea {
 
     display:none;
@@ -716,6 +822,7 @@ pre {
 
 }
 
+
 #previewImgThumb {
 
     width:70px;
@@ -727,6 +834,7 @@ pre {
     border-radius:12px;
 
 }
+
 
 #pdfPreviewThumb {
 
@@ -746,6 +854,7 @@ pre {
     font-size:13px;
 
 }
+
 
 .close-img-btn {
 
@@ -771,6 +880,7 @@ pre {
 
 }
 
+
 .input-row {
 
     display:flex;
@@ -780,6 +890,7 @@ pre {
     gap:10px;
 
 }
+
 
 .plus-btn,
 .mic-btn {
@@ -798,6 +909,7 @@ pre {
 
 }
 
+
 .mic-btn.recording {
 
     color:#ef4444 !important;
@@ -805,6 +917,7 @@ pre {
     animation:pulse 1.2s infinite;
 
 }
+
 
 @keyframes pulse {
 
@@ -821,6 +934,7 @@ pre {
     }
 
 }
+
 
 .chat-textarea {
 
@@ -848,6 +962,7 @@ pre {
 
 }
 
+
 .send-btn {
 
     width:32px;
@@ -874,15 +989,15 @@ pre {
 
 }
 
+
 .send-btn:disabled {
 
     background:var(--border-color);
 
     color:var(--text-muted);
 
-    cursor:not-allowed;
-
 }
+
 
 .tts-btn {
 
@@ -912,6 +1027,7 @@ pre {
 
 }
 
+
 .modal-btn {
 
     width:100%;
@@ -932,6 +1048,7 @@ pre {
     text-align:left;
 
 }
+
 
 .modal-btn:hover {
 
@@ -961,11 +1078,13 @@ pre {
 
     }
 
+
     .sidebar.collapsed {
 
         margin-left:-260px;
 
     }
+
 
     .sidebar-overlay.active {
 
@@ -973,15 +1092,33 @@ pre {
 
     }
 
+
     .chat-container {
 
-        padding:15px 10px;
+        padding:
+            15px 10px;
 
     }
 
+
     .chat-header {
 
-        padding:12px 15px;
+        padding:
+            12px 15px;
+
+    }
+
+
+    .bubble {
+
+        max-width:100%;
+
+    }
+
+
+    .uploaded-img-preview {
+
+        max-width:280px;
 
     }
 
@@ -1064,6 +1201,7 @@ pre {
 
     <div class="chat-header">
 
+
         <div class="header-left">
 
             <button
@@ -1104,6 +1242,7 @@ pre {
 
         </button>
 
+
     </div>
 
 
@@ -1119,24 +1258,22 @@ pre {
 
     <div class="input-container-box">
 
+
         <div class="input-wrapper">
 
 
-            <!-- FILE PREVIEW -->
-
-            <div
-                id="filePreviewArea">
+            <div id="filePreviewArea">
 
 
                 <img
                     id="previewImgThumb"
                     src=""
                     alt="Image preview"
-                    style="display:none;">
+                    style="display:none;"
+                >
 
 
-                <div
-                    id="pdfPreviewThumb">
+                <div id="pdfPreviewThumb">
 
                     <i
                         class="fa-solid fa-file-pdf me-2">
@@ -1156,6 +1293,7 @@ pre {
                     <i class="fa-solid fa-xmark"></i>
 
                 </button>
+
 
             </div>
 
@@ -1184,8 +1322,8 @@ pre {
                         id="question"
                         class="chat-textarea"
                         rows="1"
-                        placeholder="Message Tuto AI...">
-                    </textarea>
+                        placeholder="Message Tuto AI..."
+                    ></textarea>
 
 
                     <button
@@ -1215,11 +1353,68 @@ pre {
 
                 </form>
 
+
             </div>
+
 
         </div>
 
+
     </div>
+
+
+</div>
+
+
+<!-- ============================================================
+     CONTEXT MENU
+============================================================ -->
+
+<div
+    class="chat-context-menu"
+    id="chatContextMenu">
+
+
+    <button
+        class="context-item"
+        onclick="contextPin()">
+
+        <i
+            class="fa-solid fa-thumbtack">
+        </i>
+
+        <span id="contextPinText">
+            Pin
+        </span>
+
+    </button>
+
+
+    <button
+        class="context-item"
+        onclick="contextRename()">
+
+        <i
+            class="fa-solid fa-pen">
+        </i>
+
+        Rename
+
+    </button>
+
+
+    <button
+        class="context-item delete"
+        onclick="contextDelete()">
+
+        <i
+            class="fa-solid fa-trash">
+        </i>
+
+        Delete
+
+    </button>
+
 
 </div>
 
@@ -1233,7 +1428,8 @@ pre {
     id="galleryInput"
     accept="image/*"
     style="display:none"
-    onchange="handleFileSelect(this)">
+    onchange="handleFileSelect(this)"
+>
 
 
 <input
@@ -1242,7 +1438,8 @@ pre {
     accept="image/*"
     capture="environment"
     style="display:none"
-    onchange="handleFileSelect(this)">
+    onchange="handleFileSelect(this)"
+>
 
 
 <input
@@ -1250,7 +1447,8 @@ pre {
     id="pdfInput"
     accept="application/pdf"
     style="display:none"
-    onchange="handleFileSelect(this)">
+    onchange="handleFileSelect(this)"
+>
 
 
 <!-- ============================================================
@@ -1262,15 +1460,16 @@ pre {
     id="uploadModal"
     tabindex="-1">
 
+
     <div
         class="modal-dialog modal-dialog-centered">
 
-        <div
-            class="modal-content">
+
+        <div class="modal-content">
 
 
-            <div
-                class="modal-header border-0">
+            <div class="modal-header border-0">
+
 
                 <h5 class="modal-title fw-bold">
 
@@ -1288,6 +1487,7 @@ pre {
                     class="btn-close"
                     data-bs-dismiss="modal">
                 </button>
+
 
             </div>
 
@@ -1342,12 +1542,15 @@ pre {
 
             </div>
 
+
         </div>
 
     </div>
 
 </div>
 
+
+<!-- Bootstrap -->
 
 <script
     src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js">
@@ -1357,378 +1560,111 @@ pre {
 <script>
 
 /* ============================================================
-   GLOBAL VARIABLES
+   VARIABLES
 ============================================================ */
 
 let selectedFile = null;
 
+let selectedFileDataURL = null;
+
+let contextSessionId = null;
+
+let longPressTimer = null;
+
+
 const questionInput =
     document.getElementById("question");
+
 
 const chatBox =
     document.getElementById("chatBox");
 
+
 const historyList =
     document.getElementById("historyList");
+
 
 const micBtn =
     document.getElementById("micBtn");
 
 
 /* ============================================================
-   STORAGE SETTINGS
+   STORAGE
 ============================================================ */
-
-/*
-    IMPORTANT:
-
-    Old version stored huge HTML inside localStorage.
-
-    This version:
-    - limits number of chats
-    - limits each chat size
-    - automatically removes oldest chats
-    - catches quota errors
-*/
-
-const MAX_SESSIONS = 25;
-
-const MAX_SESSION_SIZE = 180000;
-
-const STORAGE_KEY =
-    "tuto_all_sessions";
-
-const CURRENT_KEY =
-    "tuto_current_session_id";
-
-
-/* ============================================================
-   LOAD STORAGE SAFELY
-============================================================ */
-
-function loadSessionsSafely() {
-
-    try {
-
-        const raw =
-            localStorage.getItem(STORAGE_KEY);
-
-        if(!raw)
-            return {};
-
-        return JSON.parse(raw) || {};
-
-    } catch(error) {
-
-        console.warn(
-            "Storage read error:",
-            error
-        );
-
-        return {};
-
-    }
-
-}
-
 
 let allSessions =
-    loadSessionsSafely();
+    JSON.parse(
+        localStorage.getItem(
+            "tuto_all_sessions"
+        )
+    ) || {};
 
 
 let currentSessionId =
     localStorage.getItem(
-        CURRENT_KEY
+        "tuto_current_session_id"
     ) || null;
 
 
 /* ============================================================
-   STORAGE CLEANER
+   VOICE
 ============================================================ */
 
-function cleanSessionsForStorage() {
+let mediaRecorder = null;
 
-    const ids =
-        Object.keys(allSessions);
+let audioChunks = [];
 
-
-    /*
-        Remove extremely large sessions.
-    */
-
-    ids.forEach(id => {
-
-        const session =
-            allSessions[id];
-
-        if(!session)
-            return;
-
-
-        let html =
-            session.html || "";
-
-
-        /*
-            Remove image blob URLs from
-            saved history.
-
-            blob URLs are temporary anyway.
-        */
-
-        html =
-            html.replace(
-                /blob:[^"']+/g,
-                ""
-            );
-
-
-        /*
-            Limit session HTML.
-        */
-
-        if(
-            html.length >
-            MAX_SESSION_SIZE
-        ) {
-
-            html =
-                html.slice(
-                    -MAX_SESSION_SIZE
-                );
-
-        }
-
-
-        session.html =
-            html;
-
-    });
-
-
-    /*
-        Keep only newest 25 chats.
-
-        Pinned chats are kept first.
-    */
-
-    let sorted =
-        ids.sort(
-            (a,b) => {
-
-                const aPin =
-                    allSessions[a]?.isPinned
-                    ? 1
-                    : 0;
-
-                const bPin =
-                    allSessions[b]?.isPinned
-                    ? 1
-                    : 0;
-
-                if(aPin !== bPin)
-                    return bPin - aPin;
-
-                return (
-                    (allSessions[b]?.createdAt || 0)
-                    -
-                    (allSessions[a]?.createdAt || 0)
-                );
-
-            }
-        );
-
-
-    while(
-        sorted.length >
-        MAX_SESSIONS
-    ) {
-
-        const removeId =
-            sorted.pop();
-
-
-        if(
-            removeId ===
-            currentSessionId
-        ) {
-
-            continue;
-
-        }
-
-
-        delete allSessions[
-            removeId
-        ];
-
-    }
-
-}
+let isRecording = false;
 
 
 /* ============================================================
-   SAVE STORAGE
+   DEFAULT WELCOME
 ============================================================ */
 
-function saveSessions() {
+const DEFAULT_WELCOME = `
 
-    cleanSessionsForStorage();
+<div
+    class="welcome-screen"
+    id="welcomeScreen">
 
+    <div class="welcome-avatar">
+        AI
+    </div>
 
-    try {
+    <h2 class="fw-bold mb-2">
+        Hello there!
+    </h2>
 
-        localStorage.setItem(
-            STORAGE_KEY,
-            JSON.stringify(allSessions)
-        );
+    <p class="text-secondary fs-5">
+        How can I help you today?
+    </p>
 
-        if(currentSessionId) {
+    <small class="text-secondary">
+        Ask me anything — study, coding, writing,
+        ideas, math, science, technology and more.
+    </small>
 
-            localStorage.setItem(
-                CURRENT_KEY,
-                currentSessionId
-            );
+</div>
 
-        }
-
-        return true;
-
-    } catch(error) {
-
-        console.warn(
-            "LocalStorage full. Cleaning old chats...",
-            error
-        );
-
-
-        /*
-            Emergency cleanup:
-            remove oldest non-pinned chats.
-        */
-
-        const ids =
-            Object.keys(allSessions);
-
-
-        ids.sort(
-            (a,b) =>
-                (allSessions[a]?.createdAt || 0)
-                -
-                (allSessions[b]?.createdAt || 0)
-        );
-
-
-        for(
-            let i = 0;
-            i < ids.length;
-            i++
-        ) {
-
-            const id =
-                ids[i];
-
-
-            if(
-                id === currentSessionId
-            )
-                continue;
-
-
-            if(
-                allSessions[id]?.isPinned
-            )
-                continue;
-
-
-            delete allSessions[id];
-
-
-            try {
-
-                localStorage.setItem(
-                    STORAGE_KEY,
-                    JSON.stringify(allSessions)
-                );
-
-                localStorage.setItem(
-                    CURRENT_KEY,
-                    currentSessionId
-                );
-
-                return true;
-
-            } catch(e) {}
-
-        }
-
-
-        /*
-            If still full,
-            save only current chat.
-        */
-
-        try {
-
-            const current =
-                allSessions[
-                    currentSessionId
-                ];
-
-
-            allSessions = {
-
-                [currentSessionId]:
-                    current
-
-            };
-
-
-            localStorage.setItem(
-                STORAGE_KEY,
-                JSON.stringify(allSessions)
-            );
-
-            localStorage.setItem(
-                CURRENT_KEY,
-                currentSessionId
-            );
-
-            return true;
-
-        } catch(e) {
-
-            /*
-                Do not crash the app.
-            */
-
-            return false;
-
-        }
-
-    }
-
-}
+`;
 
 
 /* ============================================================
    THEME
 ============================================================ */
 
-function initTheme() {
+function initTheme(){
 
     const savedTheme =
         localStorage.getItem(
             "tuto_theme"
         ) || "dark";
 
-
     setTheme(savedTheme);
-
 }
 
 
-function toggleTheme() {
+function toggleTheme(){
 
     const current =
         document.documentElement
@@ -1736,24 +1672,22 @@ function toggleTheme() {
             "data-theme"
         );
 
-
     setTheme(
         current === "dark"
-            ? "light"
-            : "dark"
+        ? "light"
+        : "dark"
     );
 
 }
 
 
-function setTheme(theme) {
+function setTheme(theme){
 
     document.documentElement
         .setAttribute(
             "data-theme",
             theme
         );
-
 
     localStorage.setItem(
         "tuto_theme",
@@ -1773,7 +1707,7 @@ function setTheme(theme) {
         );
 
 
-    if(theme === "light") {
+    if(theme === "light"){
 
         icon.className =
             "fa-solid fa-moon";
@@ -1781,7 +1715,7 @@ function setTheme(theme) {
         text.innerText =
             "Dark";
 
-    } else {
+    }else{
 
         icon.className =
             "fa-solid fa-sun";
@@ -1798,7 +1732,7 @@ function setTheme(theme) {
    SIDEBAR
 ============================================================ */
 
-function toggleSidebar() {
+function toggleSidebar(){
 
     const sidebar =
         document.getElementById(
@@ -1817,21 +1751,19 @@ function toggleSidebar() {
     );
 
 
-    if(
-        window.innerWidth <= 768
-    ) {
+    if(window.innerWidth <= 768){
 
         if(
             !sidebar.classList.contains(
                 "collapsed"
             )
-        ) {
+        ){
 
             overlay.classList.add(
                 "active"
             );
 
-        } else {
+        }else{
 
             overlay.classList.remove(
                 "active"
@@ -1844,11 +1776,9 @@ function toggleSidebar() {
 }
 
 
-function mobileSidebarCheck() {
+function mobileSidebarCheck(){
 
-    if(
-        window.innerWidth <= 768
-    ) {
+    if(window.innerWidth <= 768){
 
         document
             .getElementById("sidebar")
@@ -1862,43 +1792,12 @@ function mobileSidebarCheck() {
 
 
 /* ============================================================
-   WELCOME
-============================================================ */
-
-const DEFAULT_WELCOME = `
-
-<div class="welcome-screen">
-
-    <div class="welcome-avatar">
-        AI
-    </div>
-
-    <h2 class="fw-bold mb-2">
-        Hello there!
-    </h2>
-
-    <p class="text-secondary fs-5">
-        How can I help you today?
-    </p>
-
-    <small class="text-secondary">
-        Ask me anything — study, coding,
-        writing, ideas, math, science,
-        technology and more.
-    </small>
-
-</div>
-
-`;
-
-
-/* ============================================================
    INIT
 ============================================================ */
 
 window.addEventListener(
     "DOMContentLoaded",
-    () => {
+    function(){
 
         initTheme();
 
@@ -1910,11 +1809,11 @@ window.addEventListener(
             !allSessions[
                 currentSessionId
             ]
-        ) {
+        ){
 
             startNewChat(false);
 
-        } else {
+        }else{
 
             renderSidebarHistory();
 
@@ -1934,11 +1833,10 @@ window.addEventListener(
 
 questionInput.addEventListener(
     "input",
-    function() {
+    function(){
 
         this.style.height =
             "auto";
-
 
         this.style.height =
             Math.min(
@@ -1952,15 +1850,14 @@ questionInput.addEventListener(
 
 questionInput.addEventListener(
     "keydown",
-    function(e) {
+    function(e){
 
         if(
             e.key === "Enter" &&
             !e.shiftKey
-        ) {
+        ){
 
             e.preventDefault();
-
 
             document
                 .getElementById(
@@ -1979,16 +1876,34 @@ questionInput.addEventListener(
 
 
 /* ============================================================
+   SAFE HTML
+============================================================ */
+
+function escapeHTML(text){
+
+    const div =
+        document.createElement(
+            "div"
+        );
+
+    div.innerText =
+        text || "";
+
+    return div.innerHTML;
+}
+
+
+/* ============================================================
    MATH
 ============================================================ */
 
-function renderMath(element) {
+function renderMath(element){
 
     if(
         window.renderMathInElement
-    ) {
+    ){
 
-        try {
+        try{
 
             renderMathInElement(
                 element,
@@ -2027,7 +1942,7 @@ function renderMath(element) {
                 }
             );
 
-        } catch(e) {}
+        }catch(e){}
 
     }
 
@@ -2038,7 +1953,7 @@ function renderMath(element) {
    CODE BLOCKS
 ============================================================ */
 
-function processCodeBlocks(element) {
+function processCodeBlocks(element){
 
     if(!element)
         return;
@@ -2047,7 +1962,7 @@ function processCodeBlocks(element) {
     element
         .querySelectorAll("pre")
         .forEach(
-            pre => {
+            function(pre){
 
                 if(
                     pre.closest(
@@ -2065,8 +1980,8 @@ function processCodeBlocks(element) {
 
                 const codeText =
                     code
-                        ? code.innerText
-                        : pre.innerText;
+                    ? code.innerText
+                    : pre.innerText;
 
 
                 let language =
@@ -2076,13 +1991,12 @@ function processCodeBlocks(element) {
                 if(
                     code &&
                     code.className
-                ) {
+                ){
 
                     const match =
                         code.className.match(
                             /language-(\w+)/
                         );
-
 
                     if(match)
                         language =
@@ -2136,9 +2050,9 @@ function processCodeBlocks(element) {
 
 
                 copyBtn.onclick =
-                    async function() {
+                    async function(){
 
-                        try {
+                        try{
 
                             await navigator
                                 .clipboard
@@ -2152,7 +2066,7 @@ function processCodeBlocks(element) {
 
 
                             setTimeout(
-                                () => {
+                                function(){
 
                                     copyBtn.innerHTML =
                                         '<i class="fa-regular fa-copy"></i> Copy';
@@ -2161,7 +2075,7 @@ function processCodeBlocks(element) {
                                 2000
                             );
 
-                        } catch(e) {}
+                        }catch(e){}
 
                     };
 
@@ -2193,15 +2107,15 @@ function processCodeBlocks(element) {
                 if(
                     window.hljs &&
                     code
-                ) {
+                ){
 
-                    try {
+                    try{
 
                         hljs.highlightElement(
                             code
                         );
 
-                    } catch(e) {}
+                    }catch(e){}
 
                 }
 
@@ -2212,12 +2126,49 @@ function processCodeBlocks(element) {
 
 
 /* ============================================================
+   SAVE
+============================================================ */
+
+function saveSessions(){
+
+    try{
+
+        localStorage.setItem(
+            "tuto_all_sessions",
+            JSON.stringify(
+                allSessions
+            )
+        );
+
+        localStorage.setItem(
+            "tuto_current_session_id",
+            currentSessionId
+        );
+
+    }catch(error){
+
+        console.error(
+            "Storage error:",
+            error
+        );
+
+        alert(
+            "Chat storage is full. "
+            + "Try deleting some old chats."
+        );
+
+    }
+
+}
+
+
+/* ============================================================
    NEW CHAT
 ============================================================ */
 
 function startNewChat(
     render = true
-) {
+){
 
     currentSessionId =
         "session_" +
@@ -2232,9 +2183,7 @@ function startNewChat(
 
         html:DEFAULT_WELCOME,
 
-        isPinned:false,
-
-        createdAt:Date.now()
+        isPinned:false
 
     };
 
@@ -2242,7 +2191,7 @@ function startNewChat(
     saveSessions();
 
 
-    if(render) {
+    if(render){
 
         renderSidebarHistory();
 
@@ -2262,7 +2211,7 @@ function startNewChat(
    LOAD SESSION
 ============================================================ */
 
-function loadSession(id) {
+function loadSession(id){
 
     if(
         !allSessions[id]
@@ -2283,9 +2232,11 @@ function loadSession(id) {
 
 
     chatBox
-        .querySelectorAll(".bubble")
+        .querySelectorAll(
+            ".bubble"
+        )
         .forEach(
-            bubble => {
+            function(bubble){
 
                 renderMath(
                     bubble
@@ -2305,19 +2256,28 @@ function loadSession(id) {
 
     renderSidebarHistory();
 
+    mobileSidebarCheck();
+
 }
 
 
 /* ============================================================
-   DELETE SESSION
+   DELETE
 ============================================================ */
 
 function deleteSession(
     event,
     id
-) {
+){
 
-    event.stopPropagation();
+    if(event)
+        event.stopPropagation();
+
+
+    if(
+        !allSessions[id]
+    )
+        return;
 
 
     if(
@@ -2339,32 +2299,14 @@ function deleteSession(
 
     if(
         currentSessionId === id
-    ) {
+    ){
 
-        if(keys.length) {
-
-            /*
-                Open newest chat.
-            */
-
-            keys.sort(
-                (a,b) =>
-                    (
-                        allSessions[b]
-                        ?.createdAt || 0
-                    )
-                    -
-                    (
-                        allSessions[a]
-                        ?.createdAt || 0
-                    )
-            );
-
+        if(keys.length){
 
             currentSessionId =
-                keys[0];
+                keys[keys.length - 1];
 
-        } else {
+        }else{
 
             startNewChat(false);
 
@@ -2391,14 +2333,15 @@ function deleteSession(
 function togglePin(
     event,
     id
-) {
+){
 
-    event.stopPropagation();
+    if(event)
+        event.stopPropagation();
 
 
     if(
         allSessions[id]
-    ) {
+    ){
 
         allSessions[id].isPinned =
             !allSessions[id].isPinned;
@@ -2414,16 +2357,10 @@ function togglePin(
 
 
 /* ============================================================
-   RENAME CHAT
+   RENAME
 ============================================================ */
 
-function renameSession(
-    event,
-    id
-) {
-
-    event.stopPropagation();
-
+function renameSession(id){
 
     if(
         !allSessions[id]
@@ -2449,16 +2386,18 @@ function renameSession(
         return;
 
 
-    const title =
+    const cleanTitle =
         newTitle.trim();
 
 
-    if(!title)
+    if(
+        !cleanTitle
+    )
         return;
 
 
     allSessions[id].title =
-        title.slice(
+        cleanTitle.substring(
             0,
             80
         );
@@ -2475,7 +2414,7 @@ function renameSession(
    SIDEBAR HISTORY
 ============================================================ */
 
-function renderSidebarHistory() {
+function renderSidebarHistory(){
 
     historyList.innerHTML = "";
 
@@ -2483,80 +2422,76 @@ function renderSidebarHistory() {
     const keys =
         Object.keys(
             allSessions
-        );
-
-
-    keys.sort(
-        (a,b) =>
-            (
-                allSessions[b]
-                ?.createdAt || 0
-            )
-            -
-            (
-                allSessions[a]
-                ?.createdAt || 0
-            )
-    );
+        ).reverse();
 
 
     const pinned =
         keys.filter(
-            id =>
-                allSessions[id]
-                ?.isPinned
+            function(id){
+
+                return allSessions[
+                    id
+                ].isPinned;
+
+            }
         );
 
 
     const recent =
         keys.filter(
-            id =>
-                !allSessions[id]
-                ?.isPinned
+            function(id){
+
+                return !allSessions[
+                    id
+                ].isPinned;
+
+            }
         );
 
 
-    if(pinned.length) {
+    if(pinned.length){
 
         historyList.innerHTML += `
 
-            <div
-                class="text-warning small fw-bold mt-2 mb-1">
-
-                <i class="fa-solid fa-star me-1"></i>
-
-                PINNED CHATS
-
+            <div class="history-label">
+                PINNED
             </div>
 
         `;
 
 
         pinned.forEach(
-            id =>
-                renderHistoryItem(id)
+            function(id){
+
+                renderHistoryItem(
+                    id
+                );
+
+            }
         );
 
     }
 
 
-    if(recent.length) {
+    if(recent.length){
 
         historyList.innerHTML += `
 
-            <div
-                class="text-secondary small fw-bold mt-3 mb-1">
-
+            <div class="history-label">
                 RECENT CHATS
-
             </div>
 
         `;
 
 
         recent.forEach(
-            id =>
-                renderHistoryItem(id)
+            function(id){
+
+                renderHistoryItem(
+                    id
+                );
+
+            }
         );
 
     }
@@ -2568,453 +2503,322 @@ function renderSidebarHistory() {
    HISTORY ITEM
 ============================================================ */
 
-function renderHistoryItem(id) {
+function renderHistoryItem(id){
 
     const session =
         allSessions[id];
 
 
-    if(!session)
-        return;
-
-
     const active =
         id === currentSessionId
-            ? "active"
-            : "";
-
-
-    const star =
-        session.isPinned
-            ? "fa-solid fa-star"
-            : "fa-regular fa-star";
-
-
-    /*
-        Long press support.
-    */
-
-    historyList.innerHTML += `
-
-        <div
-            class="history-item ${active}"
-            data-id="${escapeHTML(id)}"
-            onclick="loadSession('${id}')"
-            oncontextmenu="showChatActions(event,'${id}')">
-
-            <div class="history-title">
-
-                <i
-                    class="fa-regular fa-message me-2">
-                </i>
-
-                ${escapeHTML(
-                    session.title ||
-                    "New Chat"
-                )}
-
-                ${
-                    session.isPinned
-                    ?
-                    '<i class="fa-solid fa-star is-pinned-icon"></i>'
-                    :
-                    ''
-                }
-
-            </div>
-
-
-            <div class="action-btns-group">
-
-                <button
-                    class="action-icon-btn delete-btn-icon"
-                    onclick="deleteSession(event,'${id}')">
-
-                    <i
-                        class="fa-solid fa-trash-can">
-                    </i>
-
-                </button>
-
-
-                <button
-                    class="action-icon-btn star-btn-icon"
-                    onclick="togglePin(event,'${id}')">
-
-                    <i
-                        class="${star}">
-                    </i>
-
-                </button>
-
-
-                <button
-                    class="action-icon-btn"
-                    onclick="renameSession(event,'${id}')">
-
-                    <i
-                        class="fa-solid fa-pen">
-                    </i>
-
-                </button>
-
-            </div>
-
-        </div>
-
-    `;
-
-}
-
-
-/* ============================================================
-   CHAT ACTION MENU
-============================================================ */
-
-let chatActionTimer = null;
-
-
-function showChatActions(
-    event,
-    id
-) {
-
-    event.preventDefault();
-
-
-    document
-        .querySelectorAll(
-            ".history-item"
-        )
-        .forEach(
-            item =>
-                item.classList.remove(
-                    "show-actions"
-                )
-        );
+        ? "active"
+        : "";
 
 
     const item =
-        event.currentTarget;
-
-
-    item.classList.add(
-        "show-actions"
-    );
-
-}
-
-
-/* ============================================================
-   LONG PRESS
-============================================================ */
-
-document.addEventListener(
-    "touchstart",
-    function(e) {
-
-        const item =
-            e.target.closest(
-                ".history-item"
-            );
-
-
-        if(!item)
-            return;
-
-
-        const id =
-            item.dataset.id;
-
-
-        chatActionTimer =
-            setTimeout(
-                () => {
-
-                    document
-                        .querySelectorAll(
-                            ".history-item"
-                        )
-                        .forEach(
-                            el =>
-                                el.classList.remove(
-                                    "show-actions"
-                                )
-                        );
-
-
-                    item.classList.add(
-                        "show-actions"
-                    );
-
-                },
-                600
-            );
-
-    },
-    {
-        passive:true
-    }
-);
-
-
-document.addEventListener(
-    "touchend",
-    function() {
-
-        if(chatActionTimer) {
-
-            clearTimeout(
-                chatActionTimer
-            );
-
-            chatActionTimer =
-                null;
-
-        }
-
-    },
-    {
-        passive:true
-    }
-);
-
-
-/* ============================================================
-   SAFE HTML
-============================================================ */
-
-function escapeHTML(text) {
-
-    const div =
         document.createElement(
             "div"
         );
 
 
-    div.innerText =
-        text || "";
+    item.className =
+        "history-item " +
+        active;
 
 
-    return div.innerHTML;
+    item.dataset.id =
+        id;
 
-}
 
+    item.innerHTML = `
 
-/* ============================================================
-   VOICE RECORDING
-============================================================ */
+        <div class="history-title">
 
-let mediaRecorder = null;
+            <i
+                class="fa-regular fa-message me-2">
+            </i>
 
-let audioChunks = [];
+            ${escapeHTML(
+                session.title ||
+                "New Chat"
+            )}
 
-let isRecording = false;
+            ${
+                session.isPinned
+                ?
+                '<i class="fa-solid fa-thumbtack pinned-icon"></i>'
+                :
+                ''
+            }
 
+        </div>
 
-async function toggleVoiceRecording() {
+    `;
 
-    if(isRecording) {
 
-        stopRecording();
+    /* Normal click */
 
-    } else {
+    item.addEventListener(
+        "click",
+        function(){
 
-        startRecording();
+            loadSession(id);
 
-    }
-
-}
-
-
-async function startRecording() {
-
-    try {
-
-        const stream =
-            await navigator
-                .mediaDevices
-                .getUserMedia({
-                    audio:true
-                });
-
-
-        mediaRecorder =
-            new MediaRecorder(
-                stream
-            );
-
-
-        audioChunks = [];
-
-
-        mediaRecorder.ondataavailable =
-            event => {
-
-                if(
-                    event.data.size > 0
-                ) {
-
-                    audioChunks.push(
-                        event.data
-                    );
-
-                }
-
-            };
-
-
-        mediaRecorder.onstop =
-            async () => {
-
-                const blob =
-                    new Blob(
-                        audioChunks,
-                        {
-                            type:
-                                "audio/webm"
-                        }
-                    );
-
-
-                stream
-                    .getTracks()
-                    .forEach(
-                        track =>
-                            track.stop()
-                    );
-
-
-                await transcribeAudio(
-                    blob
-                );
-
-            };
-
-
-        mediaRecorder.start();
-
-
-        isRecording = true;
-
-
-        micBtn.classList.add(
-            "recording"
-        );
-
-
-        questionInput.placeholder =
-            "Recording... Tap microphone to stop";
-
-    } catch(error) {
-
-        alert(
-            "Microphone permission denied or unavailable."
-        );
-
-    }
-
-}
-
-
-function stopRecording() {
-
-    if(
-        mediaRecorder &&
-        isRecording
-    ) {
-
-        mediaRecorder.stop();
-
-        isRecording = false;
-
-        micBtn.classList.remove(
-            "recording"
-        );
-
-        questionInput.placeholder =
-            "Processing voice...";
-
-    }
-
-}
-
-
-/* ============================================================
-   TRANSCRIBE
-============================================================ */
-
-async function transcribeAudio(
-    blob
-) {
-
-    const formData =
-        new FormData();
-
-
-    formData.append(
-        "audio",
-        blob,
-        "audio.webm"
+        }
     );
 
 
-    try {
+    /* Right click */
 
-        const response =
-            await fetch(
-                "/api/transcribe",
-                {
-                    method:"POST",
-                    body:formData
-                }
-            );
+    item.addEventListener(
+        "contextmenu",
+        function(e){
 
+            e.preventDefault();
 
-        const data =
-            await response.json();
-
-
-        if(
-            data.status === "success" &&
-            data.text
-        ) {
-
-            questionInput.value =
-                data.text;
-
-
-            questionInput.style.height =
-                "auto";
-
-
-            questionInput.style.height =
-                Math.min(
-                    questionInput.scrollHeight,
-                    120
-                ) + "px";
-
-        } else {
-
-            alert(
-                data.message ||
-                "Voice recognition failed."
+            showContextMenu(
+                e.clientX,
+                e.clientY,
+                id
             );
 
         }
+    );
 
-    } catch(error) {
 
-        alert(
-            "Could not connect to voice service."
+    /* Long press */
+
+    item.addEventListener(
+        "touchstart",
+        function(e){
+
+            const touch =
+                e.touches[0];
+
+
+            longPressTimer =
+                setTimeout(
+                    function(){
+
+                        showContextMenu(
+                            touch.clientX,
+                            touch.clientY,
+                            id
+                        );
+
+                    },
+                    600
+                );
+
+        },
+        {
+            passive:true
+        }
+    );
+
+
+    item.addEventListener(
+        "touchend",
+        function(){
+
+            clearTimeout(
+                longPressTimer
+            );
+
+        }
+    );
+
+
+    item.addEventListener(
+        "touchmove",
+        function(){
+
+            clearTimeout(
+                longPressTimer
+            );
+
+        }
+    );
+
+
+    historyList.appendChild(
+        item
+    );
+
+}
+
+
+/* ============================================================
+   CONTEXT MENU
+============================================================ */
+
+function showContextMenu(
+    x,
+    y,
+    id
+){
+
+    contextSessionId =
+        id;
+
+
+    const menu =
+        document.getElementById(
+            "chatContextMenu"
         );
 
-    } finally {
 
-        questionInput.placeholder =
-            "Message Tuto AI...";
+    const pinText =
+        document.getElementById(
+            "contextPinText"
+        );
+
+
+    pinText.innerText =
+        allSessions[id] &&
+        allSessions[id].isPinned
+        ? "Unpin"
+        : "Pin";
+
+
+    menu.classList.add(
+        "show"
+    );
+
+
+    const width =
+        190;
+
+
+    const height =
+        145;
+
+
+    const safeX =
+        Math.min(
+            x,
+            window.innerWidth -
+            width -
+            10
+        );
+
+
+    const safeY =
+        Math.min(
+            y,
+            window.innerHeight -
+            height -
+            10
+        );
+
+
+    menu.style.left =
+        Math.max(
+            10,
+            safeX
+        ) + "px";
+
+
+    menu.style.top =
+        Math.max(
+            10,
+            safeY
+        ) + "px";
+
+}
+
+
+function hideContextMenu(){
+
+    document
+        .getElementById(
+            "chatContextMenu"
+        )
+        .classList.remove(
+            "show"
+        );
+
+    contextSessionId =
+        null;
+
+}
+
+
+document.addEventListener(
+    "click",
+    function(e){
+
+        const menu =
+            document.getElementById(
+                "chatContextMenu"
+            );
+
+
+        if(
+            !menu.contains(e.target)
+        ){
+
+            hideContextMenu();
+
+        }
 
     }
+);
+
+
+/* ============================================================
+   CONTEXT ACTIONS
+============================================================ */
+
+function contextPin(){
+
+    if(
+        contextSessionId
+    ){
+
+        togglePin(
+            null,
+            contextSessionId
+        );
+
+    }
+
+    hideContextMenu();
+
+}
+
+
+function contextRename(){
+
+    if(
+        contextSessionId
+    ){
+
+        renameSession(
+            contextSessionId
+        );
+
+    }
+
+    hideContextMenu();
+
+}
+
+
+function contextDelete(){
+
+    if(
+        contextSessionId
+    ){
+
+        deleteSession(
+            null,
+            contextSessionId
+        );
+
+    }
+
+    hideContextMenu();
 
 }
 
@@ -3023,7 +2827,7 @@ async function transcribeAudio(
    FILE MODAL
 ============================================================ */
 
-function closeUploadModal() {
+function closeUploadModal(){
 
     const modal =
         document.getElementById(
@@ -3043,10 +2847,9 @@ function closeUploadModal() {
 }
 
 
-function triggerCamera() {
+function triggerCamera(){
 
     closeUploadModal();
-
 
     document
         .getElementById(
@@ -3057,10 +2860,9 @@ function triggerCamera() {
 }
 
 
-function triggerGallery() {
+function triggerGallery(){
 
     closeUploadModal();
-
 
     document
         .getElementById(
@@ -3071,10 +2873,9 @@ function triggerGallery() {
 }
 
 
-function triggerPDF() {
+function triggerPDF(){
 
     closeUploadModal();
-
 
     document
         .getElementById(
@@ -3086,12 +2887,49 @@ function triggerPDF() {
 
 
 /* ============================================================
+   FILE TO DATA URL
+============================================================ */
+
+function fileToDataURL(file){
+
+    return new Promise(
+        function(resolve, reject){
+
+            const reader =
+                new FileReader();
+
+
+            reader.onload =
+                function(){
+
+                    resolve(
+                        reader.result
+                    );
+
+                };
+
+
+            reader.onerror =
+                reject;
+
+
+            reader.readAsDataURL(
+                file
+            );
+
+        }
+    );
+
+}
+
+
+/* ============================================================
    FILE SELECT
 ============================================================ */
 
-function handleFileSelect(
+async function handleFileSelect(
     input
-) {
+){
 
     if(
         !input.files ||
@@ -3102,6 +2940,21 @@ function handleFileSelect(
 
     selectedFile =
         input.files[0];
+
+
+    try{
+
+        selectedFileDataURL =
+            await fileToDataURL(
+                selectedFile
+            );
+
+    }catch(error){
+
+        selectedFileDataURL =
+            null;
+
+    }
 
 
     const previewArea =
@@ -3125,7 +2978,7 @@ function handleFileSelect(
     if(
         selectedFile.type ===
         "application/pdf"
-    ) {
+    ){
 
         imageThumb.style.display =
             "none";
@@ -3140,7 +2993,7 @@ function handleFileSelect(
         ).innerText =
             selectedFile.name;
 
-    } else {
+    }else{
 
         pdfThumb.style.display =
             "none";
@@ -3150,12 +3003,8 @@ function handleFileSelect(
             "block";
 
 
-        /*
-            Object URL only exists
-            during this page session.
-        */
-
         imageThumb.src =
+            selectedFileDataURL ||
             URL.createObjectURL(
                 selectedFile
             );
@@ -3173,9 +3022,14 @@ function handleFileSelect(
    CLEAR FILE
 ============================================================ */
 
-function clearSelectedFile() {
+function clearSelectedFile(){
 
-    selectedFile = null;
+    selectedFile =
+        null;
+
+
+    selectedFileDataURL =
+        null;
 
 
     document.getElementById(
@@ -3207,14 +3061,231 @@ function clearSelectedFile() {
 
 
 /* ============================================================
+   VOICE
+============================================================ */
+
+async function toggleVoiceRecording(){
+
+    if(isRecording){
+
+        stopRecording();
+
+    }else{
+
+        startRecording();
+
+    }
+
+}
+
+
+async function startRecording(){
+
+    try{
+
+        const stream =
+            await navigator
+                .mediaDevices
+                .getUserMedia({
+                    audio:true
+                });
+
+
+        mediaRecorder =
+            new MediaRecorder(
+                stream
+            );
+
+
+        audioChunks = [];
+
+
+        mediaRecorder.ondataavailable =
+            function(event){
+
+                if(
+                    event.data.size > 0
+                ){
+
+                    audioChunks.push(
+                        event.data
+                    );
+
+                }
+
+            };
+
+
+        mediaRecorder.onstop =
+            async function(){
+
+                const blob =
+                    new Blob(
+                        audioChunks,
+                        {
+                            type:
+                                "audio/webm"
+                        }
+                    );
+
+
+                stream
+                    .getTracks()
+                    .forEach(
+                        function(track){
+
+                            track.stop();
+
+                        }
+                    );
+
+
+                await transcribeAudio(
+                    blob
+                );
+
+            };
+
+
+        mediaRecorder.start();
+
+
+        isRecording =
+            true;
+
+
+        micBtn.classList.add(
+            "recording"
+        );
+
+
+        questionInput.placeholder =
+            "Recording... Tap microphone to stop";
+
+    }catch(error){
+
+        alert(
+            "Microphone permission denied or unavailable."
+        );
+
+    }
+
+}
+
+
+function stopRecording(){
+
+    if(
+        mediaRecorder &&
+        isRecording
+    ){
+
+        mediaRecorder.stop();
+
+
+        isRecording =
+            false;
+
+
+        micBtn.classList.remove(
+            "recording"
+        );
+
+
+        questionInput.placeholder =
+            "Processing voice...";
+
+    }
+
+}
+
+
+async function transcribeAudio(
+    blob
+){
+
+    const formData =
+        new FormData();
+
+
+    formData.append(
+        "audio",
+        blob,
+        "audio.webm"
+    );
+
+
+    try{
+
+        const response =
+            await fetch(
+                "/api/transcribe",
+                {
+                    method:"POST",
+                    body:formData
+                }
+            );
+
+
+        const data =
+            await response.json();
+
+
+        if(
+            data.status ===
+                "success"
+            &&
+            data.text
+        ){
+
+            questionInput.value =
+                data.text;
+
+
+            questionInput.style.height =
+                "auto";
+
+
+            questionInput.style.height =
+                Math.min(
+                    questionInput.scrollHeight,
+                    120
+                ) + "px";
+
+        }else{
+
+            alert(
+                data.message ||
+                "Voice recognition failed."
+            );
+
+        }
+
+    }catch(error){
+
+        alert(
+            "Could not connect to voice service."
+        );
+
+    }finally{
+
+        questionInput.placeholder =
+            "Message Tuto AI...";
+
+    }
+
+}
+
+
+/* ============================================================
    TEXT TO SPEECH
 ============================================================ */
 
-function speakText(button) {
+function speakText(button){
 
     if(
         !("speechSynthesis" in window)
-    ) {
+    ){
 
         alert(
             "Voice output is not supported."
@@ -3233,13 +3304,13 @@ function speakText(button) {
 
     const text =
         bubble
-            ? bubble.innerText
-            : "";
+        ? bubble.innerText
+        : "";
 
 
     if(
         window.speechSynthesis.speaking
-    ) {
+    ){
 
         window.speechSynthesis.cancel();
 
@@ -3263,12 +3334,12 @@ function speakText(button) {
         /[\u0980-\u09FF]/.test(
             text
         )
-    ) {
+    ){
 
         utterance.lang =
             "bn-BD";
 
-    } else {
+    }else{
 
         utterance.lang =
             "en-US";
@@ -3281,7 +3352,7 @@ function speakText(button) {
 
 
     utterance.onend =
-        () => {
+        function(){
 
             button.innerHTML =
                 '<i class="fa-solid fa-volume-high"></i>';
@@ -3306,7 +3377,7 @@ document
     )
     .addEventListener(
         "submit",
-        async function(e) {
+        async function(e){
 
             e.preventDefault();
 
@@ -3324,63 +3395,48 @@ document
             if(
                 !question &&
                 !selectedFile
-            )
+            ){
+
                 return;
-
-
-            /*
-                Remove welcome screen.
-            */
-
-            if(
-                chatBox.querySelector(
-                    ".welcome-screen"
-                )
-            ) {
-
-                chatBox.innerHTML =
-                    "";
 
             }
 
 
-            /* =================================================
+            /* ----------------------------------------------
                USER MESSAGE
-            ================================================= */
+            ---------------------------------------------- */
 
             let userHTML = "";
 
 
-            if(question) {
+            if(question){
 
                 userHTML += `
 
-                    <strong>
-                        You
-                    </strong>
+                    <strong>You</strong><br>
 
-                    <br>
-
-                    ${escapeHTML(question)
-                        .replace(
-                            /\n/g,
-                            "<br>"
-                        )}
+                    ${escapeHTML(
+                        question
+                    ).replace(
+                        /\n/g,
+                        "<br>"
+                    )}
 
                 `;
 
             }
 
 
-            if(selectedFile) {
+            if(selectedFile){
 
                 if(
                     selectedFile.type ===
                     "application/pdf"
-                ) {
+                ){
 
                     userHTML =
                         `
+
                         <div class="pdf-badge">
 
                             <i
@@ -3392,25 +3448,21 @@ document
                             )}
 
                         </div>
-                        `
-                        +
+
+                        ` +
                         (
                             userHTML
-                                ? "<br>" +
-                                  userHTML
-                                : ""
+                            ?
+                            "<br>" + userHTML
+                            :
+                            ""
                         );
 
-                } else {
 
-                    /*
-                        IMPORTANT:
-                        This image is NOT converted
-                        to base64 and NOT saved in
-                        localStorage.
-                    */
+                }else{
 
-                    const url =
+                    const imageSrc =
+                        selectedFileDataURL ||
                         URL.createObjectURL(
                             selectedFile
                         );
@@ -3418,17 +3470,20 @@ document
 
                     userHTML =
                         `
+
                         <img
-                            src="${url}"
+                            src="${imageSrc}"
                             class="uploaded-img-preview"
+                            alt="Uploaded image"
                         >
-                        `
-                        +
+
+                        ` +
                         (
                             userHTML
-                                ? "<br>" +
-                                  userHTML
-                                : ""
+                            ?
+                            "<br>" + userHTML
+                            :
+                            ""
                         );
 
                 }
@@ -3455,9 +3510,9 @@ document
             `;
 
 
-            /* =================================================
-               FORMDATA
-            ================================================= */
+            /* ----------------------------------------------
+               FORM DATA
+            ---------------------------------------------- */
 
             const formData =
                 new FormData();
@@ -3475,7 +3530,7 @@ document
             );
 
 
-            if(selectedFile) {
+            if(selectedFile){
 
                 formData.append(
                     "file",
@@ -3484,11 +3539,6 @@ document
 
             }
 
-
-            /*
-                Clear input AFTER FormData
-                has been created.
-            */
 
             questionInput.value = "";
 
@@ -3507,9 +3557,9 @@ document
                 chatBox.scrollHeight;
 
 
-            /* =================================================
+            /* ----------------------------------------------
                LOADING
-            ================================================= */
+            ---------------------------------------------- */
 
             const loadingId =
                 "loading-" +
@@ -3546,7 +3596,7 @@ document
                 chatBox.scrollHeight;
 
 
-            try {
+            try{
 
                 const response =
                     await fetch(
@@ -3571,20 +3621,21 @@ document
                 if(
                     data.status ===
                     "success"
-                ) {
+                ){
 
                     let content =
-                        data.response || "";
+                        data.response ||
+                        "";
 
 
-                    try {
+                    try{
 
                         content =
                             marked.parse(
                                 content
                             );
 
-                    } catch(e) {
+                    }catch(error){
 
                         content =
                             escapeHTML(
@@ -3597,25 +3648,30 @@ document
                     }
 
 
+                    if(!loading){
+
+                        return;
+
+                    }
+
+
                     const bubble =
-                        loading
-                            .querySelector(
-                                ".bubble"
-                            );
+                        loading.querySelector(
+                            ".bubble"
+                        );
 
 
                     bubble.innerHTML = `
 
                         <div
                             class="d-flex
-                                   justify-content-between
-                                   align-items-center
-                                   mb-1">
+                            justify-content-between
+                            align-items-center
+                            mb-1">
 
                             <strong>
                                 Tuto AI
                             </strong>
-
 
                             <button
                                 class="tts-btn"
@@ -3632,9 +3688,7 @@ document
 
 
                         <div>
-
                             ${content}
-
                         </div>
 
                     `;
@@ -3650,77 +3704,60 @@ document
                     );
 
 
-                    /*
-                        Save chat safely.
-                    */
+                    /* Save current chat */
+
+                    allSessions[
+                        currentSessionId
+                    ].html =
+                        chatBox.innerHTML;
+
+
+                    saveSessions();
+
+
+                    /* Generate title */
 
                     if(
-                        allSessions[
-                            currentSessionId
-                        ]
-                    ) {
-
-                        allSessions[
-                            currentSessionId
-                        ].html =
-                            chatBox.innerHTML;
-
-
-                        saveSessions();
-
-                    }
-
-
-                    /*
-                        Generate title.
-                    */
-
-                    if(
-                        allSessions[
-                            currentSessionId
-                        ] &&
                         allSessions[
                             currentSessionId
                         ].title ===
                         "New Chat"
-                    ) {
+                    ){
 
                         generateTitle(
                             question ||
-                            selectedFile?.name ||
-                            "Conversation"
+                            "Image conversation"
                         );
 
                     }
 
-                } else {
 
-                    if(loading) {
+                }else{
 
-                        loading
-                            .querySelector(
-                                ".bubble"
-                            )
-                            .innerHTML = `
+                    if(loading){
 
-                                <span
-                                    class="text-danger">
+                        loading.querySelector(
+                            ".bubble"
+                        ).innerHTML = `
 
-                                    Error:
-                                    ${escapeHTML(
-                                        data.message ||
-                                        "Something went wrong."
-                                    )}
+                            <span class="text-danger">
 
-                                </span>
+                                Error:
+                                ${escapeHTML(
+                                    data.message ||
+                                    "Something went wrong."
+                                )}
 
-                            `;
+                            </span>
+
+                        `;
 
                     }
 
                 }
 
-            } catch(error) {
+
+            }catch(error){
 
                 const loading =
                     document.getElementById(
@@ -3728,26 +3765,23 @@ document
                     );
 
 
-                if(loading) {
+                if(loading){
 
-                    loading
-                        .querySelector(
-                            ".bubble"
-                        )
-                        .innerHTML = `
+                    loading.querySelector(
+                        ".bubble"
+                    ).innerHTML = `
 
-                            <span
-                                class="text-danger">
+                        <span class="text-danger">
 
-                                Server connection error.
+                            Server connection error.
 
-                            </span>
+                        </span>
 
-                        `;
+                    `;
 
                 }
 
-            } finally {
+            }finally{
 
                 sendBtn.disabled =
                     false;
@@ -3763,31 +3797,31 @@ document
 
 
 /* ============================================================
-   SMART TITLE
+   TITLE GENERATION
 ============================================================ */
 
 async function generateTitle(
     prompt
-) {
+){
 
-    try {
+    try{
+
+        const formData =
+            new FormData();
+
+
+        formData.append(
+            "prompt",
+            prompt
+        );
+
 
         const response =
             await fetch(
                 "/api/generate-title",
                 {
                     method:"POST",
-
-                    headers:{
-                        "Content-Type":
-                            "application/json"
-                    },
-
-                    body:
-                        JSON.stringify({
-                            prompt:prompt
-                        })
-
+                    body:formData
                 }
             );
 
@@ -3798,12 +3832,14 @@ async function generateTitle(
 
         if(
             data.status ===
-                "success" &&
-            data.title &&
+                "success"
+            &&
+            data.title
+            &&
             allSessions[
                 currentSessionId
             ]
-        ) {
+        ){
 
             allSessions[
                 currentSessionId
@@ -3817,69 +3853,30 @@ async function generateTitle(
 
         }
 
-    } catch(error) {
-
-        console.warn(
-            "Title generation failed:",
-            error
-        );
-
-    }
+    }catch(error){}
 
 }
 
 
 /* ============================================================
-   HIDE CHAT ACTIONS WHEN CLICKING OUTSIDE
+   CLOSE MENU ON ESC
 ============================================================ */
 
 document.addEventListener(
-    "click",
-    function(e) {
+    "keydown",
+    function(e){
 
-        if(
-            !e.target.closest(
-                ".history-item"
-            )
-        ) {
+        if(e.key === "Escape"){
 
-            document
-                .querySelectorAll(
-                    ".history-item"
-                )
-                .forEach(
-                    item =>
-                        item.classList.remove(
-                            "show-actions"
-                        )
-                );
+            hideContextMenu();
 
         }
 
     }
 );
 
-
-/* ============================================================
-   PERIODIC STORAGE CLEANUP
-============================================================ */
-
-setInterval(
-    () => {
-
-        try {
-
-            cleanSessionsForStorage();
-
-            saveSessions();
-
-        } catch(e) {}
-
-    },
-    60000
-);
-
 </script>
 
 </body>
+
 </html>
