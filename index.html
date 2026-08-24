@@ -1,77 +1,42 @@
 <!DOCTYPE html>
 <html lang="en" data-theme="dark">
-
 <head>
-
 <meta charset="UTF-8">
-
-<meta
-    name="viewport"
-    content="width=device-width,
-    initial-scale=1.0,
-    maximum-scale=1.0,
-    user-scalable=no"
->
-
+<meta name="viewport"
+      content="width=device-width, initial-scale=1.0,
+      maximum-scale=1.0, user-scalable=no">
 <title>Tuto AI</title>
-
-
-<!-- Bootstrap -->
 <link
     href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
-    rel="stylesheet"
->
-
-
-<!-- Font Awesome -->
+    rel="stylesheet">
 <link
     rel="stylesheet"
-    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
->
-
-
-<!-- KaTeX -->
+    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <link
     rel="stylesheet"
-    href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css"
->
-
+    href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
 <script
     defer
     src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js">
 </script>
-
 <script
     defer
     src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js">
 </script>
-
-
-<!-- Markdown -->
 <script
     src="https://cdn.jsdelivr.net/npm/marked/marked.min.js">
 </script>
-
-
-<!-- Highlight.js -->
 <link
     rel="stylesheet"
-    href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/atom-one-dark.min.css"
->
-
+    href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/atom-one-dark.min.css">
 <script
     src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js">
 </script>
-
-
 <style>
-
 /* ============================================================
    THEME
 ============================================================ */
-
 :root[data-theme="dark"] {
-
     --bg-color:#131314;
     --sidebar-bg:#1e1e20;
     --text-color:#ffffff;
@@ -85,12 +50,8 @@
     --strong-color:#a8c7fa;
     --modal-bg:#1e1e20;
     --menu-bg:#29292c;
-
 }
-
-
 :root[data-theme="light"] {
-
     --bg-color:#ffffff;
     --sidebar-bg:#f0f4f9;
     --text-color:#1f1f1f;
@@ -104,2306 +65,1252 @@
     --strong-color:#0b57d0;
     --modal-bg:#ffffff;
     --menu-bg:#ffffff;
-
 }
-
-
 * {
     box-sizing:border-box;
 }
-
-
 html,
 body {
-
     margin:0;
     padding:0;
-
     width:100%;
     height:100%;
-
     overflow:hidden;
-
     background:var(--bg-color);
-
     color:var(--text-color);
-
-    font-family:
-        "Segoe UI",
-        system-ui,
-        -apple-system,
-        sans-serif;
-
+    font-family:"Segoe UI",system-ui,-apple-system,sans-serif;
 }
-
-
 body {
     display:flex;
 }
-
-
 /* ============================================================
    SIDEBAR
 ============================================================ */
-
 .sidebar {
-
     width:260px;
-
     height:100%;
-
     background:var(--sidebar-bg);
-
-    border-right:
-        1px solid var(--border-color);
-
+    border-right:1px solid var(--border-color);
     padding:20px;
-
     display:flex;
-
     flex-direction:column;
-
     flex-shrink:0;
-
     transition:all .25s ease;
-
     z-index:1000;
-
 }
-
-
 .sidebar.collapsed {
     margin-left:-260px;
 }
-
-
 .sidebar-overlay {
-
     display:none;
-
     position:fixed;
-
     inset:0;
-
     background:rgba(0,0,0,.5);
-
     z-index:999;
-
 }
-
-
 .new-chat-btn {
-
     background:var(--input-bg);
-
     color:var(--text-color);
-
-    border:
-        1px solid var(--border-color);
-
+    border:1px solid var(--border-color);
     border-radius:30px;
-
     padding:10px 15px;
-
     font-weight:500;
-
 }
-
-
 .history-list {
-
     flex:1;
-
     overflow-y:auto;
-
     margin-top:15px;
-
 }
-
-
 .history-label {
-
     color:var(--text-muted);
-
     font-size:11px;
-
     font-weight:700;
-
     margin:15px 8px 8px;
-
 }
-
-
 .history-item {
-
     display:flex;
-
     align-items:center;
-
     padding:11px 12px;
-
     border-radius:10px;
-
     color:var(--text-muted);
-
     cursor:pointer;
-
     font-size:14px;
-
     margin-bottom:5px;
-
     user-select:none;
-
     position:relative;
-
 }
-
-
 .history-item:hover,
 .history-item.active {
-
     background:var(--btn-hover);
-
     color:var(--text-color);
-
 }
-
-
 .history-title {
-
     white-space:nowrap;
-
     overflow:hidden;
-
     text-overflow:ellipsis;
-
     width:100%;
-
 }
-
-
 .pinned-icon {
-
     color:#f59e0b;
-
     margin-left:5px;
-
 }
-
-
 /* ============================================================
    CONTEXT MENU
 ============================================================ */
-
 .chat-context-menu {
-
     display:none;
-
     position:fixed;
-
     min-width:190px;
-
     background:var(--menu-bg);
-
-    border:
-        1px solid var(--border-color);
-
+    border:1px solid var(--border-color);
     border-radius:13px;
-
-    box-shadow:
-        0 10px 35px rgba(0,0,0,.35);
-
+    box-shadow:0 10px 35px rgba(0,0,0,.35);
     padding:7px;
-
     z-index:5000;
-
 }
-
-
 .chat-context-menu.show {
     display:block;
 }
-
-
 .context-item {
-
     display:flex;
-
     align-items:center;
-
     gap:12px;
-
     width:100%;
-
     padding:10px 12px;
-
     border:none;
-
     border-radius:8px;
-
     background:transparent;
-
     color:var(--text-color);
-
     text-align:left;
-
     cursor:pointer;
-
 }
-
-
 .context-item:hover {
     background:var(--btn-hover);
 }
-
-
 .context-item.delete {
     color:#ef4444;
 }
-
-
 .context-item i {
     width:18px;
 }
-
-
 /* ============================================================
    MAIN
 ============================================================ */
-
 .main-chat {
-
     flex:1;
-
     width:100%;
-
     height:100vh;
-
     height:100dvh;
-
     display:flex;
-
     flex-direction:column;
-
     overflow:hidden;
-
 }
-
-
 .chat-header {
-
     padding:15px 25px;
-
-    border-bottom:
-        1px solid var(--border-color);
-
+    border-bottom:1px solid var(--border-color);
     display:flex;
-
     align-items:center;
-
     justify-content:space-between;
-
     flex-shrink:0;
-
 }
-
-
 .header-left {
-
     display:flex;
-
     align-items:center;
-
 }
-
-
 .toggle-btn,
 .theme-btn {
-
     background:transparent;
-
     border:none;
-
     color:var(--text-color);
-
     cursor:pointer;
-
     padding:7px 12px;
-
     border-radius:20px;
-
 }
-
-
 .toggle-btn:hover,
 .theme-btn:hover {
     background:var(--btn-hover);
 }
-
-
 .theme-btn {
-
-    border:
-        1px solid var(--border-color);
-
+    border:1px solid var(--border-color);
 }
-
-
 /* ============================================================
    CHAT
 ============================================================ */
-
 .chat-container {
-
     flex:1;
-
     overflow-y:auto;
-
     padding:20px;
-
     width:100%;
-
     max-width:900px;
-
     margin:0 auto;
-
 }
-
-
 .welcome-screen {
-
     min-height:100%;
-
     display:flex;
-
     align-items:center;
-
     justify-content:center;
-
     flex-direction:column;
-
     text-align:center;
-
 }
-
-
 .welcome-avatar {
-
     width:58px;
-
     height:58px;
-
     border-radius:50%;
-
-    background:
-        linear-gradient(
-            135deg,
-            #f59e0b,
-            #d97706
-        );
-
+    background:linear-gradient(135deg,#f59e0b,#d97706);
     display:flex;
-
     align-items:center;
-
     justify-content:center;
-
     color:white;
-
     font-weight:bold;
-
     font-size:22px;
-
     margin-bottom:15px;
-
 }
-
-
 .message {
-
     display:flex;
-
     gap:15px;
-
     margin-bottom:28px;
-
 }
-
-
 .avatar {
-
     width:35px;
-
     height:35px;
-
     border-radius:50%;
-
     display:flex;
-
     justify-content:center;
-
     align-items:center;
-
     flex-shrink:0;
-
     font-size:13px;
-
     font-weight:bold;
-
 }
-
-
 .user-avatar {
-
     background:#5436da;
-
     color:white;
-
 }
-
-
 .ai-avatar {
-
-    background:
-        linear-gradient(
-            135deg,
-            #f59e0b,
-            #d97706
-        );
-
+    background:linear-gradient(135deg,#f59e0b,#d97706);
     color:white;
-
 }
-
-
 .bubble {
-
     width:100%;
-
     max-width:88%;
-
     color:var(--bubble-text);
-
     font-size:16px;
-
     line-height:1.6;
-
     word-wrap:break-word;
-
 }
-
-
 .bubble strong {
     color:var(--strong-color);
 }
-
-
 .bubble table {
-
     width:100%;
-
     border-collapse:collapse;
-
     margin:12px 0;
-
 }
-
-
 .bubble th,
 .bubble td {
-
-    border:
-        1px solid var(--border-color);
-
+    border:1px solid var(--border-color);
     padding:8px;
-
 }
-
-
 .bubble th {
     background:var(--btn-hover);
 }
-
-
 /* ============================================================
-   IMAGE
+   IMAGE / PDF
 ============================================================ */
-
 .uploaded-img-preview {
-
     display:block;
-
     max-width:350px;
-
     max-height:500px;
-
     width:auto;
-
     height:auto;
-
     object-fit:contain;
-
     border-radius:12px;
-
-    border:
-        1px solid var(--border-color);
-
+    border:1px solid var(--border-color);
     margin-bottom:10px;
-
 }
-
-
 .pdf-badge {
-
     display:inline-flex;
-
     align-items:center;
-
     gap:8px;
-
     background:var(--btn-hover);
-
-    border:
-        1px solid #e11d48;
-
+    border:1px solid #e11d48;
     color:#ff4d4d;
-
     padding:7px 12px;
-
     border-radius:8px;
-
 }
-
-
 /* ============================================================
    CODE
 ============================================================ */
-
 .code-container {
-
     margin:12px 0;
-
     border-radius:8px;
-
     overflow:hidden;
-
-    border:
-        1px solid #3e4451;
-
+    border:1px solid #3e4451;
     background:#282c34;
-
 }
-
-
 .code-header {
-
     display:flex;
-
     justify-content:space-between;
-
     align-items:center;
-
     background:#21252b;
-
     padding:6px 12px;
-
     font-size:12px;
-
     color:#abb2bf;
-
 }
-
-
 pre {
-
     margin:0 !important;
-
     padding:12px !important;
-
     overflow-x:auto;
-
 }
-
-
 .copy-code-btn {
-
     background:#3e4451;
-
     color:white;
-
     border:none;
-
     border-radius:4px;
-
     padding:3px 8px;
-
     font-size:12px;
-
     cursor:pointer;
-
 }
-
-
 /* ============================================================
    INPUT
 ============================================================ */
-
 .input-container-box {
-
     width:100%;
-
     padding:10px 15px 15px;
-
     background:var(--bg-color);
-
     flex-shrink:0;
-
 }
-
-
 .input-wrapper {
-
     width:100%;
-
     max-width:850px;
-
     margin:0 auto;
-
     background:var(--input-bg);
-
-    border:
-        1px solid var(--input-border);
-
+    border:1px solid var(--input-border);
     border-radius:24px;
-
     padding:8px 15px;
-
 }
-
-
 #filePreviewArea {
-
     display:none;
-
     position:relative;
-
     width:fit-content;
-
     margin-bottom:8px;
-
 }
-
-
 #previewImgThumb {
-
     width:70px;
-
     height:70px;
-
     object-fit:cover;
-
     border-radius:12px;
-
 }
-
-
 #pdfPreviewThumb {
-
     display:none;
-
     background:var(--btn-hover);
-
-    border:
-        1px solid #e11d48;
-
+    border:1px solid #e11d48;
     color:#ff4d4d;
-
     padding:8px 12px;
-
     border-radius:10px;
-
     font-size:13px;
-
 }
-
-
 .close-img-btn {
-
     position:absolute;
-
     top:-7px;
-
     right:-7px;
-
     width:22px;
-
     height:22px;
-
     border:none;
-
     border-radius:50%;
-
     background:#e11d48;
-
     color:white;
-
     cursor:pointer;
-
 }
-
-
 .input-row {
-
     display:flex;
-
     align-items:center;
-
     gap:10px;
-
 }
-
-
 .plus-btn,
 .mic-btn {
-
     background:none;
-
     border:none;
-
     color:var(--accent-color);
-
     font-size:18px;
-
     cursor:pointer;
-
     padding:5px;
-
 }
-
-
 .mic-btn.recording {
-
     color:#ef4444 !important;
-
     animation:pulse 1.2s infinite;
-
 }
-
-
 @keyframes pulse {
-
-    0% {
-        transform:scale(1);
-    }
-
-    50% {
-        transform:scale(1.2);
-    }
-
-    100% {
-        transform:scale(1);
-    }
-
+    0% { transform:scale(1); }
+    50% { transform:scale(1.2); }
+    100% { transform:scale(1); }
 }
-
-
 .chat-textarea {
-
     background:transparent;
-
     border:none;
-
     outline:none;
-
     color:var(--text-color);
-
     width:100%;
-
     resize:none;
-
     min-height:28px;
-
     max-height:120px;
-
     padding:6px 0;
-
     font-size:15px;
-
     font-family:inherit;
-
 }
-
-
+.chat-textarea::placeholder {
+    color:var(--text-muted);
+}
 .send-btn {
-
     width:32px;
-
     height:32px;
-
     border-radius:50%;
-
     border:none;
-
     background:var(--text-color);
-
     color:var(--bg-color);
-
     display:flex;
-
     align-items:center;
-
     justify-content:center;
-
     cursor:pointer;
-
     flex-shrink:0;
-
 }
-
-
 .send-btn:disabled {
-
     background:var(--border-color);
-
     color:var(--text-muted);
-
 }
-
-
 .tts-btn {
-
     background:none;
-
     border:none;
-
     color:var(--text-muted);
-
     cursor:pointer;
-
 }
-
-
 /* ============================================================
    MODAL
 ============================================================ */
-
 .modal-content {
-
     background:var(--modal-bg);
-
     color:var(--text-color);
-
-    border:
-        1px solid var(--border-color);
-
+    border:1px solid var(--border-color);
 }
-
-
 .modal-btn {
-
     width:100%;
-
     padding:15px;
-
     margin-bottom:10px;
-
     border-radius:15px;
-
-    border:
-        1px solid var(--border-color);
-
+    border:1px solid var(--border-color);
     background:var(--input-bg);
-
     color:var(--text-color);
-
     text-align:left;
-
 }
-
-
 .modal-btn:hover {
     background:var(--btn-hover);
 }
-
-
 /* ============================================================
    MOBILE
 ============================================================ */
-
 @media(max-width:768px) {
-
     .sidebar {
-
         position:absolute;
-
         top:0;
-
         bottom:0;
-
         left:0;
-
-        box-shadow:
-            5px 0 15px rgba(0,0,0,.3);
-
+        box-shadow:5px 0 15px rgba(0,0,0,.3);
     }
-
-
     .sidebar.collapsed {
         margin-left:-260px;
     }
-
-
     .sidebar-overlay.active {
         display:block;
     }
-
-
     .chat-container {
         padding:15px 10px;
     }
-
-
     .chat-header {
         padding:12px 15px;
     }
-
-
     .bubble {
         max-width:100%;
     }
-
-
     .uploaded-img-preview {
         max-width:280px;
     }
-
 }
-
 </style>
-
 </head>
-
-
 <body>
-
-
-<!-- SIDEBAR OVERLAY -->
-
+<!-- ============================================================
+     SIDEBAR OVERLAY
+============================================================ -->
 <div
     class="sidebar-overlay"
     id="sidebarOverlay"
     onclick="toggleSidebar()">
 </div>
-
-
-<!-- SIDEBAR -->
-
+<!-- ============================================================
+     SIDEBAR
+============================================================ -->
 <div
     class="sidebar"
     id="sidebar">
-
     <div
         class="d-flex justify-content-between align-items-center mb-3 d-md-none">
-
         <span class="fw-bold">
             Menu
         </span>
-
         <button
             class="btn btn-sm text-secondary"
             onclick="toggleSidebar()">
-
             <i class="fa-solid fa-xmark fa-xl"></i>
-
         </button>
-
     </div>
-
-
     <button
         class="new-chat-btn w-100 mb-2"
         onclick="startNewChat()">
-
         <i class="fa-solid fa-plus me-2"></i>
-
         New Chat
-
     </button>
-
-
     <div
         class="history-list"
         id="historyList">
     </div>
-
 </div>
-
-
-<!-- MAIN -->
-
+<!-- ============================================================
+     MAIN
+============================================================ -->
 <div class="main-chat">
-
-
-    <!-- HEADER -->
-
     <div class="chat-header">
-
         <div class="header-left">
-
             <button
                 class="toggle-btn"
                 onclick="toggleSidebar()">
-
                 <i class="fa-solid fa-bars"></i>
-
             </button>
-
-
             <h5 class="m-0 fw-bold">
-
-                <i
-                    class="fa-solid fa-sparkles me-2 text-warning">
-                </i>
-
+                <i class="fa-solid fa-sparkles me-2 text-warning"></i>
                 Tuto AI
-
             </h5>
-
         </div>
-
-
         <button
             class="theme-btn"
             onclick="toggleTheme()"
             id="themeToggleBtn">
-
             <i
                 class="fa-solid fa-sun"
                 id="themeIcon">
             </i>
-
             <span id="themeText">
                 Light
             </span>
-
         </button>
-
     </div>
-
-
     <!-- CHAT -->
-
     <div
         class="chat-container"
         id="chatBox">
     </div>
-
-
     <!-- INPUT -->
-
     <div class="input-container-box">
-
         <div class="input-wrapper">
-
-
             <div id="filePreviewArea">
-
                 <img
                     id="previewImgThumb"
                     src=""
                     alt="Image preview"
-                    style="display:none;"
-                >
-
-
+                    style="display:none;">
                 <div id="pdfPreviewThumb">
-
-                    <i
-                        class="fa-solid fa-file-pdf me-2">
-                    </i>
-
+                    <i class="fa-solid fa-file-pdf me-2"></i>
                     <span id="pdfFileName">
                         document.pdf
                     </span>
-
                 </div>
-
-
                 <button
                     class="close-img-btn"
                     onclick="clearSelectedFile()">
-
                     <i class="fa-solid fa-xmark"></i>
-
                 </button>
-
             </div>
-
-
             <div class="input-row">
-
                 <button
                     class="plus-btn"
                     data-bs-toggle="modal"
                     data-bs-target="#uploadModal">
-
-                    <i
-                        class="fa-solid fa-circle-plus">
-                    </i>
-
+                    <i class="fa-solid fa-circle-plus"></i>
                 </button>
-
-
                 <form
                     id="chatForm"
                     class="d-flex w-100 align-items-center gap-2">
-
-
                     <textarea
                         id="question"
                         class="chat-textarea"
                         rows="1"
-                        placeholder="Message Tuto AI..."
-                    ></textarea>
-
-
+                        placeholder="Message Tuto AI..."></textarea>
                     <button
                         type="button"
                         class="mic-btn"
                         id="micBtn"
                         onclick="toggleVoiceRecording()">
-
-                        <i
-                            class="fa-solid fa-microphone">
-                        </i>
-
+                        <i class="fa-solid fa-microphone"></i>
                     </button>
-
-
                     <button
                         type="submit"
                         class="send-btn"
                         id="sendBtn">
-
-                        <i
-                            class="fa-solid fa-arrow-up">
-                        </i>
-
+                        <i class="fa-solid fa-arrow-up"></i>
                     </button>
-
                 </form>
-
             </div>
-
         </div>
-
     </div>
-
 </div>
-
-
-<!-- CONTEXT MENU -->
-
+<!-- ============================================================
+     CONTEXT MENU
+============================================================ -->
 <div
     class="chat-context-menu"
     id="chatContextMenu">
-
     <button
         class="context-item"
         onclick="contextPin()">
-
         <i class="fa-solid fa-thumbtack"></i>
-
         <span id="contextPinText">
             Pin
         </span>
-
     </button>
-
-
     <button
         class="context-item"
         onclick="contextRename()">
-
         <i class="fa-solid fa-pen"></i>
-
         Rename
-
     </button>
-
-
     <button
         class="context-item delete"
         onclick="contextDelete()">
-
         <i class="fa-solid fa-trash"></i>
-
         Delete
-
     </button>
-
 </div>
-
-
-<!-- FILE INPUTS -->
-
+<!-- ============================================================
+     FILE INPUTS
+============================================================ -->
 <input
     type="file"
     id="galleryInput"
     accept="image/*"
     style="display:none"
-    onchange="handleFileSelect(this)"
->
-
-
+    onchange="handleFileSelect(this)">
 <input
     type="file"
     id="cameraInput"
     accept="image/*"
     capture="environment"
     style="display:none"
-    onchange="handleFileSelect(this)"
->
-
-
+    onchange="handleFileSelect(this)">
 <input
     type="file"
     id="pdfInput"
     accept="application/pdf"
     style="display:none"
-    onchange="handleFileSelect(this)"
->
-
-
-<!-- UPLOAD MODAL -->
-
+    onchange="handleFileSelect(this)">
+<!-- ============================================================
+     UPLOAD MODAL
+============================================================ -->
 <div
     class="modal fade"
     id="uploadModal"
     tabindex="-1">
-
     <div
         class="modal-dialog modal-dialog-centered">
-
         <div class="modal-content">
-
             <div class="modal-header border-0">
-
                 <h5 class="modal-title fw-bold">
-
-                    <i
-                        class="fa-solid fa-paperclip me-2 text-primary">
-                    </i>
-
+                    <i class="fa-solid fa-paperclip me-2 text-primary"></i>
                     Attach File
-
                 </h5>
-
-
                 <button
                     type="button"
                     class="btn-close"
                     data-bs-dismiss="modal">
                 </button>
-
             </div>
-
-
             <div class="modal-body">
-
                 <button
                     class="modal-btn"
                     onclick="triggerCamera()">
-
-                    <i
-                        class="fa-solid fa-camera fa-lg me-3 text-warning">
-                    </i>
-
+                    <i class="fa-solid fa-camera fa-lg me-3 text-warning"></i>
                     <strong>
                         Take Photo
                     </strong>
-
                 </button>
-
-
                 <button
                     class="modal-btn"
                     onclick="triggerGallery()">
-
-                    <i
-                        class="fa-solid fa-images fa-lg me-3 text-info">
-                    </i>
-
+                    <i class="fa-solid fa-images fa-lg me-3 text-info"></i>
                     <strong>
                         Upload Photo
                     </strong>
-
                 </button>
-
-
                 <button
                     class="modal-btn"
                     onclick="triggerPDF()">
-
-                    <i
-                        class="fa-solid fa-file-pdf fa-lg me-3 text-danger">
-                    </i>
-
+                    <i class="fa-solid fa-file-pdf fa-lg me-3 text-danger"></i>
                     <strong>
                         Upload PDF Document
                     </strong>
-
                 </button>
-
             </div>
-
         </div>
-
     </div>
-
 </div>
-
-
-<!-- Bootstrap -->
-
 <script
     src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js">
 </script>
-
-
 <script>
-
 /* ============================================================
    VARIABLES
 ============================================================ */
-
 let selectedFile = null;
-
 let selectedFileDataURL = null;
-
 let contextSessionId = null;
-
 let longPressTimer = null;
-
-
 const questionInput =
     document.getElementById("question");
-
-
 const chatBox =
     document.getElementById("chatBox");
-
-
 const historyList =
     document.getElementById("historyList");
-
-
 const micBtn =
     document.getElementById("micBtn");
-
-
 /* ============================================================
-   INDEXEDDB STORAGE
+   DATABASE
 ============================================================ */
-
 const DB_NAME = "TutoAI_DB";
-
 const DB_VERSION = 1;
-
 const STORE_NAME = "sessions";
-
 let db = null;
-
 let allSessions = {};
-
 let currentSessionId =
     localStorage.getItem(
         "tuto_current_session_id"
     ) || null;
-
-
 /* ============================================================
    OPEN DATABASE
 ============================================================ */
-
 function openDatabase(){
-
     return new Promise(
-        function(resolve, reject){
-
+        function(resolve,reject){
             const request =
                 indexedDB.open(
                     DB_NAME,
                     DB_VERSION
                 );
-
-
             request.onupgradeneeded =
                 function(event){
-
                     const database =
                         event.target.result;
-
-
                     if(
-                        !database.objectStoreNames
-                            .contains(STORE_NAME)
+                        !database.objectStoreNames.contains(
+                            STORE_NAME
+                        )
                     ){
-
                         database.createObjectStore(
                             STORE_NAME,
                             {
                                 keyPath:"id"
                             }
                         );
-
                     }
-
                 };
-
-
             request.onsuccess =
                 function(event){
-
                     db =
                         event.target.result;
-
                     resolve(db);
-
                 };
-
-
             request.onerror =
                 function(){
-
-                    reject(
-                        request.error
-                    );
-
+                    reject(request.error);
                 };
-
         }
     );
-
 }
-
-
 /* ============================================================
-   LOAD ALL SESSIONS
+   LOAD SESSIONS
 ============================================================ */
-
 function loadAllSessions(){
-
     return new Promise(
-        function(resolve, reject){
-
+        function(resolve,reject){
             if(!db){
-
                 resolve({});
-
                 return;
-
             }
-
-
             const transaction =
                 db.transaction(
                     STORE_NAME,
                     "readonly"
                 );
-
-
             const store =
                 transaction.objectStore(
                     STORE_NAME
                 );
-
-
             const request =
                 store.getAll();
-
-
             request.onsuccess =
                 function(){
-
                     const sessions = {};
-
-
                     (
                         request.result || []
                     ).forEach(
                         function(session){
-
                             sessions[
                                 session.id
-                            ] =
-                                session;
-
+                            ] = session;
                         }
                     );
-
-
-                    resolve(
-                        sessions
-                    );
-
+                    resolve(sessions);
                 };
-
-
             request.onerror =
                 function(){
-
-                    reject(
-                        request.error
-                    );
-
+                    reject(request.error);
                 };
-
         }
     );
-
 }
-
-
 /* ============================================================
-   SAVE ONE SESSION
+   SAVE SESSION
 ============================================================ */
-
 function saveSession(session){
-
     return new Promise(
-        function(resolve, reject){
-
+        function(resolve,reject){
             if(
                 !db ||
                 !session ||
                 !session.id
             ){
-
                 resolve();
-
                 return;
-
             }
-
-
             const transaction =
                 db.transaction(
                     STORE_NAME,
                     "readwrite"
                 );
-
-
             const store =
                 transaction.objectStore(
                     STORE_NAME
                 );
-
-
             const request =
                 store.put(session);
-
-
             request.onsuccess =
                 function(){
-
                     resolve();
-
                 };
-
-
             request.onerror =
                 function(){
-
-                    reject(
-                        request.error
-                    );
-
+                    reject(request.error);
                 };
-
         }
     );
-
 }
-
-
 /* ============================================================
-   DELETE ONE SESSION
+   DELETE SESSION
 ============================================================ */
-
 function deleteSessionFromDB(id){
-
     return new Promise(
-        function(resolve, reject){
-
+        function(resolve,reject){
             if(!db){
-
                 resolve();
-
                 return;
-
             }
-
-
             const transaction =
                 db.transaction(
                     STORE_NAME,
                     "readwrite"
                 );
-
-
             const store =
                 transaction.objectStore(
                     STORE_NAME
                 );
-
-
             const request =
                 store.delete(id);
-
-
             request.onsuccess =
                 function(){
-
                     resolve();
-
                 };
-
-
             request.onerror =
                 function(){
-
-                    reject(
-                        request.error
-                    );
-
+                    reject(request.error);
                 };
-
         }
     );
-
 }
-
-
 /* ============================================================
    SAVE CURRENT SESSION
 ============================================================ */
-
 async function saveSessions(){
-
     try{
-
         if(currentSessionId){
-
             localStorage.setItem(
                 "tuto_current_session_id",
                 currentSessionId
             );
-
         }
-
-
         if(
             currentSessionId &&
             allSessions[currentSessionId]
         ){
-
             allSessions[
                 currentSessionId
             ].updatedAt =
                 Date.now();
-
-
             await saveSession(
                 allSessions[
                     currentSessionId
                 ]
             );
-
         }
-
     }catch(error){
-
         console.error(
-            "IndexedDB storage error:",
+            "Storage error:",
             error
         );
-
-        /*
-         * Important:
-         * No "Chat storage is full" popup.
-         */
-
-        console.warn(
-            "Unable to save chat."
-        );
-
     }
-
 }
-
-
 /* ============================================================
    DEFAULT WELCOME
 ============================================================ */
-
 const DEFAULT_WELCOME = `
-
 <div
     class="welcome-screen"
     id="welcomeScreen">
-
     <div class="welcome-avatar">
         AI
     </div>
-
     <h2 class="fw-bold mb-2">
         Hello there!
     </h2>
-
     <p class="text-secondary fs-5">
         How can I help you today?
     </p>
-
     <small class="text-secondary">
         Ask me anything — study, coding, writing,
         ideas, math, science, technology and more.
     </small>
-
 </div>
-
 `;
-
-
 /* ============================================================
    THEME
 ============================================================ */
-
 function initTheme(){
-
     const savedTheme =
         localStorage.getItem(
             "tuto_theme"
         ) || "dark";
-
-
     setTheme(savedTheme);
-
 }
-
-
 function toggleTheme(){
-
     const current =
-        document.documentElement
-        .getAttribute(
+        document.documentElement.getAttribute(
             "data-theme"
         );
-
-
     setTheme(
         current === "dark"
         ? "light"
         : "dark"
     );
-
 }
-
-
 function setTheme(theme){
-
-    document.documentElement
-        .setAttribute(
-            "data-theme",
-            theme
-        );
-
-
+    document.documentElement.setAttribute(
+        "data-theme",
+        theme
+    );
     localStorage.setItem(
         "tuto_theme",
         theme
     );
-
-
     const icon =
         document.getElementById(
             "themeIcon"
         );
-
-
     const text =
         document.getElementById(
             "themeText"
         );
-
-
     if(theme === "light"){
-
         icon.className =
             "fa-solid fa-moon";
-
         text.innerText =
             "Dark";
-
     }else{
-
         icon.className =
             "fa-solid fa-sun";
-
         text.innerText =
             "Light";
-
     }
-
 }
-
-
 /* ============================================================
    SIDEBAR
 ============================================================ */
-
 function toggleSidebar(){
-
     const sidebar =
         document.getElementById(
             "sidebar"
         );
-
-
     const overlay =
         document.getElementById(
             "sidebarOverlay"
         );
-
-
     sidebar.classList.toggle(
         "collapsed"
     );
-
-
     if(window.innerWidth <= 768){
-
         if(
             !sidebar.classList.contains(
                 "collapsed"
             )
         ){
-
             overlay.classList.add(
                 "active"
             );
-
         }else{
-
             overlay.classList.remove(
                 "active"
             );
-
         }
-
     }
-
 }
-
-
 function mobileSidebarCheck(){
-
     if(window.innerWidth <= 768){
-
         document
             .getElementById("sidebar")
-            .classList.add(
-                "collapsed"
-            );
-
+            .classList.add("collapsed");
+        document
+            .getElementById("sidebarOverlay")
+            .classList.remove("active");
     }
-
 }
-
-
 /* ============================================================
    INITIALIZATION
 ============================================================ */
-
 window.addEventListener(
     "DOMContentLoaded",
     async function(){
-
         initTheme();
-
         mobileSidebarCheck();
-
-
         try{
-
-            /*
-             * Open IndexedDB
-             */
-
             await openDatabase();
-
-
-            /*
-             * Load chats
-             */
-
             allSessions =
                 await loadAllSessions();
-
-
         }catch(error){
-
             console.error(
                 "Database initialization failed:",
                 error
             );
-
             allSessions = {};
-
         }
-
-
-        /*
-         * Restore previous chat
-         */
-
         if(
             currentSessionId &&
-            allSessions[
-                currentSessionId
-            ]
+            allSessions[currentSessionId]
         ){
-
             renderSidebarHistory();
-
             loadSession(
                 currentSessionId
             );
-
         }else{
-
             startNewChat(true);
-
         }
-
     }
 );
-
-
 /* ============================================================
    TEXTAREA
 ============================================================ */
-
 questionInput.addEventListener(
     "input",
     function(){
-
         this.style.height =
             "auto";
-
-
         this.style.height =
             Math.min(
                 this.scrollHeight,
                 120
             ) + "px";
-
     }
 );
-
-
 questionInput.addEventListener(
     "keydown",
     function(e){
-
         if(
             e.key === "Enter" &&
             !e.shiftKey
         ){
-
             e.preventDefault();
-
-
             document
-                .getElementById(
-                    "chatForm"
-                )
+                .getElementById("chatForm")
                 .dispatchEvent(
-                    new Event(
-                        "submit"
-                    )
+                    new Event("submit")
                 );
-
         }
-
     }
 );
-
-
 /* ============================================================
-   SAFE HTML
+   ESCAPE HTML
 ============================================================ */
-
 function escapeHTML(text){
-
     const div =
-        document.createElement(
-            "div"
-        );
-
-
+        document.createElement("div");
     div.innerText =
         text || "";
-
-
     return div.innerHTML;
-
 }
-
-
 /* ============================================================
    MATH
 ============================================================ */
-
 function renderMath(element){
-
     if(
         window.renderMathInElement
     ){
-
         try{
-
             renderMathInElement(
                 element,
                 {
-
                     delimiters:[
-
                         {
                             left:"$$",
                             right:"$$",
                             display:true
                         },
-
                         {
                             left:"$",
                             right:"$",
                             display:false
                         },
-
                         {
                             left:"\\(",
                             right:"\\)",
                             display:false
                         },
-
                         {
                             left:"\\[",
                             right:"\\]",
                             display:true
                         }
-
                     ],
-
                     throwOnError:false
-
                 }
             );
-
-        }catch(e){}
-
+        }catch(error){
+            console.warn(
+                "Math render error:",
+                error
+            );
+        }
     }
-
 }
-
-
 /* ============================================================
    CODE BLOCKS
 ============================================================ */
-
 function processCodeBlocks(element){
-
     if(!element)
         return;
-
-
     element
         .querySelectorAll("pre")
         .forEach(
             function(pre){
-
                 if(
                     pre.closest(
                         ".code-container"
                     )
-                )
+                ){
                     return;
-
-
+                }
                 const code =
-                    pre.querySelector(
-                        "code"
-                    );
-
-
+                    pre.querySelector("code");
                 const codeText =
                     code
                     ? code.innerText
                     : pre.innerText;
-
-
                 let language =
                     "code";
-
-
                 if(
                     code &&
                     code.className
                 ){
-
                     const match =
                         code.className.match(
                             /language-(\w+)/
                         );
-
-
-                    if(match)
+                    if(match){
                         language =
                             match[1];
-
+                    }
                 }
-
-
                 const container =
-                    document.createElement(
-                        "div"
-                    );
-
-
+                    document.createElement("div");
                 container.className =
                     "code-container";
-
-
                 const header =
-                    document.createElement(
-                        "div"
-                    );
-
-
+                    document.createElement("div");
                 header.className =
                     "code-header";
-
-
                 const label =
-                    document.createElement(
-                        "span"
-                    );
-
-
+                    document.createElement("span");
                 label.innerText =
                     language;
-
-
                 const copyBtn =
-                    document.createElement(
-                        "button"
-                    );
-
-
+                    document.createElement("button");
                 copyBtn.className =
                     "copy-code-btn";
-
-
                 copyBtn.innerHTML =
                     '<i class="fa-regular fa-copy"></i> Copy';
-
-
                 copyBtn.onclick =
                     async function(){
-
                         try{
-
                             await navigator
                                 .clipboard
                                 .writeText(
                                     codeText.trim()
                                 );
-
-
                             copyBtn.innerHTML =
                                 '<i class="fa-solid fa-check"></i> Copied!';
-
-
                             setTimeout(
                                 function(){
-
                                     copyBtn.innerHTML =
                                         '<i class="fa-regular fa-copy"></i> Copy';
-
                                 },
                                 2000
                             );
-
-                        }catch(e){}
-
+                        }catch(error){
+                            console.error(
+                                "Copy error:",
+                                error
+                            );
+                        }
                     };
-
-
-                header.appendChild(
-                    label
-                );
-
-
-                header.appendChild(
-                    copyBtn
-                );
-
-
+                header.appendChild(label);
+                header.appendChild(copyBtn);
                 pre.parentNode.insertBefore(
                     container,
                     pre
                 );
-
-
-                container.appendChild(
-                    header
-                );
-
-
-                container.appendChild(
-                    pre
-                );
-
-
+                container.appendChild(header);
+                container.appendChild(pre);
                 if(
                     window.hljs &&
                     code
                 ){
-
                     try{
-
                         hljs.highlightElement(
                             code
                         );
-
-                    }catch(e){}
-
+                    }catch(error){}
                 }
-
             }
         );
-
 }
-
-
 /* ============================================================
    NEW CHAT
 ============================================================ */
-
 function startNewChat(
     render = true
 ){
-
     currentSessionId =
         "session_" +
         Date.now() +
@@ -2411,430 +1318,267 @@ function startNewChat(
         Math.random()
             .toString(36)
             .substring(2,9);
-
-
     allSessions[
         currentSessionId
     ] = {
-
         id:
             currentSessionId,
-
         title:
             "New Chat",
-
         html:
             DEFAULT_WELCOME,
-
         isPinned:
             false,
-
         createdAt:
             Date.now(),
-
         updatedAt:
             Date.now()
-
     };
-
-
-    /*
-     * Save only this new chat
-     */
-
-    saveSessions();
-
-
-    if(render){
-
-        renderSidebarHistory();
-
-        loadSession(
-            currentSessionId
-        );
-
-    }
-
-
-    mobileSidebarCheck();
-
-}
-
-
-/* ============================================================
-   LOAD SESSION
-============================================================ */
-
-function loadSession(id){
-
-    if(
-        !allSessions[id]
-    )
-        return;
-
-
-    currentSessionId =
-        id;
-
-
     localStorage.setItem(
         "tuto_current_session_id",
         currentSessionId
     );
-
-
+    saveSession(
+        allSessions[
+            currentSessionId
+        ]
+    );
+    if(render){
+        renderSidebarHistory();
+        loadSession(
+            currentSessionId
+        );
+    }
+    mobileSidebarCheck();
+}
+/* ============================================================
+   LOAD SESSION
+============================================================ */
+function loadSession(id){
+    if(
+        !allSessions[id]
+    ){
+        return;
+    }
+    currentSessionId =
+        id;
+    localStorage.setItem(
+        "tuto_current_session_id",
+        currentSessionId
+    );
     chatBox.innerHTML =
         allSessions[id].html ||
         DEFAULT_WELCOME;
-
-
     chatBox
-        .querySelectorAll(
-            ".bubble"
-        )
+        .querySelectorAll(".bubble")
         .forEach(
             function(bubble){
-
-                renderMath(
-                    bubble
-                );
-
-
-                processCodeBlocks(
-                    bubble
-                );
-
+                renderMath(bubble);
+                processCodeBlocks(bubble);
             }
         );
-
-
     chatBox.scrollTop =
         chatBox.scrollHeight;
-
-
     renderSidebarHistory();
-
     mobileSidebarCheck();
-
 }
-
-
 /* ============================================================
-   DELETE
+   DELETE SESSION
 ============================================================ */
-
 async function deleteSession(
     event,
     id
 ){
-
-    if(event)
+    if(event){
         event.stopPropagation();
-
-
+    }
     if(
         !allSessions[id]
-    )
+    ){
         return;
-
-
+    }
     if(
-        !confirm(
-            "Delete this chat?"
-        )
-    )
+        !confirm("Delete this chat?")
+    ){
         return;
-
-
+    }
     delete allSessions[id];
-
-
     await deleteSessionFromDB(id);
-
-
     const keys =
-        Object.keys(
-            allSessions
-        );
-
-
+        Object.keys(allSessions);
     if(
         currentSessionId === id
     ){
-
         if(keys.length){
-
+            keys.sort(
+                function(a,b){
+                    return (
+                        (
+                            allSessions[b].updatedAt || 0
+                        )
+                        -
+                        (
+                            allSessions[a].updatedAt || 0
+                        )
+                    );
+                }
+            );
             currentSessionId =
-                keys[keys.length - 1];
-
+                keys[0];
         }else{
-
             startNewChat(false);
-
         }
-
     }
-
-
     if(currentSessionId){
-
         localStorage.setItem(
             "tuto_current_session_id",
             currentSessionId
         );
-
     }
-
-
     renderSidebarHistory();
-
-
     loadSession(
         currentSessionId
     );
-
 }
-
-
 /* ============================================================
    PIN
 ============================================================ */
-
 function togglePin(
     event,
     id
 ){
-
-    if(event)
+    if(event){
         event.stopPropagation();
-
-
+    }
     if(
         allSessions[id]
     ){
-
         allSessions[id].isPinned =
             !allSessions[id].isPinned;
-
-
         saveSession(
             allSessions[id]
         );
-
-
         renderSidebarHistory();
-
     }
-
 }
-
-
 /* ============================================================
    RENAME
 ============================================================ */
-
 function renameSession(id){
-
     if(
         !allSessions[id]
-    )
+    ){
         return;
-
-
+    }
     const oldTitle =
         allSessions[id].title ||
         "New Chat";
-
-
     const newTitle =
         prompt(
             "Rename chat:",
             oldTitle
         );
-
-
     if(
         newTitle === null
-    )
+    ){
         return;
-
-
+    }
     const cleanTitle =
         newTitle.trim();
-
-
     if(
         !cleanTitle
-    )
+    ){
         return;
-
-
+    }
     allSessions[id].title =
         cleanTitle.substring(
             0,
             80
         );
-
-
     saveSession(
         allSessions[id]
     );
-
-
     renderSidebarHistory();
-
 }
-
-
 /* ============================================================
    SIDEBAR HISTORY
 ============================================================ */
-
 function renderSidebarHistory(){
-
     historyList.innerHTML = "";
-
-
     const keys =
-        Object.keys(
-            allSessions
-        ).sort(
+        Object.keys(allSessions)
+        .sort(
             function(a,b){
-
                 return (
                     (
-                        allSessions[b]
-                            .updatedAt || 0
+                        allSessions[b].updatedAt || 0
                     )
                     -
                     (
-                        allSessions[a]
-                            .updatedAt || 0
+                        allSessions[a].updatedAt || 0
                     )
                 );
-
             }
         );
-
-
     const pinned =
         keys.filter(
             function(id){
-
-                return allSessions[
-                    id
-                ].isPinned;
-
+                return allSessions[id].isPinned;
             }
         );
-
-
     const recent =
         keys.filter(
             function(id){
-
-                return !allSessions[
-                    id
-                ].isPinned;
-
+                return !allSessions[id].isPinned;
             }
         );
-
-
     if(pinned.length){
-
         historyList.innerHTML += `
-
             <div class="history-label">
                 PINNED
             </div>
-
         `;
-
-
         pinned.forEach(
             function(id){
-
-                renderHistoryItem(
-                    id
-                );
-
+                renderHistoryItem(id);
             }
         );
-
     }
-
-
     if(recent.length){
-
         historyList.innerHTML += `
-
             <div class="history-label">
                 RECENT CHATS
             </div>
-
         `;
-
-
         recent.forEach(
             function(id){
-
-                renderHistoryItem(
-                    id
-                );
-
+                renderHistoryItem(id);
             }
         );
-
     }
-
 }
-
-
 /* ============================================================
    HISTORY ITEM
 ============================================================ */
-
 function renderHistoryItem(id){
-
     const session =
         allSessions[id];
-
-
     const active =
         id === currentSessionId
         ? "active"
         : "";
-
-
     const item =
-        document.createElement(
-            "div"
-        );
-
-
+        document.createElement("div");
     item.className =
-        "history-item " +
-        active;
-
-
+        "history-item " + active;
     item.dataset.id =
         id;
-
-
     item.innerHTML = `
-
         <div class="history-title">
-
-            <i
-                class="fa-regular fa-message me-2">
-            </i>
-
+            <i class="fa-regular fa-message me-2"></i>
             ${escapeHTML(
-                session.title ||
-                "New Chat"
+                session.title || "New Chat"
             )}
-
             ${
                 session.isPinned
                 ?
@@ -2842,145 +1586,90 @@ function renderHistoryItem(id){
                 :
                 ''
             }
-
         </div>
-
     `;
-
-
     item.addEventListener(
         "click",
         function(){
-
             loadSession(id);
-
         }
     );
-
-
     item.addEventListener(
         "contextmenu",
         function(e){
-
             e.preventDefault();
-
-
             showContextMenu(
                 e.clientX,
                 e.clientY,
                 id
             );
-
         }
     );
-
-
     item.addEventListener(
         "touchstart",
         function(e){
-
             const touch =
                 e.touches[0];
-
-
             longPressTimer =
                 setTimeout(
                     function(){
-
                         showContextMenu(
                             touch.clientX,
                             touch.clientY,
                             id
                         );
-
                     },
                     600
                 );
-
         },
         {
             passive:true
         }
     );
-
-
     item.addEventListener(
         "touchend",
         function(){
-
             clearTimeout(
                 longPressTimer
             );
-
         }
     );
-
-
     item.addEventListener(
         "touchmove",
         function(){
-
             clearTimeout(
                 longPressTimer
             );
-
         }
     );
-
-
-    historyList.appendChild(
-        item
-    );
-
+    historyList.appendChild(item);
 }
-
-
 /* ============================================================
    CONTEXT MENU
 ============================================================ */
-
 function showContextMenu(
     x,
     y,
     id
 ){
-
     contextSessionId =
         id;
-
-
     const menu =
         document.getElementById(
             "chatContextMenu"
         );
-
-
     const pinText =
         document.getElementById(
             "contextPinText"
         );
-
-
     pinText.innerText =
         allSessions[id] &&
         allSessions[id].isPinned
         ? "Unpin"
         : "Pin";
-
-
-    menu.classList.add(
-        "show"
-    );
-
-
-    const width =
-        190;
-
-
-    const height =
-        145;
-
-
+    menu.classList.add("show");
+    const width = 190;
+    const height = 145;
     const safeX =
         Math.min(
             x,
@@ -2988,8 +1677,6 @@ function showContextMenu(
             width -
             10
         );
-
-
     const safeY =
         Math.min(
             y,
@@ -2997,527 +1684,291 @@ function showContextMenu(
             height -
             10
         );
-
-
     menu.style.left =
-        Math.max(
-            10,
-            safeX
-        ) + "px";
-
-
+        Math.max(10,safeX) + "px";
     menu.style.top =
-        Math.max(
-            10,
-            safeY
-        ) + "px";
-
+        Math.max(10,safeY) + "px";
 }
-
-
 function hideContextMenu(){
-
     document
         .getElementById(
             "chatContextMenu"
         )
-        .classList.remove(
-            "show"
-        );
-
-
+        .classList.remove("show");
     contextSessionId =
         null;
-
 }
-
-
 document.addEventListener(
     "click",
     function(e){
-
         const menu =
             document.getElementById(
                 "chatContextMenu"
             );
-
-
         if(
             !menu.contains(e.target)
         ){
-
             hideContextMenu();
-
         }
-
     }
 );
-
-
 /* ============================================================
    CONTEXT ACTIONS
 ============================================================ */
-
 function contextPin(){
-
-    if(
-        contextSessionId
-    ){
-
+    if(contextSessionId){
         togglePin(
             null,
             contextSessionId
         );
-
     }
-
-
     hideContextMenu();
-
 }
-
-
 function contextRename(){
-
-    if(
-        contextSessionId
-    ){
-
+    if(contextSessionId){
         renameSession(
             contextSessionId
         );
-
     }
-
-
     hideContextMenu();
-
 }
-
-
 function contextDelete(){
-
-    if(
-        contextSessionId
-    ){
-
+    if(contextSessionId){
         deleteSession(
             null,
             contextSessionId
         );
-
     }
-
-
     hideContextMenu();
-
 }
-
-
 /* ============================================================
    FILE MODAL
 ============================================================ */
-
 function closeUploadModal(){
-
     const modal =
         document.getElementById(
             "uploadModal"
         );
-
-
     const instance =
         bootstrap.Modal.getInstance(
             modal
         );
-
-
-    if(instance)
+    if(instance){
         instance.hide();
-
+    }
 }
-
-
 function triggerCamera(){
-
     closeUploadModal();
-
-
     document
-        .getElementById(
-            "cameraInput"
-        )
+        .getElementById("cameraInput")
         .click();
-
 }
-
-
 function triggerGallery(){
-
     closeUploadModal();
-
-
     document
-        .getElementById(
-            "galleryInput"
-        )
+        .getElementById("galleryInput")
         .click();
-
 }
-
-
 function triggerPDF(){
-
     closeUploadModal();
-
-
     document
-        .getElementById(
-            "pdfInput"
-        )
+        .getElementById("pdfInput")
         .click();
-
 }
-
-
 /* ============================================================
    FILE TO DATA URL
 ============================================================ */
-
 function fileToDataURL(file){
-
     return new Promise(
-        function(resolve, reject){
-
+        function(resolve,reject){
             const reader =
                 new FileReader();
-
-
             reader.onload =
                 function(){
-
                     resolve(
                         reader.result
                     );
-
                 };
-
-
             reader.onerror =
                 reject;
-
-
-            reader.readAsDataURL(
-                file
-            );
-
+            reader.readAsDataURL(file);
         }
     );
-
 }
-
-
 /* ============================================================
    FILE SELECT
 ============================================================ */
-
-async function handleFileSelect(
-    input
-){
-
+async function handleFileSelect(input){
     if(
         !input.files ||
         !input.files[0]
-    )
+    ){
         return;
-
-
+    }
     selectedFile =
         input.files[0];
-
-
     try{
-
         selectedFileDataURL =
             await fileToDataURL(
                 selectedFile
             );
-
     }catch(error){
-
         selectedFileDataURL =
             null;
-
     }
-
-
     const previewArea =
         document.getElementById(
             "filePreviewArea"
         );
-
-
     const imageThumb =
         document.getElementById(
             "previewImgThumb"
         );
-
-
     const pdfThumb =
         document.getElementById(
             "pdfPreviewThumb"
         );
-
-
     if(
         selectedFile.type ===
         "application/pdf"
     ){
-
         imageThumb.style.display =
             "none";
-
-
         pdfThumb.style.display =
             "inline-block";
-
-
         document.getElementById(
             "pdfFileName"
         ).innerText =
             selectedFile.name;
-
     }else{
-
         pdfThumb.style.display =
             "none";
-
-
         imageThumb.style.display =
             "block";
-
-
         imageThumb.src =
             selectedFileDataURL ||
             URL.createObjectURL(
                 selectedFile
             );
-
     }
-
-
     previewArea.style.display =
         "block";
-
 }
-
-
 /* ============================================================
    CLEAR FILE
 ============================================================ */
-
 function clearSelectedFile(){
-
     selectedFile =
         null;
-
-
     selectedFileDataURL =
         null;
-
-
     document.getElementById(
         "galleryInput"
     ).value = "";
-
-
     document.getElementById(
         "cameraInput"
     ).value = "";
-
-
     document.getElementById(
         "pdfInput"
     ).value = "";
-
-
     document.getElementById(
         "filePreviewArea"
     ).style.display =
         "none";
-
-
     document.getElementById(
         "previewImgThumb"
     ).src = "";
-
 }
-
-
 /* ============================================================
-   VOICE
+   VOICE RECORDING
 ============================================================ */
-
 let mediaRecorder = null;
-
 let audioChunks = [];
-
 let isRecording = false;
-
-
 async function toggleVoiceRecording(){
-
     if(isRecording){
-
         stopRecording();
-
     }else{
-
         startRecording();
-
     }
-
 }
-
-
 async function startRecording(){
-
     try{
-
         const stream =
             await navigator
                 .mediaDevices
                 .getUserMedia({
                     audio:true
                 });
-
-
         mediaRecorder =
-            new MediaRecorder(
-                stream
-            );
-
-
+            new MediaRecorder(stream);
         audioChunks = [];
-
-
         mediaRecorder.ondataavailable =
             function(event){
-
                 if(
                     event.data.size > 0
                 ){
-
                     audioChunks.push(
                         event.data
                     );
-
                 }
-
             };
-
-
         mediaRecorder.onstop =
             async function(){
-
                 const blob =
                     new Blob(
                         audioChunks,
                         {
-                            type:
-                                "audio/webm"
+                            type:"audio/webm"
                         }
                     );
-
-
                 stream
                     .getTracks()
                     .forEach(
                         function(track){
-
                             track.stop();
-
                         }
                     );
-
-
-                await transcribeAudio(
-                    blob
-                );
-
+                await transcribeAudio(blob);
             };
-
-
         mediaRecorder.start();
-
-
         isRecording =
             true;
-
-
         micBtn.classList.add(
             "recording"
         );
-
-
         questionInput.placeholder =
             "Recording... Tap microphone to stop";
-
     }catch(error){
-
         alert(
             "Microphone permission denied or unavailable."
         );
-
     }
-
 }
-
-
 function stopRecording(){
-
     if(
         mediaRecorder &&
         isRecording
     ){
-
         mediaRecorder.stop();
-
-
         isRecording =
             false;
-
-
         micBtn.classList.remove(
             "recording"
         );
-
-
         questionInput.placeholder =
             "Processing voice...";
-
     }
-
 }
-
-
-async function transcribeAudio(
-    blob
-){
-
+async function transcribeAudio(blob){
     const formData =
         new FormData();
-
-
     formData.append(
         "audio",
         blob,
         "audio.webm"
     );
-
-
     try{
-
         const response =
             await fetch(
                 "/api/transcribe",
@@ -3526,228 +1977,146 @@ async function transcribeAudio(
                     body:formData
                 }
             );
-
-
         const data =
             await response.json();
-
-
         if(
-            data.status ===
-                "success"
-            &&
+            data.status === "success" &&
             data.text
         ){
-
             questionInput.value =
                 data.text;
-
-
             questionInput.style.height =
                 "auto";
-
-
             questionInput.style.height =
                 Math.min(
                     questionInput.scrollHeight,
                     120
                 ) + "px";
-
         }else{
-
             alert(
                 data.message ||
                 "Voice recognition failed."
             );
-
         }
-
     }catch(error){
-
         alert(
             "Could not connect to voice service."
         );
-
     }finally{
-
         questionInput.placeholder =
             "Message Tuto AI...";
-
     }
-
 }
-
-
 /* ============================================================
    TEXT TO SPEECH
 ============================================================ */
-
 function speakText(button){
-
     if(
         !("speechSynthesis" in window)
     ){
-
         alert(
             "Voice output is not supported."
         );
-
         return;
-
     }
-
-
     const bubble =
-        button.closest(
-            ".bubble"
-        );
-
-
+        button.closest(".bubble");
     const text =
         bubble
         ? bubble.innerText
         : "";
-
-
     if(
         window.speechSynthesis.speaking
     ){
-
         window.speechSynthesis.cancel();
-
-
         button.innerHTML =
             '<i class="fa-solid fa-volume-high"></i>';
-
-
         return;
-
     }
-
-
     const utterance =
         new SpeechSynthesisUtterance(
             text
         );
-
-
     if(
-        /[\u0980-\u09FF]/.test(
-            text
-        )
+        /[\u0980-\u09FF]/.test(text)
     ){
-
         utterance.lang =
             "bn-BD";
-
     }else{
-
         utterance.lang =
             "en-US";
-
     }
-
-
     button.innerHTML =
         '<i class="fa-solid fa-volume-xmark text-warning"></i>';
-
-
     utterance.onend =
         function(){
-
             button.innerHTML =
                 '<i class="fa-solid fa-volume-high"></i>';
-
         };
-
-
     window.speechSynthesis.speak(
         utterance
     );
-
 }
-
-
 /* ============================================================
    SEND MESSAGE
 ============================================================ */
-
 document
-    .getElementById(
-        "chatForm"
-    )
+    .getElementById("chatForm")
     .addEventListener(
         "submit",
         async function(e){
-
             e.preventDefault();
-
-
             const sendBtn =
                 document.getElementById(
                     "sendBtn"
                 );
-
-
             const question =
                 questionInput.value.trim();
-
-
             if(
                 !question &&
                 !selectedFile
             ){
-
                 return;
-
             }
-
-
-            /* USER MESSAGE */
-
+            /*
+             * IMPORTANT:
+             *
+             * Save the session ID BEFORE sending
+             * the request.
+             *
+             * This prevents title generation from
+             * accidentally changing another chat.
+             */
+            const messageSessionId =
+                currentSessionId;
+            /* =================================================
+               USER MESSAGE
+            ================================================= */
             let userHTML = "";
-
-
             if(question){
-
                 userHTML += `
-
                     <strong>You</strong><br>
-
                     ${escapeHTML(
                         question
                     ).replace(
                         /\n/g,
                         "<br>"
                     )}
-
                 `;
-
             }
-
-
             if(selectedFile){
-
                 if(
                     selectedFile.type ===
                     "application/pdf"
                 ){
-
                     userHTML =
                         `
-
                         <div class="pdf-badge">
-
-                            <i
-                                class="fa-solid fa-file-pdf">
-                            </i>
-
+                            <i class="fa-solid fa-file-pdf"></i>
                             ${escapeHTML(
                                 selectedFile.name
                             )}
-
                         </div>
-
                         ` +
                         (
                             userHTML
@@ -3756,26 +2125,18 @@ document
                             :
                             ""
                         );
-
-
                 }else{
-
                     const imageSrc =
                         selectedFileDataURL ||
                         URL.createObjectURL(
                             selectedFile
                         );
-
-
                     userHTML =
                         `
-
                         <img
                             src="${imageSrc}"
                             class="uploaded-img-preview"
-                            alt="Uploaded image"
-                        >
-
+                            alt="Uploaded image">
                         ` +
                         (
                             userHTML
@@ -3784,116 +2145,85 @@ document
                             :
                             ""
                         );
-
                 }
-
             }
-
-
             chatBox.innerHTML += `
-
                 <div class="message">
-
                     <div class="avatar user-avatar">
                         You
                     </div>
-
                     <div class="bubble">
-
                         ${userHTML}
-
                     </div>
-
                 </div>
-
             `;
-
-
-            /* FORM DATA */
-
+            /* =================================================
+               FORM DATA
+            ================================================= */
             const formData =
                 new FormData();
-
-
             formData.append(
                 "question",
                 question
             );
-
-
             formData.append(
                 "session_id",
-                currentSessionId
+                messageSessionId
             );
-
-
             if(selectedFile){
-
                 formData.append(
                     "file",
                     selectedFile
                 );
-
             }
-
-
+            /*
+             * IMPORTANT:
+             * Check title status BEFORE clearing
+             * anything.
+             */
+            const shouldGenerateTitle =
+                allSessions[messageSessionId] &&
+                allSessions[messageSessionId].title ===
+                    "New Chat";
+            const titleQuestion =
+                question ||
+                (
+                    selectedFile
+                    ?
+                    "Image or document analysis"
+                    :
+                    ""
+                );
             questionInput.value = "";
-
-
             questionInput.style.height =
                 "auto";
-
-
             clearSelectedFile();
-
-
             sendBtn.disabled =
                 true;
-
-
             chatBox.scrollTop =
                 chatBox.scrollHeight;
-
-
-            /* LOADING */
-
+            /* =================================================
+               LOADING
+            ================================================= */
             const loadingId =
                 "loading-" +
                 Date.now();
-
-
             chatBox.innerHTML += `
-
                 <div
                     class="message"
                     id="${loadingId}">
-
                     <div class="avatar ai-avatar">
                         AI
                     </div>
-
-                    <div
-                        class="bubble text-secondary">
-
-                        <i
-                            class="fa-solid fa-circle-notch fa-spin me-2">
-                        </i>
-
+                    <div class="bubble text-secondary">
+                        <i class="fa-solid fa-circle-notch fa-spin me-2"></i>
                         Thinking...
-
                     </div>
-
                 </div>
-
             `;
-
-
             chatBox.scrollTop =
                 chatBox.scrollHeight;
-
-
             try{
-
                 const response =
                     await fetch(
                         "/api/chat",
@@ -3902,37 +2232,23 @@ document
                             body:formData
                         }
                     );
-
-
                 const data =
                     await response.json();
-
-
                 const loading =
                     document.getElementById(
                         loadingId
                     );
-
-
                 if(
-                    data.status ===
-                    "success"
+                    data.status === "success"
                 ){
-
                     let content =
-                        data.response ||
-                        "";
-
-
+                        data.response || "";
                     try{
-
                         content =
                             marked.parse(
                                 content
                             );
-
                     }catch(error){
-
                         content =
                             escapeHTML(
                                 data.response
@@ -3940,210 +2256,158 @@ document
                                 /\n/g,
                                 "<br>"
                             );
-
                     }
-
-
-                    if(!loading){
-
-                        return;
-
-                    }
-
-
-                    const bubble =
-                        loading.querySelector(
-                            ".bubble"
+                    if(loading){
+                        const bubble =
+                            loading.querySelector(
+                                ".bubble"
+                            );
+                        bubble.classList.remove(
+                            "text-secondary"
                         );
-
-
-                    bubble.innerHTML = `
-
-                        <div
-                            class="d-flex
-                            justify-content-between
-                            align-items-center
-                            mb-1">
-
-                            <strong>
-                                Tuto AI
-                            </strong>
-
-                            <button
-                                class="tts-btn"
-                                onclick="speakText(this)"
-                                title="Read Aloud">
-
-                                <i
-                                    class="fa-solid fa-volume-high">
-                                </i>
-
-                            </button>
-
-                        </div>
-
-
-                        <div>
-                            ${content}
-                        </div>
-
-                    `;
-
-
-                    processCodeBlocks(
-                        bubble
-                    );
-
-
-                    renderMath(
-                        bubble
-                    );
-
-
-                    /*
-                     * Save entire current chat
-                     * into IndexedDB.
-                     */
-
+                        bubble.innerHTML = `
+                            <div
+                                class="d-flex
+                                justify-content-between
+                                align-items-center
+                                mb-1">
+                                <strong>
+                                    Tuto AI
+                                </strong>
+                                <button
+                                    class="tts-btn"
+                                    onclick="speakText(this)"
+                                    title="Read Aloud">
+                                    <i class="fa-solid fa-volume-high"></i>
+                                </button>
+                            </div>
+                            <div>
+                                ${content}
+                            </div>
+                        `;
+                        processCodeBlocks(
+                            bubble
+                        );
+                        renderMath(
+                            bubble
+                        );
+                    }
+                    /* =================================================
+                       SAVE CHAT
+                    ================================================= */
                     if(
                         allSessions[
-                            currentSessionId
+                            messageSessionId
                         ]
                     ){
-
                         allSessions[
-                            currentSessionId
+                            messageSessionId
                         ].html =
                             chatBox.innerHTML;
-
-
                         allSessions[
-                            currentSessionId
+                            messageSessionId
                         ].updatedAt =
                             Date.now();
-
-
                         await saveSession(
                             allSessions[
-                                currentSessionId
+                                messageSessionId
                             ]
                         );
-
                     }
-
-
-                    /*
-                     * Generate title
-                     */
-
+                    /* =================================================
+                       AUTOMATIC AI CHAT TITLE
+                    ================================================= */
                     if(
-                        allSessions[
-                            currentSessionId
-                        ] &&
-                        allSessions[
-                            currentSessionId
-                        ].title ===
-                        "New Chat"
+                        shouldGenerateTitle &&
+                        titleQuestion
                     ){
-
+                        /*
+                         * Do NOT await.
+                         *
+                         * The answer is already displayed.
+                         * Title can be generated separately.
+                         */
                         generateTitle(
-                            question ||
-                            "Image conversation"
+                            titleQuestion,
+                            messageSessionId
                         );
-
                     }
-
-
                 }else{
-
                     if(loading){
-
                         loading.querySelector(
                             ".bubble"
                         ).innerHTML = `
-
                             <span class="text-danger">
-
                                 Error:
                                 ${escapeHTML(
                                     data.message ||
                                     "Something went wrong."
                                 )}
-
                             </span>
-
                         `;
-
                     }
-
                 }
-
-
             }catch(error){
-
                 console.error(
                     "Chat error:",
                     error
                 );
-
-
                 const loading =
                     document.getElementById(
                         loadingId
                     );
-
-
                 if(loading){
-
                     loading.querySelector(
                         ".bubble"
                     ).innerHTML = `
-
                         <span class="text-danger">
-
                             Server connection error.
-
                         </span>
-
                     `;
-
                 }
-
             }finally{
-
                 sendBtn.disabled =
                     false;
-
-
                 chatBox.scrollTop =
                     chatBox.scrollHeight;
-
             }
-
         }
     );
-
-
 /* ============================================================
-   TITLE GENERATION
+   AI AUTOMATIC CHAT TITLE
 ============================================================ */
-
 async function generateTitle(
-    prompt
+    prompt,
+    sessionId
 ){
-
+    if(
+        !prompt ||
+        !prompt.trim() ||
+        !sessionId
+    ){
+        return;
+    }
+    /*
+     * IMPORTANT:
+     *
+     * The title request uses the SAME session ID
+     * that received the first question.
+     *
+     * So if the user opens another chat while
+     * title generation is running, the wrong chat
+     * will NOT be renamed.
+     */
     try{
-
         const formData =
             new FormData();
-
-
         formData.append(
             "prompt",
-            prompt
+            prompt.trim()
         );
-
-
+        formData.append(
+            "session_id",
+            sessionId
+        );
         const response =
             await fetch(
                 "/api/generate-title",
@@ -4152,77 +2416,113 @@ async function generateTitle(
                     body:formData
                 }
             );
-
-
+        if(!response.ok){
+            console.error(
+                "Title API error:",
+                response.status
+            );
+            return;
+        }
         const data =
             await response.json();
-
-
         if(
-            data.status ===
-                "success"
-            &&
-            data.title
-            &&
-            allSessions[
-                currentSessionId
-            ]
+            data.status !== "success" ||
+            !data.title ||
+            !allSessions[sessionId]
         ){
-
-            allSessions[
-                currentSessionId
-            ].title =
-                data.title;
-
-
-            allSessions[
-                currentSessionId
-            ].updatedAt =
-                Date.now();
-
-
-            await saveSession(
-                allSessions[
-                    currentSessionId
-                ]
-            );
-
-
-            renderSidebarHistory();
-
+            return;
         }
-
+        let title =
+            String(
+                data.title
+            ).trim();
+        /*
+         * Remove quotes if AI returns:
+         * "Python Learning"
+         */
+        title =
+            title
+                .replace(
+                    /^["'“”‘’]+/,
+                    ""
+                )
+                .replace(
+                    /["'“”‘’]+$/,
+                    ""
+                )
+                .trim();
+        /*
+         * Remove unnecessary line breaks.
+         */
+        title =
+            title
+                .replace(
+                    /\s+/g,
+                    " "
+                )
+                .trim();
+        /*
+         * Keep sidebar title short.
+         */
+        if(title.length > 60){
+            title =
+                title
+                    .substring(0,60)
+                    .trim();
+        }
+        if(!title){
+            return;
+        }
+        /*
+         * Only change the title if it is
+         * still "New Chat".
+         *
+         * If the user manually renamed it while
+         * AI was generating, we DO NOT overwrite it.
+         */
+        if(
+            allSessions[sessionId].title !==
+            "New Chat"
+        ){
+            return;
+        }
+        allSessions[
+            sessionId
+        ].title =
+            title;
+        allSessions[
+            sessionId
+        ].updatedAt =
+            Date.now();
+        await saveSession(
+            allSessions[
+                sessionId
+            ]
+        );
+        /*
+         * Immediately update sidebar.
+         */
+        renderSidebarHistory();
     }catch(error){
-
         console.error(
-            "Title generation error:",
+            "Automatic title generation error:",
             error
         );
-
     }
-
 }
-
-
 /* ============================================================
-   CLOSE MENU ON ESC
+   ESC
 ============================================================ */
-
 document.addEventListener(
     "keydown",
     function(e){
-
-        if(e.key === "Escape"){
-
+        if(
+            e.key === "Escape"
+        ){
             hideContextMenu();
-
         }
-
     }
 );
-
 </script>
-
 </body>
-
 </html>
