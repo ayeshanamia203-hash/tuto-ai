@@ -1,6 +1,8 @@
-# ai_brain.py
-# Tuto AI - General Purpose AI Brain
-# Smart Groq model discovery + automatic fallback
+# ============================================================
+# TUTO AI - HORIZONTAL AI BRAIN
+# Groq Text AI
+# Smart model discovery + automatic fallback
+# ============================================================
 
 import re
 from groq import Groq
@@ -23,7 +25,9 @@ from config import (
 client = None
 
 if GROQ_API_KEY:
-    client = Groq(api_key=GROQ_API_KEY)
+    client = Groq(
+        api_key=GROQ_API_KEY
+    )
 
 
 # ============================================================
@@ -34,15 +38,77 @@ _available_models = None
 
 
 # ============================================================
+# HORIZONTAL AI SYSTEM PROMPT
+# ============================================================
+
+HORIZONTAL_AI_PROMPT = """
+You are Tuto AI, a general-purpose horizontal AI assistant.
+
+Your job is to answer users naturally and directly, like a modern
+general-purpose AI assistant.
+
+IMPORTANT RESPONSE STYLE:
+
+1. Answer the user's actual question directly.
+2. Do NOT automatically organize every answer into:
+   - Subject
+   - Topic
+   - Answer
+   - Analysis
+   - Explanation
+   - Conclusion
+   - Summary
+   or similar headings.
+3. Do NOT treat every question like a school assignment.
+4. Do NOT automatically mention the user's subject or grade.
+5. Prefer natural sentences and short paragraphs.
+6. Keep simple questions simple.
+7. Give detailed explanations only when the user asks for detail
+   or when the question genuinely requires explanation.
+8. If a list is genuinely useful, you may use bullet points.
+9. If the user asks for steps, use numbered steps.
+10. If the user asks for a table, comparison, code, formula, etc.,
+    provide the format requested by the user.
+11. Do not force everything into paragraphs if another format is
+    clearly better.
+12. Do not repeat the user's question unnecessarily.
+13. Do not start every answer with phrases such as:
+    "Sure", "Of course", "Here is the answer", or "Certainly".
+14. Be conversational, clear and useful.
+15. Match the user's language.
+16. If the user writes Bangla/Banglish, answer naturally in Bangla
+    unless the user clearly asks for English.
+17. If the user asks in English, answer in English.
+18. If the user mixes Bangla and English, understand the meaning
+    and reply naturally in the same style when appropriate.
+19. Never invent facts.
+20. If you are uncertain, clearly say that you are uncertain.
+21. For coding questions, give working code and explain only what
+    is necessary.
+22. For mathematical questions, show the calculation when useful.
+23. For casual questions, respond naturally instead of using
+    educational headings.
+24. You are NOT limited to education. You are a general-purpose
+    horizontal AI.
+
+MOST IMPORTANT:
+
+Think about the user's intent first.
+
+Then choose the most natural answer format for that specific request.
+
+Do not use a fixed answer template for every question.
+"""
+
+
+# ============================================================
 # GET AVAILABLE GROQ MODELS
 # ============================================================
 
 def get_available_models():
     """
     Ask Groq which models are currently available.
-
-    The result is cached so we don't request the model list
-    on every single user message.
+    Result is cached during the server lifetime.
     """
 
     global _available_models
@@ -54,13 +120,18 @@ def get_available_models():
         return []
 
     try:
+
         model_list = client.models.list()
 
         models = []
 
         for model in model_list.data:
 
-            model_id = getattr(model, "id", None)
+            model_id = getattr(
+                model,
+                "id",
+                None
+            )
 
             if model_id:
                 models.append(model_id)
@@ -70,6 +141,7 @@ def get_available_models():
         return models
 
     except Exception:
+
         return []
 
 
@@ -79,55 +151,82 @@ def get_available_models():
 
 def choose_models():
     """
-    Create an ordered list of models to try.
+    Create ordered list of models to try.
 
     Priority:
-        1. Configured primary model
-        2. Configured fallback model
-        3. Other currently available Groq models
+    1. Configured primary
+    2. Configured fallback
+    3. Strong known Groq models
+    4. Other available models
     """
 
     available = get_available_models()
 
     preferred = [
+
         PRIMARY_GROQ_MODEL,
+
         FALLBACK_GROQ_MODEL,
 
-        # Known strong/general-purpose models.
-        "llama-3.3-70b-versatile",
         "openai/gpt-oss-120b",
+
         "openai/gpt-oss-20b",
+
+        "llama-3.3-70b-versatile",
+
         "llama-3.1-8b-instant",
+
     ]
 
     result = []
 
-    # First add configured/preferred models
-    # only if Groq says they currently exist.
     if available:
 
         for model_name in preferred:
 
             if (
-                model_name
-                and model_name in available
-                and model_name not in result
-            ):
-                result.append(model_name)
 
-        # Then add any other available models.
+                model_name
+
+                and
+
+                model_name in available
+
+                and
+
+                model_name not in result
+
+            ):
+
+                result.append(
+                    model_name
+                )
+
         for model_name in available:
 
             if model_name not in result:
-                result.append(model_name)
+
+                result.append(
+                    model_name
+                )
 
     else:
-        # If model listing itself fails,
-        # still try configured models.
+
         for model_name in preferred:
 
-            if model_name and model_name not in result:
-                result.append(model_name)
+            if (
+
+                model_name
+
+                and
+
+                model_name not in result
+
+            ):
+
+                result.append(
+                    model_name
+                )
 
     return result
 
@@ -137,30 +236,44 @@ def choose_models():
 # ============================================================
 
 def extract_text_from_pdf(pdf_file):
-    """
-    Extract readable text from a PDF file.
-    """
 
     try:
 
         import pypdf
 
-        reader = pypdf.PdfReader(pdf_file)
+        reader = pypdf.PdfReader(
+            pdf_file
+        )
 
         text_parts = []
 
         for page in reader.pages:
 
-            extracted = page.extract_text()
+            try:
 
-            if extracted:
-                text_parts.append(extracted)
+                extracted = (
+                    page.extract_text()
+                )
 
-        return "\n\n".join(text_parts).strip()
+                if extracted:
+
+                    text_parts.append(
+                        extracted
+                    )
+
+            except Exception:
+
+                continue
+
+        return "\n\n".join(
+            text_parts
+        ).strip()
 
     except Exception as e:
 
-        return f"PDF পড়তে সমস্যা হয়েছে: {str(e)}"
+        return (
+            f"PDF পড়তে সমস্যা হয়েছে: {str(e)}"
+        )
 
 
 # ============================================================
@@ -168,15 +281,13 @@ def extract_text_from_pdf(pdf_file):
 # ============================================================
 
 def clean_response(text):
-    """
-    Clean unnecessary AI output.
-    """
 
     if not text:
         return ""
 
     text = str(text).strip()
 
+    # Remove hidden thinking tags if any.
     text = re.sub(
         r"<think>.*?</think>",
         "",
@@ -184,7 +295,46 @@ def clean_response(text):
         flags=re.DOTALL | re.IGNORECASE
     )
 
+    # Remove accidental assistant/system wrappers.
+    text = re.sub(
+        r"^\s*(assistant|tuto ai)\s*:\s*",
+        "",
+        text,
+        flags=re.IGNORECASE
+    )
+
     return text.strip()
+
+
+# ============================================================
+# BUILD SYSTEM PROMPT
+# ============================================================
+
+def build_system_prompt():
+
+    base_prompt = ""
+
+    try:
+
+        if SYSTEM_PROMPT:
+
+            base_prompt = str(
+                SYSTEM_PROMPT
+            ).strip()
+
+    except Exception:
+
+        base_prompt = ""
+
+    if base_prompt:
+
+        return (
+            base_prompt
+            + "\n\n"
+            + HORIZONTAL_AI_PROMPT
+        )
+
+    return HORIZONTAL_AI_PROMPT
 
 
 # ============================================================
@@ -192,18 +342,17 @@ def clean_response(text):
 # ============================================================
 
 def _ask_groq(messages):
-    """
-    Send the request to Groq using automatically selected models.
-
-    If one model fails, another available model is tried.
-    """
 
     if not client:
 
         return (
+
             None,
+
             "GROQ_API_KEY সেট করা নেই। "
-            "Render Environment Variables থেকে GROQ_API_KEY যোগ করুন।"
+            "Render Environment Variables থেকে "
+            "GROQ_API_KEY যোগ করুন।"
+
         )
 
     models_to_try = choose_models()
@@ -211,8 +360,11 @@ def _ask_groq(messages):
     if not models_to_try:
 
         return (
+
             None,
+
             "Groq-এর কোনো available model পাওয়া যায়নি।"
+
         )
 
     errors = []
@@ -221,49 +373,76 @@ def _ask_groq(messages):
 
         try:
 
-            response = client.chat.completions.create(
-                model=model_name,
-                messages=messages,
-                temperature=DEFAULT_TEMPERATURE,
-                max_tokens=DEFAULT_MAX_TOKENS,
+            response = (
+                client
+                .chat
+                .completions
+                .create(
+
+                    model=model_name,
+
+                    messages=messages,
+
+                    temperature=DEFAULT_TEMPERATURE,
+
+                    max_tokens=DEFAULT_MAX_TOKENS,
+
+                )
             )
 
-            if response and response.choices:
+            if (
 
-                answer = response.choices[0].message.content
+                response
+
+                and
+
+                response.choices
+
+            ):
+
+                answer = (
+                    response
+                    .choices[0]
+                    .message
+                    .content
+                )
 
                 if answer:
 
-                    return answer, None
+                    return (
+                        answer,
+                        None
+                    )
 
         except Exception as e:
 
-            error_text = str(e)
-
             errors.append(
-                f"{model_name}: {error_text}"
+                f"{model_name}: {str(e)}"
             )
 
-            # If this model is invalid/deleted,
-            # simply continue to the next model.
             continue
-
-    # --------------------------------------------------------
-    # All models failed
-    # --------------------------------------------------------
 
     if errors:
 
         return (
+
             None,
-            "সব available Groq model দিয়ে চেষ্টা করা হয়েছে, "
-            "কিন্তু কোনো model উত্তর দিতে পারেনি.\n\n"
-            + "\n".join(errors[-3:])
+
+            "সব available Groq model দিয়ে "
+            "চেষ্টা করা হয়েছে, কিন্তু কোনো "
+            "model উত্তর দিতে পারেনি.\n\n"
+            + "\n".join(
+                errors[-3:]
+            )
+
         )
 
     return (
+
         None,
+
         "Groq কোনো response দিতে পারেনি।"
+
     )
 
 
@@ -276,9 +455,6 @@ def ask_ai(
     chat_history=None,
     context_text=None,
 ):
-    """
-    Main general-purpose Tuto AI function.
-    """
 
     try:
 
@@ -291,63 +467,92 @@ def ask_ai(
             )
 
         # ----------------------------------------------------
-        # Prepare messages
+        # SYSTEM
         # ----------------------------------------------------
 
         messages = [
+
             {
                 "role": "system",
-                "content": SYSTEM_PROMPT
+                "content": build_system_prompt()
             }
+
         ]
 
         # ----------------------------------------------------
-        # Conversation history
+        # CHAT HISTORY
         # ----------------------------------------------------
 
         if chat_history:
 
             recent_history = (
-                chat_history[-MAX_HISTORY_MESSAGES:]
+                chat_history[
+                    -MAX_HISTORY_MESSAGES:
+                ]
             )
 
             for message in recent_history:
 
-                if not isinstance(message, dict):
+                if not isinstance(
+                    message,
+                    dict
+                ):
+
                     continue
 
-                role = message.get("role")
-                content = message.get("content")
+                role = message.get(
+                    "role"
+                )
 
-                if role not in ["user", "assistant"]:
+                content = message.get(
+                    "content"
+                )
+
+                if role not in [
+                    "user",
+                    "assistant"
+                ]:
+
                     continue
 
                 if not content:
+
                     continue
 
-                messages.append(
-                    {
-                        "role": role,
-                        "content": str(content)
-                    }
-                )
+                messages.append({
+
+                    "role": role,
+
+                    "content": str(
+                        content
+                    )
+
+                })
 
         # ----------------------------------------------------
-        # Current user message
+        # CURRENT USER MESSAGE
         # ----------------------------------------------------
 
         final_question = (
-            str(user_question).strip()
+
+            str(
+                user_question
+            ).strip()
+
             if user_question
+
             else ""
+
         )
 
         if not final_question:
 
-            return "Please enter a message."
+            return (
+                "Please enter a message."
+            )
 
         # ----------------------------------------------------
-        # Document/PDF context
+        # DOCUMENT CONTEXT
         # ----------------------------------------------------
 
         if context_text:
@@ -364,18 +569,25 @@ User's request:
 {final_question}
 """
 
-        messages.append(
-            {
-                "role": "user",
-                "content": final_question
-            }
+        # ----------------------------------------------------
+        # ADD USER MESSAGE
+        # ----------------------------------------------------
+
+        messages.append({
+
+            "role": "user",
+
+            "content": final_question
+
+        })
+
+        # ----------------------------------------------------
+        # ASK GROQ
+        # ----------------------------------------------------
+
+        answer, error = _ask_groq(
+            messages
         )
-
-        # ----------------------------------------------------
-        # Ask Groq
-        # ----------------------------------------------------
-
-        answer, error = _ask_groq(messages)
 
         if error:
 
@@ -384,7 +596,9 @@ User's request:
                 f"সমস্যা: {error}"
             )
 
-        return clean_response(answer)
+        return clean_response(
+            answer
+        )
 
     except Exception as e:
 
@@ -405,12 +619,6 @@ def ask_ai_tutor(
     context_text=None,
     image_file=None,
 ):
-    """
-    Compatibility wrapper.
-
-    পুরোনো application যদি ask_ai_tutor() ব্যবহার করে,
-    তাহলেও কাজ করবে।
-    """
 
     extra_context = ""
 
@@ -429,17 +637,26 @@ def ask_ai_tutor(
     if context_text:
 
         extra_context += (
-            f"\n\nDocument context:\n{context_text}"
+            f"\n\nDocument context:\n"
+            f"{context_text}"
         )
 
     return ask_ai(
+
         user_question=user_question,
+
         chat_history=chat_history,
+
         context_text=(
+
             extra_context.strip()
+
             if extra_context
+
             else None
+
         ),
+
     )
 
 
@@ -448,12 +665,6 @@ def ask_ai_tutor(
 # ============================================================
 
 def refresh_models():
-    """
-    Force Tuto AI to check Groq models again.
-
-    Useful if Groq adds/removes models while the server
-    is running.
-    """
 
     global _available_models
 
