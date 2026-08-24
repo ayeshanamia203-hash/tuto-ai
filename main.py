@@ -1,5 +1,6 @@
 # ============================================================
 # TUTO AI - MAIN.PY
+# Horizontal General Purpose AI
 # Groq Text + Groq Vision + Groq Whisper
 # NO GEMINI
 # ============================================================
@@ -11,13 +12,24 @@ import re
 import tempfile
 from pathlib import Path
 
-from fastapi import FastAPI, File, Form, UploadFile
+from fastapi import (
+    FastAPI,
+    File,
+    Form,
+    UploadFile
+)
+
 from fastapi.responses import HTMLResponse
+
 from groq import Groq
+
 import uvicorn
 
 from ai_brain import ask_ai
-from config import GROQ_API_KEY
+
+from config import (
+    GROQ_API_KEY
+)
 
 
 # ============================================================
@@ -25,9 +37,16 @@ from config import GROQ_API_KEY
 # ============================================================
 
 app = FastAPI(
+
     title="Tuto AI",
-    description="Tuto AI - Groq powered AI assistant",
-    version="4.0.0"
+
+    description=(
+        "Tuto AI - General Purpose "
+        "Horizontal AI Assistant"
+    ),
+
+    version="5.0.0"
+
 )
 
 
@@ -38,6 +57,7 @@ app = FastAPI(
 groq_client = None
 
 if GROQ_API_KEY:
+
     groq_client = Groq(
         api_key=GROQ_API_KEY
     )
@@ -65,16 +85,26 @@ chat_sessions = {}
 # CLEAN AI RESPONSE
 # ============================================================
 
-def clean_ai_response(text: str) -> str:
+def clean_ai_response(text: str):
 
     if not text:
+
         return ""
 
     text = re.sub(
+
         r"<think>.*?</think>",
+
         "",
+
         text,
-        flags=re.DOTALL | re.IGNORECASE
+
+        flags=(
+            re.DOTALL
+            |
+            re.IGNORECASE
+        )
+
     )
 
     return text.strip()
@@ -84,7 +114,7 @@ def clean_ai_response(text: str) -> str:
 # PDF TEXT EXTRACTION
 # ============================================================
 
-def extract_pdf_text(contents: bytes) -> str:
+def extract_pdf_text(contents: bytes):
 
     try:
 
@@ -103,17 +133,24 @@ def extract_pdf_text(contents: bytes) -> str:
                 text = page.extract_text()
 
                 if text:
-                    pages.append(text)
+
+                    pages.append(
+                        text
+                    )
 
             except Exception:
+
                 continue
 
-        return "\n\n".join(pages).strip()
+        return "\n\n".join(
+            pages
+        ).strip()
 
     except Exception as e:
 
         return (
-            f"Unable to extract PDF text: {str(e)}"
+            f"Unable to extract PDF text: "
+            f"{str(e)}"
         )
 
 
@@ -121,13 +158,19 @@ def extract_pdf_text(contents: bytes) -> str:
 # SESSION
 # ============================================================
 
-def get_session_history(session_id: str):
+def get_session_history(
+    session_id: str
+):
 
     if session_id not in chat_sessions:
 
-        chat_sessions[session_id] = []
+        chat_sessions[
+            session_id
+        ] = []
 
-    return chat_sessions[session_id]
+    return chat_sessions[
+        session_id
+    ]
 
 
 def save_message(
@@ -138,9 +181,13 @@ def save_message(
 
     if session_id not in chat_sessions:
 
-        chat_sessions[session_id] = []
+        chat_sessions[
+            session_id
+        ] = []
 
-    chat_sessions[session_id].append({
+    chat_sessions[
+        session_id
+    ].append({
 
         "role": role,
 
@@ -148,10 +195,12 @@ def save_message(
 
     })
 
-    # Keep latest 40 messages
-    chat_sessions[session_id] = (
-        chat_sessions[session_id][-40:]
-    )
+    # Keep latest 40 messages.
+    chat_sessions[
+        session_id
+    ] = chat_sessions[
+        session_id
+    ][-40:]
 
 
 # ============================================================
@@ -162,13 +211,19 @@ def save_message(
     "/",
     response_class=HTMLResponse
 )
+
 async def home():
 
     try:
 
         index_file = (
-            Path(__file__).resolve().parent
-            / "index.html"
+
+            Path(__file__)
+            .resolve()
+            .parent
+            /
+            "index.html"
+
         )
 
         if not index_file.exists():
@@ -201,6 +256,7 @@ async def home():
                 """,
 
                 status_code=500
+
             )
 
         html = index_file.read_text(
@@ -208,8 +264,11 @@ async def home():
         )
 
         return HTMLResponse(
+
             content=html,
+
             status_code=200
+
         )
 
     except Exception as e:
@@ -238,6 +297,7 @@ async def home():
             """,
 
             status_code=500
+
         )
 
 
@@ -246,6 +306,7 @@ async def home():
 # ============================================================
 
 @app.get("/health")
+
 async def health():
 
     return {
@@ -254,13 +315,17 @@ async def health():
 
         "service": "Tuto AI",
 
+        "version": "5.0.0",
+
         "text_model": TEXT_MODEL,
 
         "vision_model": VISION_MODEL,
 
         "voice_model": WHISPER_MODEL,
 
-        "gemini": False
+        "gemini": False,
+
+        "mode": "horizontal-ai"
 
     }
 
@@ -270,13 +335,21 @@ async def health():
 # ============================================================
 
 @app.post("/api/transcribe")
+
 async def transcribe_audio(
+
     audio: UploadFile = File(...)
+
 ):
+
+    temp_audio_path = None
 
     try:
 
-        if not GROQ_API_KEY or not groq_client:
+        if (
+            not GROQ_API_KEY
+            or not groq_client
+        ):
 
             return {
 
@@ -287,7 +360,9 @@ async def transcribe_audio(
 
             }
 
-        audio_content = await audio.read()
+        audio_content = (
+            await audio.read()
+        )
 
         if not audio_content:
 
@@ -301,64 +376,62 @@ async def transcribe_audio(
             }
 
         with tempfile.NamedTemporaryFile(
+
             delete=False,
+
             suffix=".webm"
+
         ) as temp_audio:
 
             temp_audio.write(
                 audio_content
             )
 
-            temp_audio_path = temp_audio.name
+            temp_audio_path = (
+                temp_audio.name
+            )
 
-        try:
+        with open(
 
-            with open(
-                temp_audio_path,
-                "rb"
-            ) as audio_file:
+            temp_audio_path,
 
-                transcription = (
-                    groq_client
-                    .audio
-                    .transcriptions
-                    .create(
+            "rb"
 
-                        file=(
+        ) as audio_file:
 
-                            os.path.basename(
-                                temp_audio_path
-                            ),
+            transcription = (
 
-                            audio_file.read()
+                groq_client
+                .audio
+                .transcriptions
+                .create(
 
+                    file=(
+
+                        os.path.basename(
+                            temp_audio_path
                         ),
 
-                        model=WHISPER_MODEL,
+                        audio_file.read()
 
-                        response_format="json"
+                    ),
 
-                    )
+                    model=WHISPER_MODEL,
+
+                    response_format="json"
+
                 )
 
-            return {
+            )
 
-                "status": "success",
+        return {
 
-                "text":
-                    transcription.text or ""
+            "status": "success",
 
-            }
+            "text":
+                transcription.text or ""
 
-        finally:
-
-            if os.path.exists(
-                temp_audio_path
-            ):
-
-                os.remove(
-                    temp_audio_path
-                )
+        }
 
     except Exception as e:
 
@@ -370,19 +443,50 @@ async def transcribe_audio(
 
         }
 
+    finally:
+
+        if (
+
+            temp_audio_path
+
+            and
+
+            os.path.exists(
+                temp_audio_path
+            )
+
+        ):
+
+            try:
+
+                os.remove(
+                    temp_audio_path
+                )
+
+            except Exception:
+
+                pass
+
 
 # ============================================================
 # SMART CHAT TITLE
 # ============================================================
 
 @app.post("/api/generate-title")
+
 async def generate_title(
+
     prompt: str = Form(...)
+
 ):
 
     try:
 
-        if not GROQ_API_KEY or not groq_client:
+        prompt = (
+            prompt or ""
+        ).strip()
+
+        if not prompt:
 
             return {
 
@@ -392,26 +496,51 @@ async def generate_title(
 
             }
 
+        if (
+            not GROQ_API_KEY
+            or not groq_client
+        ):
+
+            return {
+
+                "status": "success",
+
+                "title":
+                    create_fallback_title(
+                        prompt
+                    )
+
+            }
+
         title_prompt = f"""
+You are naming a chat conversation.
 
-Create a very short title for this conversation.
+Create a short, natural title based ONLY on the
+user's first message.
 
-User message:
-
+USER MESSAGE:
 {prompt}
 
-Rules:
+RULES:
 
-- 2 to 5 words maximum.
-- Output ONLY the title.
-- No quotation marks.
-- No explanation.
-- No punctuation at the end.
+- 2 to 5 words only.
+- Maximum about 40 characters.
+- Capture the main intent/topic.
+- Do not answer the user's question.
+- Do not write a sentence.
+- Do not use quotation marks.
+- Do not use emojis.
+- Do not add punctuation at the end.
+- Do not write "Chat", "New Chat", "Question",
+  "User Question" or similar generic words.
 - Match the user's language when possible.
-
+- For Bangla/Banglish users, a natural Bangla or
+  Banglish title is preferred.
+- Output ONLY the title.
 """
 
         completion = (
+
             groq_client
             .chat
             .completions
@@ -425,47 +554,49 @@ Rules:
 
                         "role": "user",
 
-                        "content": title_prompt
+                        "content":
+                            title_prompt
 
                     }
 
                 ],
 
-                max_completion_tokens=20,
+                max_completion_tokens=30,
 
-                temperature=0.3
+                temperature=0.2
 
             )
+
         )
 
         title = (
+
             completion
             .choices[0]
             .message
             .content
-            or "New Chat"
+
+            or ""
+
         ).strip()
 
-        title = title.replace(
-            '"',
-            ""
+        title = clean_title(
+            title
         )
 
-        title = title.replace(
-            "'",
-            ""
-        )
+        if not title:
 
-        title = title.replace(
-            "\n",
-            " "
-        )
+            title = (
+                create_fallback_title(
+                    prompt
+                )
+            )
 
         return {
 
             "status": "success",
 
-            "title": title[:80]
+            "title": title
 
         }
 
@@ -475,9 +606,112 @@ Rules:
 
             "status": "success",
 
-            "title": "New Chat"
+            "title":
+                create_fallback_title(
+                    prompt
+                )
 
         }
+
+
+# ============================================================
+# CLEAN TITLE
+# ============================================================
+
+def clean_title(title):
+
+    if not title:
+
+        return ""
+
+    title = str(
+        title
+    ).strip()
+
+    title = re.sub(
+        r"^[\"'`]+|[\"'`]+$",
+        "",
+        title
+    )
+
+    title = re.sub(
+        r"\s+",
+        " ",
+        title
+    )
+
+    title = re.sub(
+        r"[.!?。！？]+$",
+        "",
+        title
+    )
+
+    # Remove accidental prefixes.
+    title = re.sub(
+
+        r"^(title|chat title|conversation title)\s*:\s*",
+
+        "",
+
+        title,
+
+        flags=re.IGNORECASE
+
+    )
+
+    words = title.split()
+
+    if len(words) > 5:
+
+        title = " ".join(
+            words[:5]
+        )
+
+    return title[:60].strip()
+
+
+# ============================================================
+# FALLBACK TITLE
+# ============================================================
+
+def create_fallback_title(prompt):
+
+    prompt = (
+        prompt or ""
+    ).strip()
+
+    if not prompt:
+
+        return "New Chat"
+
+    # Remove excessive spaces.
+    prompt = re.sub(
+        r"\s+",
+        " ",
+        prompt
+    )
+
+    # Remove common question marks.
+    prompt = re.sub(
+        r"[?؟]+$",
+        "",
+        prompt
+    )
+
+    words = prompt.split()
+
+    if not words:
+
+        return "New Chat"
+
+    # Take first meaningful words.
+    title_words = words[:5]
+
+    title = " ".join(
+        title_words
+    )
+
+    return title[:50].strip()
 
 
 # ============================================================
@@ -485,34 +719,47 @@ Rules:
 # ============================================================
 
 async def analyze_image(
+
     question: str,
+
     image_bytes: bytes,
+
     mime_type: str
+
 ):
 
-    if not GROQ_API_KEY or not groq_client:
+    if (
+        not GROQ_API_KEY
+        or not groq_client
+    ):
 
         return (
+
             None,
+
             "GROQ_API_KEY missing."
+
         )
 
-
     # --------------------------------------------------------
-    # GROQ CURRENT MAX FILE SIZE
+    # MAX FILE SIZE
     # --------------------------------------------------------
 
-    if len(image_bytes) > 20 * 1024 * 1024:
+    if (
+        len(image_bytes)
+        >
+        20 * 1024 * 1024
+    ):
 
         return (
 
             None,
 
             "Image is too large. "
-            "Please upload an image smaller than 20 MB."
+            "Please upload an image smaller "
+            "than 20 MB."
 
         )
-
 
     try:
 
@@ -521,78 +768,73 @@ async def analyze_image(
         # ----------------------------------------------------
 
         image_base64 = (
+
             base64
-            .b64encode(image_bytes)
+            .b64encode(
+                image_bytes
+            )
             .decode("utf-8")
+
         )
 
         image_url = (
+
             f"data:{mime_type};"
             f"base64,{image_base64}"
-        )
 
+        )
 
         # ----------------------------------------------------
         # USER QUESTION
         # ----------------------------------------------------
 
         user_question = (
-            question.strip()
-        )
-
+            question or ""
+        ).strip()
 
         if not user_question:
 
             user_question = (
-                "Briefly describe what is visible "
-                "in this image."
+                "What is shown in this image?"
             )
 
-
         # ----------------------------------------------------
-        # IMAGE PROMPT
+        # HORIZONTAL VISION PROMPT
         # ----------------------------------------------------
 
         prompt = f"""
+You are Tuto AI, a general-purpose horizontal AI assistant.
 
-You are Tuto AI.
-
-Look at the uploaded image and answer the user's
-question directly.
+Look at the uploaded image and answer the user's question
+directly.
 
 USER QUESTION:
 {user_question}
 
-IMPORTANT:
+RESPONSE STYLE:
 
-1. Answer the exact question first.
-2. Keep simple questions SIMPLE.
-3. Do NOT automatically write a long image analysis.
-4. Do NOT describe the entire image unless the user asks.
-5. If the user asks for a short answer, give a short answer.
-6. Normally keep the answer to 1-4 short sentences.
-7. If the user asks for detailed analysis, then provide details.
-8. Do not invent information that cannot reasonably be seen.
-9. If something cannot be determined reliably from the image,
-   say that clearly.
-10. Do not infer a person's gender identity, sexuality, religion,
-    race, medical condition, or other sensitive personal
-    attributes from appearance.
-11. If the user asks whether a person is a boy or girl based
-    only on appearance, say that the person's gender cannot
-    be reliably determined from the image.
-12. Match the user's language.
-13. If the user writes Bangla, answer in Bangla.
-14. Do not repeat the user's question.
-
+- Answer the exact question first.
+- Do not automatically describe the entire image.
+- Do not automatically create sections such as Subject,
+  Analysis, Answer, Description or Conclusion.
+- Use natural sentences and short paragraphs.
+- Keep simple questions simple.
+- If the user asks for detailed analysis, provide details.
+- If a list or steps are useful, use them naturally.
+- Match the user's language.
+- If the user writes Bangla/Banglish, answer naturally in Bangla.
+- Do not repeat the user's question.
+- Do not invent information.
+- Only state what can reasonably be determined from the image.
+- Do not infer sensitive personal attributes from appearance.
 """
 
-
         # ----------------------------------------------------
-        # GROQ VISION REQUEST
+        # VISION REQUEST
         # ----------------------------------------------------
 
         response = (
+
             groq_client
             .chat
             .completions
@@ -622,7 +864,8 @@ IMPORTANT:
 
                                 "image_url": {
 
-                                    "url": image_url
+                                    "url":
+                                        image_url
 
                                 }
 
@@ -636,22 +879,24 @@ IMPORTANT:
 
                 temperature=0.3,
 
-                max_completion_tokens=300,
+                max_completion_tokens=500,
 
                 stream=False
 
             )
+
         )
 
-
         answer = (
+
             response
             .choices[0]
             .message
             .content
-            or ""
-        ).strip()
 
+            or ""
+
+        ).strip()
 
         if not answer:
 
@@ -659,19 +904,20 @@ IMPORTANT:
 
                 None,
 
-                "Groq Vision returned an empty response."
+                "Groq Vision returned "
+                "an empty response."
 
             )
 
-
         return (
 
-            clean_ai_response(answer),
+            clean_ai_response(
+                answer
+            ),
 
             None
 
         )
-
 
     except Exception as e:
 
@@ -689,6 +935,7 @@ IMPORTANT:
 # ============================================================
 
 @app.post("/api/chat")
+
 async def chat_endpoint(
 
     question: str = Form(""),
@@ -705,12 +952,15 @@ async def chat_endpoint(
 
     try:
 
-        question = question.strip()
+        question = (
+            question or ""
+        ).strip()
 
-        history = get_session_history(
-            session_id
+        history = (
+            get_session_history(
+                session_id
+            )
         )
-
 
         # ====================================================
         # FILE UPLOAD
@@ -726,7 +976,6 @@ async def chat_endpoint(
                 await file.read()
             )
 
-
             # =================================================
             # PDF
             # =================================================
@@ -736,6 +985,7 @@ async def chat_endpoint(
                 filename.endswith(".pdf")
 
                 or
+
                 file.content_type
                 == "application/pdf"
 
@@ -747,7 +997,6 @@ async def chat_endpoint(
                     )
                 )
 
-
                 if not extracted_text:
 
                     return {
@@ -755,18 +1004,22 @@ async def chat_endpoint(
                         "status": "error",
 
                         "message":
-                            "PDF থেকে কোনো readable text পাওয়া যায়নি।"
+                            "PDF থেকে কোনো readable "
+                            "text পাওয়া যায়নি।"
 
                     }
 
-
                 user_question = (
-                    question
-                    or
-                    "Please analyze this document and "
-                    "summarize the most important information."
-                )
 
+                    question
+
+                    or
+
+                    "Please summarize this document "
+                    "and explain the most important "
+                    "information."
+
+                )
 
                 document_context = (
 
@@ -778,7 +1031,6 @@ async def chat_endpoint(
 
                 )
 
-
                 if grade:
 
                     document_context += (
@@ -787,7 +1039,6 @@ async def chat_endpoint(
                         f"{grade}"
 
                     )
-
 
                 if subject:
 
@@ -798,22 +1049,22 @@ async def chat_endpoint(
 
                     )
 
-
                 response = ask_ai(
 
                     user_question=user_question,
 
                     chat_history=history,
 
-                    context_text=document_context
+                    context_text=
+                        document_context
 
                 )
 
-
-                response = clean_ai_response(
-                    response
+                response = (
+                    clean_ai_response(
+                        response
+                    )
                 )
-
 
                 save_message(
 
@@ -822,12 +1073,12 @@ async def chat_endpoint(
                     "user",
 
                     (
-                        f"[PDF: {file.filename}] "
+                        f"[PDF: "
+                        f"{file.filename}] "
                         f"{user_question}"
                     )
 
                 )
-
 
                 save_message(
 
@@ -839,17 +1090,17 @@ async def chat_endpoint(
 
                 )
 
-
                 return {
 
                     "status": "success",
 
-                    "question": user_question,
+                    "question":
+                        user_question,
 
-                    "response": response
+                    "response":
+                        response
 
                 }
-
 
             # =================================================
             # IMAGE
@@ -873,13 +1124,12 @@ async def chat_endpoint(
 
                     or
 
-                    "Briefly describe what is visible "
-                    "in this image."
+                    "What is shown in this image?"
 
                 )
 
-
                 image_response, error = (
+
                     await analyze_image(
 
                         user_question,
@@ -889,8 +1139,8 @@ async def chat_endpoint(
                         file.content_type
 
                     )
-                )
 
+                )
 
                 if error:
 
@@ -902,7 +1152,6 @@ async def chat_endpoint(
 
                     }
 
-
                 save_message(
 
                     session_id,
@@ -910,12 +1159,12 @@ async def chat_endpoint(
                     "user",
 
                     (
-                        f"[Image: {file.filename}] "
+                        f"[Image: "
+                        f"{file.filename}] "
                         f"{user_question}"
                     )
 
                 )
-
 
                 save_message(
 
@@ -927,20 +1176,20 @@ async def chat_endpoint(
 
                 )
 
-
                 return {
 
                     "status": "success",
 
-                    "question": user_question,
+                    "question":
+                        user_question,
 
-                    "response": image_response
+                    "response":
+                        image_response
 
                 }
 
-
             # =================================================
-            # UNSUPPORTED
+            # UNSUPPORTED FILE
             # =================================================
 
             return {
@@ -951,7 +1200,6 @@ async def chat_endpoint(
                     "Unsupported file type."
 
             }
-
 
         # ====================================================
         # NORMAL TEXT CHAT
@@ -968,43 +1216,50 @@ async def chat_endpoint(
 
             }
 
-
         contextual_question = question
 
+        # ----------------------------------------------------
+        # Optional context
+        # ----------------------------------------------------
 
         if grade:
 
             contextual_question += (
 
-                f"\n\n"
+                "\n\n"
                 f"[Optional user context: {grade}]"
 
             )
-
 
         if subject:
 
             contextual_question += (
 
-                f"\n"
+                "\n"
                 f"[Optional subject context: {subject}]"
 
             )
 
+        # ----------------------------------------------------
+        # AI
+        # ----------------------------------------------------
 
         response = ask_ai(
 
-            user_question=contextual_question,
+            user_question=
+                contextual_question,
 
             chat_history=history
 
         )
 
-
         response = clean_ai_response(
             response
         )
 
+        # ----------------------------------------------------
+        # SAVE MEMORY
+        # ----------------------------------------------------
 
         save_message(
 
@@ -1016,7 +1271,6 @@ async def chat_endpoint(
 
         )
 
-
         save_message(
 
             session_id,
@@ -1027,6 +1281,9 @@ async def chat_endpoint(
 
         )
 
+        # ----------------------------------------------------
+        # RETURN
+        # ----------------------------------------------------
 
         return {
 
@@ -1037,7 +1294,6 @@ async def chat_endpoint(
             "response": response
 
         }
-
 
     except Exception as e:
 
