@@ -306,7 +306,6 @@ async def home():
 # ============================================================
 
 @app.get("/health")
-
 async def health():
 
     return {
@@ -315,7 +314,7 @@ async def health():
 
         "service": "Tuto AI",
 
-        "version": "5.0.0",
+        "version": "6.0.0",
 
         "text_model": TEXT_MODEL,
 
@@ -325,7 +324,21 @@ async def health():
 
         "gemini": False,
 
-        "mode": "horizontal-ai"
+        "serper": bool(
+            os.environ.get(
+                "SERPER_API_KEY",
+                ""
+            )
+        ),
+
+        "web_search": bool(
+            os.environ.get(
+                "SERPER_API_KEY",
+                ""
+            )
+        ),
+
+        "mode": "horizontal-ai-with-web-search"
 
     }
 
