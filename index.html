@@ -2732,103 +2732,145 @@ async function generateTitle(
     }
 }
 /* ============================================================
-   VOICE ASSISTANT
+   VOICE ASSISTANT — FULL VOICE MODE
+   Wave button → Voice Assistant
+   Voice → Backend Transcription → AI → Voice
 ============================================================ */
+
 const voiceOverlay =
-    document.getElementById(
-        "voiceAssistantOverlay"
-    );
+    document.getElementById("voiceAssistantOverlay");
+
 const voiceStatus =
-    document.getElementById(
-        "voiceStatus"
-    );
+    document.getElementById("voiceStatus");
+
 const voiceTranscript =
-    document.getElementById(
-        "voiceTranscript"
-    );
+    document.getElementById("voiceTranscript");
+
 const voiceOrb =
-    document.getElementById(
-        "voiceOrb"
-    );
+    document.getElementById("voiceOrb");
+
 const voiceMainBtn =
-    document.getElementById(
-        "voiceMainBtn"
-    );
+    document.getElementById("voiceMainBtn");
+
 let voiceAssistantRecorder = null;
 let voiceAssistantChunks = [];
 let voiceAssistantRecording = false;
 let voiceAssistantProcessing = false;
+let voiceAssistantClosed = false;
+
 /* ============================================================
    OPEN VOICE ASSISTANT
 ============================================================ */
+
 function openVoiceAssistant(){
-    voiceOverlay.classList.add(
-        "show"
-    );
+
+    voiceAssistantClosed = false;
+
+    voiceOverlay.classList.add("show");
+
     voiceStatus.innerText =
         "Tap the microphone and start speaking";
+
     voiceTranscript.innerText =
         "I'm ready to listen...";
-    voiceAssistantProcessing =
-        false;
+
+    voiceOrb.classList.remove("active");
+
+    voiceMainBtn.classList.remove("recording");
+
+    voiceMainBtn.innerHTML =
+        '<i class="fa-solid fa-microphone"></i>';
+
+    voiceAssistantProcessing = false;
 }
+
 /* ============================================================
    CLOSE VOICE ASSISTANT
 ============================================================ */
+
 function closeVoiceAssistant(){
-    stopVoiceAssistantRecording();
-    if(
-        window.speechSynthesis
-    ){
+
+    voiceAssistantClosed = true;
+
+    if(voiceAssistantRecording){
+        stopVoiceAssistantRecording();
+    }
+
+    if(window.speechSynthesis){
         window.speechSynthesis.cancel();
     }
-    voiceOverlay.classList.remove(
-        "show"
-    );
+
+    voiceAssistantProcessing = false;
+
+    voiceOrb.classList.remove("active");
+
+    voiceMainBtn.classList.remove("recording");
+
+    voiceMainBtn.innerHTML =
+        '<i class="fa-solid fa-microphone"></i>';
+
+    voiceOverlay.classList.remove("show");
 }
+
 /* ============================================================
-   VOICE ASSISTANT RECORDING
+   TOGGLE RECORDING
 ============================================================ */
+
 async function toggleVoiceAssistantRecording(){
-    if(
-        voiceAssistantProcessing
-    ){
+
+    if(voiceAssistantProcessing){
         return;
     }
-    if(
-        voiceAssistantRecording
-    ){
+
+    if(voiceAssistantRecording){
+
         stopVoiceAssistantRecording();
+
     }else{
-        startVoiceAssistantRecording();
+
+        await startVoiceAssistantRecording();
+
     }
 }
+
 /* ============================================================
-   START VOICE ASSISTANT RECORDING
+   START RECORDING
 ============================================================ */
+
 async function startVoiceAssistantRecording(){
+
+    if(voiceAssistantClosed){
+        return;
+    }
+
     try{
+
         const stream =
-            await navigator
-                .mediaDevices
-                .getUserMedia({
-                    audio:true
-                });
+            await navigator.mediaDevices.getUserMedia({
+                audio:true
+            });
+
         voiceAssistantRecorder =
             new MediaRecorder(stream);
+
         voiceAssistantChunks = [];
+
         voiceAssistantRecorder.ondataavailable =
             function(event){
-                if(
-                    event.data.size > 0
-                ){
+
+                if(event.data && event.data.size > 0){
+
                     voiceAssistantChunks.push(
                         event.data
                     );
+
                 }
+
             };
+
         voiceAssistantRecorder.onstop =
             async function(){
+
                 const blob =
                     new Blob(
                         voiceAssistantChunks,
@@ -2836,6 +2878,7 @@ async function startVoiceAssistantRecording(){
                             type:"audio/webm"
                         }
                     );
+
                 stream
                     .getTracks()
                     .forEach(
@@ -2843,75 +2886,117 @@ async function startVoiceAssistantRecording(){
                             track.stop();
                         }
                     );
-                await processVoiceAssistantAudio(
-                    blob
-                );
+
+                await processVoiceAssistantAudio(blob);
+
             };
+
         voiceAssistantRecorder.start();
-        voiceAssistantRecording =
-            true;
-        voiceMainBtn.classList.add(
-            "recording"
-        );
+
+        voiceAssistantRecording = true;
+
+        voiceMainBtn.classList.add("recording");
+
         voiceMainBtn.innerHTML =
             '<i class="fa-solid fa-stop"></i>';
-        voiceOrb.classList.add(
-            "active"
-        );
+
+        voiceOrb.classList.add("active");
+
         voiceStatus.innerText =
             "Listening... Tap again when finished";
+
         voiceTranscript.innerText =
             "Listening...";
+
     }catch(error){
+
         console.error(
-            "Voice Assistant microphone error:",
+            "Voice microphone error:",
             error
         );
+
+        voiceAssistantRecording = false;
+
         voiceStatus.innerText =
             "Microphone permission denied or unavailable.";
+
+        alert(
+            "Please allow microphone permission for Tuto AI."
+        );
     }
 }
+
 /* ============================================================
-   STOP VOICE ASSISTANT RECORDING
+   STOP RECORDING
 ============================================================ */
+
 function stopVoiceAssistantRecording(){
+
     if(
         voiceAssistantRecorder &&
         voiceAssistantRecording
     ){
-        voiceAssistantRecorder.stop();
+
+        try{
+
+            voiceAssistantRecorder.stop();
+
+        }catch(error){
+
+            console.error(
+                "Stop recording error:",
+                error
+            );
+
+        }
+
     }
-    voiceAssistantRecording =
-        false;
-    voiceMainBtn.classList.remove(
-        "recording"
-    );
+
+    voiceAssistantRecording = false;
+
+    voiceMainBtn.classList.remove("recording");
+
     voiceMainBtn.innerHTML =
         '<i class="fa-solid fa-microphone"></i>';
-    voiceOrb.classList.remove(
-        "active"
-    );
+
+    voiceOrb.classList.remove("active");
+
+    voiceStatus.innerText =
+        "Processing your voice...";
 }
+
 /* ============================================================
    PROCESS VOICE
 ============================================================ */
+
 async function processVoiceAssistantAudio(blob){
-    voiceAssistantProcessing =
-        true;
+
+    if(voiceAssistantClosed){
+        return;
+    }
+
+    voiceAssistantProcessing = true;
+
     voiceStatus.innerText =
-        "Converting your voice to text...";
+        "Understanding you...";
+
+    voiceOrb.classList.add("active");
+
     try{
-        /*
-         * STEP 1:
-         * VOICE → TEXT
-         */
+
+        /* ----------------------------------------------------
+           STEP 1 — VOICE → TEXT
+        ---------------------------------------------------- */
+
         const transcriptionForm =
             new FormData();
+
         transcriptionForm.append(
             "audio",
             blob,
             "voice-assistant.webm"
         );
+
         const transcriptionResponse =
             await fetch(
                 "/api/transcribe",
@@ -2920,39 +3005,76 @@ async function processVoiceAssistantAudio(blob){
                     body:transcriptionForm
                 }
             );
+
+        if(!transcriptionResponse.ok){
+
+            throw new Error(
+                "Transcription server error: " +
+                transcriptionResponse.status
+            );
+
+        }
+
         const transcriptionData =
             await transcriptionResponse.json();
+
         if(
             transcriptionData.status !== "success" ||
             !transcriptionData.text
         ){
+
             throw new Error(
                 transcriptionData.message ||
-                "Voice transcription failed."
+                "Could not understand your voice."
             );
+
         }
+
         const userText =
-            transcriptionData.text.trim();
+            String(
+                transcriptionData.text
+            ).trim();
+
+        if(!userText){
+
+            throw new Error(
+                "No speech detected."
+            );
+
+        }
+
+        /* ----------------------------------------------------
+           SHOW ONLY INSIDE VOICE ASSISTANT
+           NOT NORMAL CHAT
+        ---------------------------------------------------- */
+
         voiceTranscript.innerHTML = `
             <strong>You:</strong><br>
             ${escapeHTML(userText)}
         `;
-        /*
-         * STEP 2:
-         * SEND TEXT TO AI
-         */
+
+        /* ----------------------------------------------------
+           STEP 2 — SEND TO AI
+        ---------------------------------------------------- */
+
         voiceStatus.innerText =
             "Tuto AI is thinking...";
+
+        voiceOrb.classList.add("active");
+
         const chatFormData =
             new FormData();
+
         chatFormData.append(
             "question",
             userText
         );
+
         chatFormData.append(
             "session_id",
             currentSessionId
         );
+
         const chatResponse =
             await fetch(
                 "/api/chat",
@@ -2961,180 +3083,127 @@ async function processVoiceAssistantAudio(blob){
                     body:chatFormData
                 }
             );
+
+        if(!chatResponse.ok){
+
+            throw new Error(
+                "AI server error: " +
+                chatResponse.status
+            );
+
+        }
+
         const chatData =
             await chatResponse.json();
+
         if(
             chatData.status !== "success"
         ){
+
             throw new Error(
                 chatData.message ||
                 "AI response failed."
             );
+
         }
+
         const answer =
-            chatData.response ||
-            "Sorry, I couldn't answer that.";
-        /*
-         * SHOW ANSWER
-         */
+            String(
+                chatData.response ||
+                "Sorry, I couldn't answer that."
+            ).trim();
+
+        /* ----------------------------------------------------
+           SHOW AI ANSWER ONLY IN VOICE WINDOW
+        ---------------------------------------------------- */
+
         voiceTranscript.innerHTML = `
             <strong>You:</strong><br>
             ${escapeHTML(userText)}
+
             <br><br>
+
             <strong>Tuto AI:</strong><br>
             ${escapeHTML(answer)}
         `;
-        /*
-         * STEP 3:
-         * AI → VOICE
-         */
+
+        /* ----------------------------------------------------
+           STEP 3 — AI → VOICE
+        ---------------------------------------------------- */
+
         voiceStatus.innerText =
             "Tuto AI is speaking...";
-        speakVoiceAssistant(
-            answer
-        );
+
+        speakVoiceAssistant(answer);
+
         /*
-         * ALSO SAVE THE VOICE CHAT
-         * INTO NORMAL CHAT HISTORY
+         * IMPORTANT:
+         *
+         * We intentionally DO NOT call
+         * addVoiceConversationToChat()
+         *
+         * Therefore the voice conversation
+         * will NOT create normal chat messages.
          */
-        addVoiceConversationToChat(
-            userText,
-            answer
-        );
+
     }catch(error){
+
         console.error(
             "Voice Assistant error:",
             error
         );
+
+        voiceOrb.classList.remove("active");
+
         voiceStatus.innerText =
-            "Something went wrong. Please try again.";
-    }finally{
-        voiceAssistantProcessing =
-            false;
-    }
-}
-/* ============================================================
-   ADD VOICE CHAT TO NORMAL CHAT
-============================================================ */
-async function addVoiceConversationToChat(
-    userText,
-    answer
-){
-    try{
-        /*
-         * Don't duplicate the complete voice
-         * assistant UI. Just add the conversation
-         * to normal Tuto AI chat history.
-         */
-        const answerHTML =
-            marked.parse(
-                answer
-            );
-        chatBox.innerHTML += `
-            <div class="message">
-                <div class="avatar user-avatar">
-                    You
-                </div>
-                <div class="bubble">
-                    <strong>You</strong><br>
-                    ${escapeHTML(
-                        userText
-                    ).replace(
-                        /\n/g,
-                        "<br>"
-                    )}
-                </div>
-            </div>
-            <div class="message">
-                <div class="avatar ai-avatar">
-                    AI
-                </div>
-                <div class="bubble">
-                    <div
-                        class="d-flex
-                        justify-content-between
-                        align-items-center
-                        mb-1">
-                        <strong>
-                            Tuto AI
-                        </strong>
-                        <button
-                            class="tts-btn"
-                            onclick="speakText(this)"
-                            title="Read Aloud">
-                            <i class="fa-solid fa-volume-high"></i>
-                        </button>
-                    </div>
-                    <div>
-                        ${answerHTML}
-                    </div>
-                </div>
-            </div>
+            "Something went wrong. Try again.";
+
+        voiceTranscript.innerHTML = `
+            <span class="text-danger">
+                ${escapeHTML(
+                    error.message ||
+                    "Voice Assistant error."
+                )}
+            </span>
         `;
-        const bubbles =
-            chatBox.querySelectorAll(
-                ".bubble"
-            );
-        const lastBubble =
-            bubbles[bubbles.length - 1];
-        processCodeBlocks(
-            lastBubble
-        );
-        renderMath(
-            lastBubble
-        );
-        chatBox.scrollTop =
-            chatBox.scrollHeight;
-        /*
-         * SAVE TO CURRENT SESSION
-         */
-        if(
-            allSessions[currentSessionId]
-        ){
-            allSessions[
-                currentSessionId
-            ].html =
-                chatBox.innerHTML;
-            allSessions[
-                currentSessionId
-            ].updatedAt =
-                Date.now();
-            await saveSession(
-                allSessions[
-                    currentSessionId
-                ]
-            );
-        }
-    }catch(error){
-        console.error(
-            "Could not save voice chat:",
-            error
-        );
+
+    }finally{
+
+        voiceAssistantProcessing = false;
+
     }
 }
+
 /* ============================================================
-   VOICE ASSISTANT TTS
+   AI TEXT → SPEECH
 ============================================================ */
+
 function speakVoiceAssistant(text){
+
     if(
         !("speechSynthesis" in window)
     ){
+
         voiceStatus.innerText =
             "Voice output is not supported on this device.";
+
         return;
     }
+
+    if(voiceAssistantClosed){
+        return;
+    }
+
     window.speechSynthesis.cancel();
+
     /*
-     * Remove markdown/code before speaking.
+     * Remove markdown before speaking.
      */
-    const cleanText =
-        String(text)
+
+    let cleanText =
+        String(text || "")
             .replace(
                 /```[\s\S]*?```/g,
-                ""
-            )
-            .replace(
-                /[*_#>`]/g,
                 ""
             )
             .replace(
@@ -3142,97 +3211,240 @@ function speakVoiceAssistant(text){
                 "$1"
             )
             .replace(
+                /[#*_>`~]/g,
+                ""
+            )
+            .replace(
                 /\s+/g,
                 " "
             )
             .trim();
+
+    if(!cleanText){
+
+        voiceStatus.innerText =
+            "Tap the microphone to speak again.";
+
+        return;
+    }
+
     const utterance =
         new SpeechSynthesisUtterance(
             cleanText
         );
+
     /*
-     * Bengali detection
+     * Bengali / English detection
      */
+
     if(
-        /[\u0980-\u09FF]/.test(
-            cleanText
-        )
+        /[\u0980-\u09FF]/.test(cleanText)
     ){
-        utterance.lang =
-            "bn-BD";
+
+        utterance.lang = "bn-BD";
+
     }else{
-        utterance.lang =
-            "en-US";
+
+        utterance.lang = "en-US";
+
     }
-    utterance.rate =
-        1;
-    utterance.pitch =
-        1;
+
+    utterance.rate = 0.95;
+    utterance.pitch = 1;
+
     utterance.onstart =
         function(){
-            voiceOrb.classList.add(
-                "active"
-            );
+
+            if(voiceAssistantClosed){
+                window.speechSynthesis.cancel();
+                return;
+            }
+
+            voiceOrb.classList.add("active");
+
             voiceStatus.innerText =
                 "Tuto AI is speaking...";
+
         };
+
     utterance.onend =
         function(){
-            voiceOrb.classList.remove(
-                "active"
-            );
-            voiceStatus.innerText =
-                "Tap the microphone to speak again.";
+
+            voiceOrb.classList.remove("active");
+
+            if(!voiceAssistantClosed){
+
+                voiceStatus.innerText =
+                    "Tap the microphone to speak again.";
+
+            }
+
         };
+
     utterance.onerror =
-        function(){
-            voiceOrb.classList.remove(
-                "active"
+        function(error){
+
+            console.error(
+                "Speech synthesis error:",
+                error
             );
-            voiceStatus.innerText =
-                "Voice playback failed.";
+
+            voiceOrb.classList.remove("active");
+
+            if(!voiceAssistantClosed){
+
+                voiceStatus.innerText =
+                    "Voice playback failed. Tap the microphone again.";
+
+            }
+
         };
+
     window.speechSynthesis.speak(
         utterance
     );
 }
+
 /* ============================================================
-   CLOSE VOICE ASSISTANT WHEN CLICKING OUTSIDE
+   VOICE OVERLAY CLICK OUTSIDE
 ============================================================ */
+
 voiceOverlay.addEventListener(
     "click",
-    function(e){
+    function(event){
+
         if(
-            e.target === voiceOverlay
+            event.target === voiceOverlay
         ){
+
             closeVoiceAssistant();
+
         }
+
     }
 );
+
 /* ============================================================
-   ESC
+   ESC KEY
 ============================================================ */
+
 document.addEventListener(
     "keydown",
-    function(e){
-        if(
-            e.key === "Escape"
-        ){
+    function(event){
+
+        if(event.key === "Escape"){
+
             hideContextMenu();
+
             if(
-                voiceOverlay.classList.contains(
-                    "show"
-                )
+                voiceOverlay.classList.contains("show")
             ){
+
                 closeVoiceAssistant();
+
             }
+
         }
+
     }
 );
+
 /* ============================================================
-   INITIAL SEND BUTTON
+   SEND BUTTON
 ============================================================ */
+
+function updateSendButton(){
+
+    const sendBtn =
+        document.getElementById("sendBtn");
+
+    const icon =
+        document.getElementById("sendBtnIcon");
+
+    const hasText =
+        questionInput.value.trim().length > 0;
+
+    if(hasText){
+
+        sendBtn.classList.remove(
+            "voice-mode"
+        );
+
+        sendBtn.classList.add(
+            "send-mode"
+        );
+
+        sendBtn.title = "Send";
+
+        icon.className =
+            "fa-solid fa-arrow-up";
+
+    }else{
+
+        sendBtn.classList.remove(
+            "send-mode"
+        );
+
+        sendBtn.classList.add(
+            "voice-mode"
+        );
+
+        sendBtn.title =
+            "Open Voice Assistant";
+
+        icon.className =
+            "fa-solid fa-waveform-lines";
+
+    }
+}
+
+/* ============================================================
+   SEND OR OPEN VOICE
+============================================================ */
+
+function handleSendOrVoice(){
+
+    const text =
+        questionInput.value.trim();
+
+    /*
+     * Empty input:
+     * Open Voice Assistant
+     */
+
+    if(!text){
+
+        openVoiceAssistant();
+
+        return;
+    }
+
+    /*
+     * Text exists:
+     * Send normal message
+     */
+
+    document
+        .getElementById("chatForm")
+        .dispatchEvent(
+            new Event(
+                "submit",
+                {
+                    bubbles:true,
+                    cancelable:true
+                }
+            )
+        );
+}
+
+/* ============================================================
+   FINAL INITIALIZATION
+============================================================ */
+
 updateSendButton();
+
+            
+                        
 </script>
 </body>
 </html>
