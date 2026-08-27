@@ -440,9 +440,15 @@ pre {
     animation:pulse 1.2s infinite;
 }
 @keyframes pulse {
-    0% { transform:scale(1); }
-    50% { transform:scale(1.2); }
-    100% { transform:scale(1); }
+    0% {
+        transform:scale(1);
+    }
+    50% {
+        transform:scale(1.2);
+    }
+    100% {
+        transform:scale(1);
+    }
 }
 .chat-textarea {
     background:transparent;
@@ -460,28 +466,177 @@ pre {
 .chat-textarea::placeholder {
     color:var(--text-muted);
 }
+/* ============================================================
+   SEND / VOICE BUTTON
+============================================================ */
 .send-btn {
-    width:32px;
-    height:32px;
+    width:34px;
+    height:34px;
+    min-width:34px;
     border-radius:50%;
     border:none;
-    background:var(--text-color);
-    color:var(--bg-color);
     display:flex;
     align-items:center;
     justify-content:center;
     cursor:pointer;
     flex-shrink:0;
+    transition:
+        transform .18s ease,
+        background .18s ease,
+        box-shadow .18s ease;
 }
-.send-btn:disabled {
-    background:var(--border-color);
-    color:var(--text-muted);
+.send-btn.voice-mode {
+    background:#1683ff;
+    color:#ffffff;
+}
+.send-btn.send-mode {
+    background:var(--text-color);
+    color:var(--bg-color);
+}
+.send-btn:hover {
+    transform:scale(1.05);
+}
+.send-btn.voice-mode:hover {
+    box-shadow:0 0 0 4px rgba(22,131,255,.15);
+}
+.send-btn.voice-mode.listening {
+    animation:voiceButtonPulse 1.2s infinite;
+}
+@keyframes voiceButtonPulse {
+    0% {
+        box-shadow:0 0 0 0 rgba(22,131,255,.55);
+    }
+    70% {
+        box-shadow:0 0 0 12px rgba(22,131,255,0);
+    }
+    100% {
+        box-shadow:0 0 0 0 rgba(22,131,255,0);
+    }
 }
 .tts-btn {
     background:none;
     border:none;
     color:var(--text-muted);
     cursor:pointer;
+}
+/* ============================================================
+   VOICE ASSISTANT
+============================================================ */
+.voice-assistant-overlay {
+    position:fixed;
+    inset:0;
+    background:rgba(0,0,0,.68);
+    backdrop-filter:blur(8px);
+    -webkit-backdrop-filter:blur(8px);
+    display:none;
+    align-items:center;
+    justify-content:center;
+    z-index:10000;
+    padding:20px;
+}
+.voice-assistant-overlay.show {
+    display:flex;
+}
+.voice-assistant-panel {
+    width:min(440px,100%);
+    min-height:540px;
+    max-height:90vh;
+    overflow-y:auto;
+    background:var(--modal-bg);
+    color:var(--text-color);
+    border:1px solid var(--border-color);
+    border-radius:28px;
+    padding:25px 22px;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    box-shadow:0 25px 80px rgba(0,0,0,.5);
+}
+.voice-assistant-top {
+    width:100%;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+}
+.voice-assistant-title {
+    font-size:18px;
+    font-weight:700;
+}
+.voice-close-btn {
+    width:38px;
+    height:38px;
+    border:none;
+    border-radius:50%;
+    background:var(--btn-hover);
+    color:var(--text-color);
+    cursor:pointer;
+}
+.voice-orb {
+    width:150px;
+    height:150px;
+    border-radius:50%;
+    background:linear-gradient(135deg,#1683ff,#635bff);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    color:white;
+    font-size:45px;
+    margin-top:65px;
+    box-shadow:0 15px 45px rgba(22,131,255,.30);
+}
+.voice-orb.active {
+    animation:voiceOrbPulse 1.3s infinite;
+}
+@keyframes voiceOrbPulse {
+    0% {
+        transform:scale(1);
+    }
+    50% {
+        transform:scale(1.08);
+    }
+    100% {
+        transform:scale(1);
+    }
+}
+.voice-status {
+    margin-top:24px;
+    text-align:center;
+    color:var(--text-muted);
+    font-size:15px;
+}
+.voice-transcript {
+    width:100%;
+    min-height:90px;
+    max-height:170px;
+    overflow-y:auto;
+    margin-top:20px;
+    padding:14px;
+    border-radius:15px;
+    background:var(--input-bg);
+    border:1px solid var(--border-color);
+    color:var(--text-color);
+    font-size:15px;
+    line-height:1.5;
+    text-align:left;
+}
+.voice-main-btn {
+    width:72px;
+    height:72px;
+    border-radius:50%;
+    border:none;
+    background:#1683ff;
+    color:white;
+    font-size:25px;
+    cursor:pointer;
+    margin-top:22px;
+    transition:transform .2s ease;
+}
+.voice-main-btn:hover {
+    transform:scale(1.05);
+}
+.voice-main-btn.recording {
+    background:#ef4444;
+    animation:pulse 1.2s infinite;
 }
 /* ============================================================
    MODAL
@@ -532,6 +687,15 @@ pre {
     }
     .uploaded-img-preview {
         max-width:280px;
+    }
+    .voice-assistant-panel {
+        min-height:500px;
+        padding:22px 18px;
+    }
+    .voice-orb {
+        width:125px;
+        height:125px;
+        margin-top:45px;
     }
 }
 </style>
@@ -602,12 +766,16 @@ pre {
             </span>
         </button>
     </div>
-    <!-- CHAT -->
+    <!-- ========================================================
+         CHAT
+    ======================================================== -->
     <div
         class="chat-container"
         id="chatBox">
     </div>
-    <!-- INPUT -->
+    <!-- ========================================================
+         INPUT
+    ======================================================== -->
     <div class="input-container-box">
         <div class="input-wrapper">
             <div id="filePreviewArea">
@@ -629,6 +797,7 @@ pre {
                 </button>
             </div>
             <div class="input-row">
+                <!-- PLUS -->
                 <button
                     class="plus-btn"
                     data-bs-toggle="modal"
@@ -638,11 +807,14 @@ pre {
                 <form
                     id="chatForm"
                     class="d-flex w-100 align-items-center gap-2">
+                    <!-- TEXT INPUT -->
                     <textarea
                         id="question"
                         class="chat-textarea"
                         rows="1"
-                        placeholder="Message Tuto AI..."></textarea>
+                        placeholder="Ask anything">
+                    </textarea>
+                    <!-- EXISTING MIC — UNCHANGED -->
                     <button
                         type="button"
                         class="mic-btn"
@@ -650,11 +822,17 @@ pre {
                         onclick="toggleVoiceRecording()">
                         <i class="fa-solid fa-microphone"></i>
                     </button>
+                    <!-- VOICE / SEND BUTTON -->
                     <button
-                        type="submit"
-                        class="send-btn"
-                        id="sendBtn">
-                        <i class="fa-solid fa-arrow-up"></i>
+                        type="button"
+                        class="send-btn voice-mode"
+                        id="sendBtn"
+                        onclick="handleSendOrVoice()"
+                        title="Open Voice Assistant">
+                        <i
+                            class="fa-solid fa-waveform-lines"
+                            id="sendBtnIcon">
+                        </i>
                     </button>
                 </form>
             </div>
@@ -757,6 +935,54 @@ pre {
                     </strong>
                 </button>
             </div>
+        </div>
+    </div>
+</div>
+<!-- ============================================================
+     TUTO AI VOICE ASSISTANT
+============================================================ -->
+<div
+    class="voice-assistant-overlay"
+    id="voiceAssistantOverlay">
+    <div class="voice-assistant-panel">
+        <div class="voice-assistant-top">
+            <div class="voice-assistant-title">
+                <i class="fa-solid fa-sparkles me-2"></i>
+                Tuto AI Voice
+            </div>
+            <button
+                class="voice-close-btn"
+                onclick="closeVoiceAssistant()"
+                title="Close">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+        <div class="text-center w-100">
+            <div
+                class="voice-orb"
+                id="voiceOrb">
+                <i class="fa-solid fa-waveform-lines"></i>
+            </div>
+            <div
+                class="voice-status"
+                id="voiceStatus">
+                Tap the microphone and start speaking
+            </div>
+            <div
+                class="voice-transcript"
+                id="voiceTranscript">
+                I'm ready to listen...
+            </div>
+            <button
+                class="voice-main-btn"
+                id="voiceMainBtn"
+                onclick="toggleVoiceAssistantRecording()"
+                title="Start speaking">
+                <i class="fa-solid fa-microphone"></i>
+            </button>
+        </div>
+        <div class="text-secondary small text-center mt-4">
+            Speak naturally with Tuto AI
         </div>
     </div>
 </div>
@@ -943,38 +1169,6 @@ function deleteSessionFromDB(id){
     );
 }
 /* ============================================================
-   SAVE CURRENT SESSION
-============================================================ */
-async function saveSessions(){
-    try{
-        if(currentSessionId){
-            localStorage.setItem(
-                "tuto_current_session_id",
-                currentSessionId
-            );
-        }
-        if(
-            currentSessionId &&
-            allSessions[currentSessionId]
-        ){
-            allSessions[
-                currentSessionId
-            ].updatedAt =
-                Date.now();
-            await saveSession(
-                allSessions[
-                    currentSessionId
-                ]
-            );
-        }
-    }catch(error){
-        console.error(
-            "Storage error:",
-            error
-        );
-    }
-}
-/* ============================================================
    DEFAULT WELCOME
 ============================================================ */
 const DEFAULT_WELCOME = `
@@ -1117,6 +1311,7 @@ window.addEventListener(
         }else{
             startNewChat(true);
         }
+        updateSendButton();
     }
 );
 /* ============================================================
@@ -1132,6 +1327,7 @@ questionInput.addEventListener(
                 this.scrollHeight,
                 120
             ) + "px";
+        updateSendButton();
     }
 );
 questionInput.addEventListener(
@@ -1880,7 +2076,8 @@ function clearSelectedFile(){
     ).src = "";
 }
 /* ============================================================
-   VOICE RECORDING
+   EXISTING VOICE RECORDING
+   THIS IS YOUR ORIGINAL MIC → TEXT FEATURE
 ============================================================ */
 let mediaRecorder = null;
 let audioChunks = [];
@@ -1992,6 +2189,7 @@ async function transcribeAudio(blob){
                     questionInput.scrollHeight,
                     120
                 ) + "px";
+            updateSendButton();
         }else{
             alert(
                 data.message ||
@@ -2004,7 +2202,7 @@ async function transcribeAudio(blob){
         );
     }finally{
         questionInput.placeholder =
-            "Message Tuto AI...";
+            "Ask anything";
     }
 }
 /* ============================================================
@@ -2058,6 +2256,68 @@ function speakText(button){
     );
 }
 /* ============================================================
+   SEND BUTTON MODE
+============================================================ */
+function updateSendButton(){
+    const sendBtn =
+        document.getElementById(
+            "sendBtn"
+        );
+    const icon =
+        document.getElementById(
+            "sendBtnIcon"
+        );
+    const hasText =
+        questionInput.value.trim().length > 0;
+    /*
+     * If user typed something:
+     * SEND ARROW
+     */
+    if(hasText){
+        sendBtn.classList.remove(
+            "voice-mode"
+        );
+        sendBtn.classList.add(
+            "send-mode"
+        );
+        sendBtn.title =
+            "Send";
+        icon.className =
+            "fa-solid fa-arrow-up";
+        return;
+    }
+    /*
+     * If input is empty:
+     * BLUE VOICE BUTTON
+     */
+    sendBtn.classList.remove(
+        "send-mode"
+    );
+    sendBtn.classList.add(
+        "voice-mode"
+    );
+    sendBtn.title =
+        "Open Voice Assistant";
+    icon.className =
+        "fa-solid fa-waveform-lines";
+}
+/* ============================================================
+   SEND OR OPEN VOICE
+============================================================ */
+function handleSendOrVoice(){
+    const text =
+        questionInput.value.trim();
+    if(!text){
+        openVoiceAssistant();
+        return;
+    }
+    document
+        .getElementById("chatForm")
+        .dispatchEvent(
+            new Event("submit")
+        );
+}
+/* ============================================================
    SEND MESSAGE
 ============================================================ */
 document
@@ -2066,10 +2326,6 @@ document
         "submit",
         async function(e){
             e.preventDefault();
-            const sendBtn =
-                document.getElementById(
-                    "sendBtn"
-                );
             const question =
                 questionInput.value.trim();
             if(
@@ -2078,20 +2334,18 @@ document
             ){
                 return;
             }
+            const sendBtn =
+                document.getElementById(
+                    "sendBtn"
+                );
             /*
-             * IMPORTANT:
-             *
-             * Save the session ID BEFORE sending
-             * the request.
-             *
-             * This prevents title generation from
-             * accidentally changing another chat.
+             * SAVE SESSION ID
              */
             const messageSessionId =
                 currentSessionId;
-            /* =================================================
-               USER MESSAGE
-            ================================================= */
+            /*
+             * USER MESSAGE
+             */
             let userHTML = "";
             if(question){
                 userHTML += `
@@ -2157,9 +2411,9 @@ document
                     </div>
                 </div>
             `;
-            /* =================================================
-               FORM DATA
-            ================================================= */
+            /*
+             * FORM DATA
+             */
             const formData =
                 new FormData();
             formData.append(
@@ -2177,9 +2431,7 @@ document
                 );
             }
             /*
-             * IMPORTANT:
-             * Check title status BEFORE clearing
-             * anything.
+             * TITLE
              */
             const shouldGenerateTitle =
                 allSessions[messageSessionId] &&
@@ -2194,17 +2446,21 @@ document
                     :
                     ""
                 );
+            /*
+             * CLEAR INPUT
+             */
             questionInput.value = "";
             questionInput.style.height =
                 "auto";
             clearSelectedFile();
+            updateSendButton();
             sendBtn.disabled =
                 true;
             chatBox.scrollTop =
                 chatBox.scrollHeight;
-            /* =================================================
-               LOADING
-            ================================================= */
+            /*
+             * LOADING
+             */
             const loadingId =
                 "loading-" +
                 Date.now();
@@ -2292,9 +2548,9 @@ document
                             bubble
                         );
                     }
-                    /* =================================================
-                       SAVE CHAT
-                    ================================================= */
+                    /*
+                     * SAVE CHAT
+                     */
                     if(
                         allSessions[
                             messageSessionId
@@ -2314,19 +2570,13 @@ document
                             ]
                         );
                     }
-                    /* =================================================
-                       AUTOMATIC AI CHAT TITLE
-                    ================================================= */
+                    /*
+                     * AUTOMATIC TITLE
+                     */
                     if(
                         shouldGenerateTitle &&
                         titleQuestion
                     ){
-                        /*
-                         * Do NOT await.
-                         *
-                         * The answer is already displayed.
-                         * Title can be generated separately.
-                         */
                         generateTitle(
                             titleQuestion,
                             messageSessionId
@@ -2368,6 +2618,7 @@ document
             }finally{
                 sendBtn.disabled =
                     false;
+                updateSendButton();
                 chatBox.scrollTop =
                     chatBox.scrollHeight;
             }
@@ -2387,16 +2638,6 @@ async function generateTitle(
     ){
         return;
     }
-    /*
-     * IMPORTANT:
-     *
-     * The title request uses the SAME session ID
-     * that received the first question.
-     *
-     * So if the user opens another chat while
-     * title generation is running, the wrong chat
-     * will NOT be renamed.
-     */
     try{
         const formData =
             new FormData();
@@ -2436,10 +2677,6 @@ async function generateTitle(
             String(
                 data.title
             ).trim();
-        /*
-         * Remove quotes if AI returns:
-         * "Python Learning"
-         */
         title =
             title
                 .replace(
@@ -2451,9 +2688,6 @@ async function generateTitle(
                     ""
                 )
                 .trim();
-        /*
-         * Remove unnecessary line breaks.
-         */
         title =
             title
                 .replace(
@@ -2461,9 +2695,6 @@ async function generateTitle(
                     " "
                 )
                 .trim();
-        /*
-         * Keep sidebar title short.
-         */
         if(title.length > 60){
             title =
                 title
@@ -2473,13 +2704,6 @@ async function generateTitle(
         if(!title){
             return;
         }
-        /*
-         * Only change the title if it is
-         * still "New Chat".
-         *
-         * If the user manually renamed it while
-         * AI was generating, we DO NOT overwrite it.
-         */
         if(
             allSessions[sessionId].title !==
             "New Chat"
@@ -2499,9 +2723,6 @@ async function generateTitle(
                 sessionId
             ]
         );
-        /*
-         * Immediately update sidebar.
-         */
         renderSidebarHistory();
     }catch(error){
         console.error(
@@ -2510,6 +2731,484 @@ async function generateTitle(
         );
     }
 }
+/* ============================================================
+   VOICE ASSISTANT
+============================================================ */
+const voiceOverlay =
+    document.getElementById(
+        "voiceAssistantOverlay"
+    );
+const voiceStatus =
+    document.getElementById(
+        "voiceStatus"
+    );
+const voiceTranscript =
+    document.getElementById(
+        "voiceTranscript"
+    );
+const voiceOrb =
+    document.getElementById(
+        "voiceOrb"
+    );
+const voiceMainBtn =
+    document.getElementById(
+        "voiceMainBtn"
+    );
+let voiceAssistantRecorder = null;
+let voiceAssistantChunks = [];
+let voiceAssistantRecording = false;
+let voiceAssistantProcessing = false;
+/* ============================================================
+   OPEN VOICE ASSISTANT
+============================================================ */
+function openVoiceAssistant(){
+    voiceOverlay.classList.add(
+        "show"
+    );
+    voiceStatus.innerText =
+        "Tap the microphone and start speaking";
+    voiceTranscript.innerText =
+        "I'm ready to listen...";
+    voiceAssistantProcessing =
+        false;
+}
+/* ============================================================
+   CLOSE VOICE ASSISTANT
+============================================================ */
+function closeVoiceAssistant(){
+    stopVoiceAssistantRecording();
+    if(
+        window.speechSynthesis
+    ){
+        window.speechSynthesis.cancel();
+    }
+    voiceOverlay.classList.remove(
+        "show"
+    );
+}
+/* ============================================================
+   VOICE ASSISTANT RECORDING
+============================================================ */
+async function toggleVoiceAssistantRecording(){
+    if(
+        voiceAssistantProcessing
+    ){
+        return;
+    }
+    if(
+        voiceAssistantRecording
+    ){
+        stopVoiceAssistantRecording();
+    }else{
+        startVoiceAssistantRecording();
+    }
+}
+/* ============================================================
+   START VOICE ASSISTANT RECORDING
+============================================================ */
+async function startVoiceAssistantRecording(){
+    try{
+        const stream =
+            await navigator
+                .mediaDevices
+                .getUserMedia({
+                    audio:true
+                });
+        voiceAssistantRecorder =
+            new MediaRecorder(stream);
+        voiceAssistantChunks = [];
+        voiceAssistantRecorder.ondataavailable =
+            function(event){
+                if(
+                    event.data.size > 0
+                ){
+                    voiceAssistantChunks.push(
+                        event.data
+                    );
+                }
+            };
+        voiceAssistantRecorder.onstop =
+            async function(){
+                const blob =
+                    new Blob(
+                        voiceAssistantChunks,
+                        {
+                            type:"audio/webm"
+                        }
+                    );
+                stream
+                    .getTracks()
+                    .forEach(
+                        function(track){
+                            track.stop();
+                        }
+                    );
+                await processVoiceAssistantAudio(
+                    blob
+                );
+            };
+        voiceAssistantRecorder.start();
+        voiceAssistantRecording =
+            true;
+        voiceMainBtn.classList.add(
+            "recording"
+        );
+        voiceMainBtn.innerHTML =
+            '<i class="fa-solid fa-stop"></i>';
+        voiceOrb.classList.add(
+            "active"
+        );
+        voiceStatus.innerText =
+            "Listening... Tap again when finished";
+        voiceTranscript.innerText =
+            "Listening...";
+    }catch(error){
+        console.error(
+            "Voice Assistant microphone error:",
+            error
+        );
+        voiceStatus.innerText =
+            "Microphone permission denied or unavailable.";
+    }
+}
+/* ============================================================
+   STOP VOICE ASSISTANT RECORDING
+============================================================ */
+function stopVoiceAssistantRecording(){
+    if(
+        voiceAssistantRecorder &&
+        voiceAssistantRecording
+    ){
+        voiceAssistantRecorder.stop();
+    }
+    voiceAssistantRecording =
+        false;
+    voiceMainBtn.classList.remove(
+        "recording"
+    );
+    voiceMainBtn.innerHTML =
+        '<i class="fa-solid fa-microphone"></i>';
+    voiceOrb.classList.remove(
+        "active"
+    );
+}
+/* ============================================================
+   PROCESS VOICE
+============================================================ */
+async function processVoiceAssistantAudio(blob){
+    voiceAssistantProcessing =
+        true;
+    voiceStatus.innerText =
+        "Converting your voice to text...";
+    try{
+        /*
+         * STEP 1:
+         * VOICE → TEXT
+         */
+        const transcriptionForm =
+            new FormData();
+        transcriptionForm.append(
+            "audio",
+            blob,
+            "voice-assistant.webm"
+        );
+        const transcriptionResponse =
+            await fetch(
+                "/api/transcribe",
+                {
+                    method:"POST",
+                    body:transcriptionForm
+                }
+            );
+        const transcriptionData =
+            await transcriptionResponse.json();
+        if(
+            transcriptionData.status !== "success" ||
+            !transcriptionData.text
+        ){
+            throw new Error(
+                transcriptionData.message ||
+                "Voice transcription failed."
+            );
+        }
+        const userText =
+            transcriptionData.text.trim();
+        voiceTranscript.innerHTML = `
+            <strong>You:</strong><br>
+            ${escapeHTML(userText)}
+        `;
+        /*
+         * STEP 2:
+         * SEND TEXT TO AI
+         */
+        voiceStatus.innerText =
+            "Tuto AI is thinking...";
+        const chatFormData =
+            new FormData();
+        chatFormData.append(
+            "question",
+            userText
+        );
+        chatFormData.append(
+            "session_id",
+            currentSessionId
+        );
+        const chatResponse =
+            await fetch(
+                "/api/chat",
+                {
+                    method:"POST",
+                    body:chatFormData
+                }
+            );
+        const chatData =
+            await chatResponse.json();
+        if(
+            chatData.status !== "success"
+        ){
+            throw new Error(
+                chatData.message ||
+                "AI response failed."
+            );
+        }
+        const answer =
+            chatData.response ||
+            "Sorry, I couldn't answer that.";
+        /*
+         * SHOW ANSWER
+         */
+        voiceTranscript.innerHTML = `
+            <strong>You:</strong><br>
+            ${escapeHTML(userText)}
+            <br><br>
+            <strong>Tuto AI:</strong><br>
+            ${escapeHTML(answer)}
+        `;
+        /*
+         * STEP 3:
+         * AI → VOICE
+         */
+        voiceStatus.innerText =
+            "Tuto AI is speaking...";
+        speakVoiceAssistant(
+            answer
+        );
+        /*
+         * ALSO SAVE THE VOICE CHAT
+         * INTO NORMAL CHAT HISTORY
+         */
+        addVoiceConversationToChat(
+            userText,
+            answer
+        );
+    }catch(error){
+        console.error(
+            "Voice Assistant error:",
+            error
+        );
+        voiceStatus.innerText =
+            "Something went wrong. Please try again.";
+    }finally{
+        voiceAssistantProcessing =
+            false;
+    }
+}
+/* ============================================================
+   ADD VOICE CHAT TO NORMAL CHAT
+============================================================ */
+async function addVoiceConversationToChat(
+    userText,
+    answer
+){
+    try{
+        /*
+         * Don't duplicate the complete voice
+         * assistant UI. Just add the conversation
+         * to normal Tuto AI chat history.
+         */
+        const answerHTML =
+            marked.parse(
+                answer
+            );
+        chatBox.innerHTML += `
+            <div class="message">
+                <div class="avatar user-avatar">
+                    You
+                </div>
+                <div class="bubble">
+                    <strong>You</strong><br>
+                    ${escapeHTML(
+                        userText
+                    ).replace(
+                        /\n/g,
+                        "<br>"
+                    )}
+                </div>
+            </div>
+            <div class="message">
+                <div class="avatar ai-avatar">
+                    AI
+                </div>
+                <div class="bubble">
+                    <div
+                        class="d-flex
+                        justify-content-between
+                        align-items-center
+                        mb-1">
+                        <strong>
+                            Tuto AI
+                        </strong>
+                        <button
+                            class="tts-btn"
+                            onclick="speakText(this)"
+                            title="Read Aloud">
+                            <i class="fa-solid fa-volume-high"></i>
+                        </button>
+                    </div>
+                    <div>
+                        ${answerHTML}
+                    </div>
+                </div>
+            </div>
+        `;
+        const bubbles =
+            chatBox.querySelectorAll(
+                ".bubble"
+            );
+        const lastBubble =
+            bubbles[bubbles.length - 1];
+        processCodeBlocks(
+            lastBubble
+        );
+        renderMath(
+            lastBubble
+        );
+        chatBox.scrollTop =
+            chatBox.scrollHeight;
+        /*
+         * SAVE TO CURRENT SESSION
+         */
+        if(
+            allSessions[currentSessionId]
+        ){
+            allSessions[
+                currentSessionId
+            ].html =
+                chatBox.innerHTML;
+            allSessions[
+                currentSessionId
+            ].updatedAt =
+                Date.now();
+            await saveSession(
+                allSessions[
+                    currentSessionId
+                ]
+            );
+        }
+    }catch(error){
+        console.error(
+            "Could not save voice chat:",
+            error
+        );
+    }
+}
+/* ============================================================
+   VOICE ASSISTANT TTS
+============================================================ */
+function speakVoiceAssistant(text){
+    if(
+        !("speechSynthesis" in window)
+    ){
+        voiceStatus.innerText =
+            "Voice output is not supported on this device.";
+        return;
+    }
+    window.speechSynthesis.cancel();
+    /*
+     * Remove markdown/code before speaking.
+     */
+    const cleanText =
+        String(text)
+            .replace(
+                /```[\s\S]*?```/g,
+                ""
+            )
+            .replace(
+                /[*_#>`]/g,
+                ""
+            )
+            .replace(
+                /\[([^\]]+)\]\([^)]+\)/g,
+                "$1"
+            )
+            .replace(
+                /\s+/g,
+                " "
+            )
+            .trim();
+    const utterance =
+        new SpeechSynthesisUtterance(
+            cleanText
+        );
+    /*
+     * Bengali detection
+     */
+    if(
+        /[\u0980-\u09FF]/.test(
+            cleanText
+        )
+    ){
+        utterance.lang =
+            "bn-BD";
+    }else{
+        utterance.lang =
+            "en-US";
+    }
+    utterance.rate =
+        1;
+    utterance.pitch =
+        1;
+    utterance.onstart =
+        function(){
+            voiceOrb.classList.add(
+                "active"
+            );
+            voiceStatus.innerText =
+                "Tuto AI is speaking...";
+        };
+    utterance.onend =
+        function(){
+            voiceOrb.classList.remove(
+                "active"
+            );
+            voiceStatus.innerText =
+                "Tap the microphone to speak again.";
+        };
+    utterance.onerror =
+        function(){
+            voiceOrb.classList.remove(
+                "active"
+            );
+            voiceStatus.innerText =
+                "Voice playback failed.";
+        };
+    window.speechSynthesis.speak(
+        utterance
+    );
+}
+/* ============================================================
+   CLOSE VOICE ASSISTANT WHEN CLICKING OUTSIDE
+============================================================ */
+voiceOverlay.addEventListener(
+    "click",
+    function(e){
+        if(
+            e.target === voiceOverlay
+        ){
+            closeVoiceAssistant();
+        }
+    }
+);
 /* ============================================================
    ESC
 ============================================================ */
@@ -2520,9 +3219,20 @@ document.addEventListener(
             e.key === "Escape"
         ){
             hideContextMenu();
+            if(
+                voiceOverlay.classList.contains(
+                    "show"
+                )
+            ){
+                closeVoiceAssistant();
+            }
         }
     }
 );
+/* ============================================================
+   INITIAL SEND BUTTON
+============================================================ */
+updateSendButton();
 </script>
 </body>
 </html>
