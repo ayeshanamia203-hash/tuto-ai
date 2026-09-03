@@ -67,9 +67,8 @@ if GROQ_API_KEY:
 # MODELS
 # ============================================================
 
-TEXT_MODEL = "openai/gpt-oss-20b"
-
-VISION_MODEL = "qwen/qwen3.6-27b"
+TEXT_MODEL = "openai/gpt-oss-20b"                                                                                                                                                                                                                                        
+VISION_MODEL = "meta-llama/llama-4-scout-17b-16e-instruct" 
 
 WHISPER_MODEL = "whisper-large-v3"
 
