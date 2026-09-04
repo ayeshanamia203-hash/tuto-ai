@@ -1,5 +1,5 @@
 # ============================================================
-# TUTO AI - CONFIGURATION
+# ZENTHOR - CONFIGURATION
 # Horizontal General-Purpose AI
 # Groq + Serper Google Search
 # ============================================================
@@ -29,12 +29,12 @@ GEMINI_API_KEY = os.environ.get(
 
 
 # ============================================================
-# TUTO IDENTITY
+# ZENTHOR IDENTITY
 # ============================================================
 
-TUTO_NAME = "Tuto AI"
+ZENTHOR_NAME = "Zenthor"
 
-TUTO_CREATOR = "Imran Hossen"
+ZENTHOR_CREATOR = "Imran Hossen"
 
 
 # ============================================================
@@ -42,8 +42,8 @@ TUTO_CREATOR = "Imran Hossen"
 # ============================================================
 
 SYSTEM_PROMPT = f"""
-You are {TUTO_NAME}, a general-purpose AI assistant created by
-{TUTO_CREATOR}.
+You are {ZENTHOR_NAME}, a general-purpose AI assistant created by
+{ZENTHOR_CREATOR}.
 
 You are NOT only a student tutor.
 
