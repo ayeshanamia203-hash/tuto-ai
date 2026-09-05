@@ -1,5 +1,5 @@
 # ============================================================
-# TUTO AI - HORIZONTAL AI BRAIN
+# ZENTHOR - HORIZONTAL AI BRAIN
 # Groq + Serper Google Search
 # Smart Web Search + Automatic Model Fallback
 # ============================================================
@@ -35,7 +35,6 @@ from config import (
 client = None
 
 if GROQ_API_KEY:
-
     client = Groq(
         api_key=GROQ_API_KEY
     )
@@ -94,7 +93,7 @@ CURRENT_KEYWORDS = [
     "president",
     "prime minister",
 
-    # Bangla
+    # Bangla (functional keywords, not comments)
     "আজ",
     "এখন",
     "বর্তমান",
@@ -131,17 +130,13 @@ def needs_web_search(question: str) -> bool:
     """
 
     if not question:
-
         return False
 
     text = str(
         question
     ).strip().lower()
 
-    # --------------------------------------------------------
     # Explicit web/search requests
-    # --------------------------------------------------------
-
     explicit_patterns = [
 
         r"\bsearch\b",
@@ -161,57 +156,39 @@ def needs_web_search(question: str) -> bool:
     ]
 
     for pattern in explicit_patterns:
-
         if re.search(
             pattern,
             text,
             flags=re.IGNORECASE
         ):
-
             return True
 
-    # --------------------------------------------------------
     # Current-information keywords
-    # --------------------------------------------------------
-
     for keyword in CURRENT_KEYWORDS:
-
         if keyword in text:
-
             return True
 
-    # --------------------------------------------------------
     # Questions asking "currently/how much now"
-    # --------------------------------------------------------
-
     dynamic_patterns = [
 
         r"\bhow much\b.*\b(now|today|currently)\b",
-
         r"\bwho is\b.*\b(current|now)\b",
-
         r"\bwhat is\b.*\b(current|now|today)\b",
-
         r"\bwhat's\b.*\b(current|now|today)\b",
-
         r"\bhow many\b.*\b(currently|today)\b",
 
         r"এখন.*কত",
-
         r"বর্তমানে.*কত",
-
         r"এখন.*কে",
 
     ]
 
     for pattern in dynamic_patterns:
-
         if re.search(
             pattern,
             text,
             flags=re.IGNORECASE
         ):
-
             return True
 
     return False
@@ -226,12 +203,10 @@ def google_search(
 ) -> Optional[dict]:
     """
     Search Google through Serper API.
-
     Returns parsed search results.
     """
 
     if not SERPER_API_KEY:
-
         return None
 
     query = (
@@ -239,17 +214,13 @@ def google_search(
     ).strip()
 
     if not query:
-
         return None
 
     payload = {
 
         "q": query,
-
         "gl": SERPER_COUNTRY,
-
         "hl": SERPER_LANGUAGE,
-
         "num": SERPER_RESULTS,
 
     }
@@ -263,19 +234,12 @@ def google_search(
     request = urllib.request.Request(
 
         SERPER_ENDPOINT,
-
         data=data,
-
         method="POST",
 
         headers={
-
-            "X-API-KEY":
-                SERPER_API_KEY,
-
-            "Content-Type":
-                "application/json",
-
+            "X-API-KEY": SERPER_API_KEY,
+            "Content-Type": "application/json",
         }
 
     )
@@ -288,19 +252,14 @@ def google_search(
         ) as response:
 
             raw = response.read()
-
             result = json.loads(
-                raw.decode(
-                    "utf-8"
-                )
+                raw.decode("utf-8")
             )
-
             return result
 
     except urllib.error.HTTPError as e:
 
         try:
-
             error_body = (
                 e.read()
                 .decode(
@@ -308,9 +267,7 @@ def google_search(
                     errors="ignore"
                 )
             )
-
         except Exception:
-
             error_body = ""
 
         print(
@@ -318,7 +275,6 @@ def google_search(
             e.code,
             error_body
         )
-
         return None
 
     except Exception as e:
@@ -327,7 +283,6 @@ def google_search(
             "SERPER SEARCH ERROR:",
             str(e)
         )
-
         return None
 
 
@@ -343,19 +298,13 @@ def format_search_results(
     """
 
     if not search_data:
-
         return ""
 
     parts = []
 
-    # --------------------------------------------------------
     # Knowledge Graph
-    # --------------------------------------------------------
-
     knowledge = (
-        search_data.get(
-            "knowledgeGraph"
-        )
+        search_data.get("knowledgeGraph")
         or {}
     )
 
@@ -363,35 +312,16 @@ def format_search_results(
 
         kg_lines = []
 
-        title = knowledge.get(
-            "title"
-        )
-
-        description = knowledge.get(
-            "description"
-        )
-
-        type_name = knowledge.get(
-            "type"
-        )
+        title = knowledge.get("title")
+        description = knowledge.get("description")
+        type_name = knowledge.get("type")
 
         if title:
-
-            kg_lines.append(
-                f"Name: {title}"
-            )
-
+            kg_lines.append(f"Name: {title}")
         if type_name:
-
-            kg_lines.append(
-                f"Type: {type_name}"
-            )
-
+            kg_lines.append(f"Type: {type_name}")
         if description:
-
-            kg_lines.append(
-                f"Description: {description}"
-            )
+            kg_lines.append(f"Description: {description}")
 
         for key, value in knowledge.items():
 
@@ -402,35 +332,20 @@ def format_search_results(
                 "imageUrl",
                 "website"
             ]:
-
                 continue
 
-            if isinstance(
-                value,
-                str
-            ):
-
-                kg_lines.append(
-                    f"{key}: {value}"
-                )
+            if isinstance(value, str):
+                kg_lines.append(f"{key}: {value}")
 
         if kg_lines:
-
             parts.append(
                 "KNOWLEDGE GRAPH:\n"
-                + "\n".join(
-                    kg_lines
-                )
+                + "\n".join(kg_lines)
             )
 
-    # --------------------------------------------------------
     # Organic Search Results
-    # --------------------------------------------------------
-
     organic = (
-        search_data.get(
-            "organic"
-        )
+        search_data.get("organic")
         or []
     )
 
@@ -441,78 +356,31 @@ def format_search_results(
         start=1
     ):
 
-        title = (
-            item.get(
-                "title"
-            )
-            or ""
-        )
+        title = item.get("title") or ""
+        snippet = item.get("snippet") or ""
+        link = item.get("link") or ""
+        date = item.get("date") or ""
 
-        snippet = (
-            item.get(
-                "snippet"
-            )
-            or ""
-        )
-
-        link = (
-            item.get(
-                "link"
-            )
-            or ""
-        )
-
-        date = (
-            item.get(
-                "date"
-            )
-            or ""
-        )
-
-        line = (
-            f"[{index}] "
-            f"{title}"
-        )
+        line = f"[{index}] {title}"
 
         if date:
-
-            line += (
-                f" ({date})"
-            )
-
+            line += f" ({date})"
         if snippet:
-
-            line += (
-                f"\nSnippet: {snippet}"
-            )
-
+            line += f"\nSnippet: {snippet}"
         if link:
+            line += f"\nURL: {link}"
 
-            line += (
-                f"\nURL: {link}"
-            )
-
-        result_lines.append(
-            line
-        )
+        result_lines.append(line)
 
     if result_lines:
-
         parts.append(
             "GOOGLE SEARCH RESULTS:\n"
-            + "\n\n".join(
-                result_lines
-            )
+            + "\n\n".join(result_lines)
         )
 
-    # --------------------------------------------------------
     # Answer Box
-    # --------------------------------------------------------
-
     answer_box = (
-        search_data.get(
-            "answerBox"
-        )
+        search_data.get("answerBox")
         or {}
     )
 
@@ -526,29 +394,18 @@ def format_search_results(
             "snippet"
         ]:
 
-            value = answer_box.get(
-                key
-            )
-
+            value = answer_box.get(key)
             if value:
-
-                answer_parts.append(
-                    f"{key}: {value}"
-                )
+                answer_parts.append(f"{key}: {value}")
 
         if answer_parts:
-
             parts.append(
                 "GOOGLE ANSWER BOX:\n"
-                + "\n".join(
-                    answer_parts
-                )
+                + "\n".join(answer_parts)
             )
 
     return (
-        "\n\n".join(
-            parts
-        ).strip()
+        "\n\n".join(parts).strip()
     )
 
 
@@ -561,37 +418,23 @@ def get_available_models():
     global _available_models
 
     if _available_models is not None:
-
         return _available_models
 
     if not client:
-
         return []
 
     try:
 
-        model_list = (
-            client.models.list()
-        )
-
+        model_list = client.models.list()
         models = []
 
         for model in model_list.data:
 
-            model_id = getattr(
-                model,
-                "id",
-                None
-            )
-
+            model_id = getattr(model, "id", None)
             if model_id:
-
-                models.append(
-                    model_id
-                )
+                models.append(model_id)
 
         _available_models = models
-
         return models
 
     except Exception as e:
@@ -600,7 +443,6 @@ def get_available_models():
             "MODEL LIST ERROR:",
             str(e)
         )
-
         return []
 
 
@@ -610,22 +452,15 @@ def get_available_models():
 
 def choose_models():
 
-    available = (
-        get_available_models()
-    )
+    available = get_available_models()
 
     preferred = [
 
         PRIMARY_GROQ_MODEL,
-
         FALLBACK_GROQ_MODEL,
-
         "openai/gpt-oss-120b",
-
         "openai/gpt-oss-20b",
-
         "llama-3.3-70b-versatile",
-
         "llama-3.1-8b-instant",
 
     ]
@@ -637,48 +472,29 @@ def choose_models():
         for model_name in preferred:
 
             if (
-
                 model_name
-
                 and
-
                 model_name in available
-
                 and
-
                 model_name not in result
-
             ):
-
-                result.append(
-                    model_name
-                )
+                result.append(model_name)
 
         for model_name in available:
 
             if model_name not in result:
-
-                result.append(
-                    model_name
-                )
+                result.append(model_name)
 
     else:
 
         for model_name in preferred:
 
             if (
-
                 model_name
-
                 and
-
                 model_name not in result
-
             ):
-
-                result.append(
-                    model_name
-                )
+                result.append(model_name)
 
     return result
 
@@ -687,46 +503,27 @@ def choose_models():
 # CLEAN RESPONSE
 # ============================================================
 
-def clean_response(
-    text
-):
+def clean_response(text):
 
     if not text:
-
         return ""
 
-    text = str(
-        text
-    ).strip()
+    text = str(text).strip()
 
     # Remove thinking tags.
     text = re.sub(
-
         r"<think>.*?</think>",
-
         "",
-
         text,
-
-        flags=(
-            re.DOTALL
-            |
-            re.IGNORECASE
-        )
-
+        flags=(re.DOTALL | re.IGNORECASE)
     )
 
     # Remove accidental assistant prefix.
     text = re.sub(
-
-        r"^\s*(assistant|tuto ai)\s*:\s*",
-
+        r"^\s*(assistant|zenthor)\s*:\s*",
         "",
-
         text,
-
         flags=re.IGNORECASE
-
     )
 
     return text.strip()
@@ -781,33 +578,15 @@ IMPORTANT:
 # ASK GROQ
 # ============================================================
 
-def _ask_groq(
-    messages
-):
+def _ask_groq(messages):
 
     if not client:
+        return (None, "GROQ_API_KEY is not set.")
 
-        return (
-
-            None,
-
-            "GROQ_API_KEY সেট করা নেই।"
-
-        )
-
-    models_to_try = (
-        choose_models()
-    )
+    models_to_try = choose_models()
 
     if not models_to_try:
-
-        return (
-
-            None,
-
-            "কোনো available Groq model পাওয়া যায়নি।"
-
-        )
+        return (None, "No available Groq model found.")
 
     errors = []
 
@@ -816,75 +595,47 @@ def _ask_groq(
         try:
 
             response = (
-
                 client
                 .chat
                 .completions
                 .create(
 
                     model=model_name,
-
                     messages=messages,
-
-                    temperature=
-                        DEFAULT_TEMPERATURE,
-
-                    max_tokens=
-                        DEFAULT_MAX_TOKENS,
+                    temperature=DEFAULT_TEMPERATURE,
+                    max_tokens=DEFAULT_MAX_TOKENS,
 
                 )
 
             )
 
             if (
-
                 response
-
                 and
-
                 response.choices
-
             ):
 
                 answer = (
-
                     response
                     .choices[0]
                     .message
                     .content
-
                 )
 
                 if answer:
-
-                    return (
-
-                        answer,
-
-                        None
-
-                    )
+                    return (answer, None)
 
         except Exception as e:
 
             errors.append(
-
-                f"{model_name}: "
-                f"{str(e)}"
-
+                f"{model_name}: {str(e)}"
             )
-
             continue
 
     return (
-
         None,
-
-        "Groq model দিয়ে উত্তর পাওয়া যায়নি.\n"
-        + "\n".join(
-            errors[-3:]
-        )
-
+        "Could not get response from Groq models.\n"
+        + "\n".join(errors[-3:])
     )
 
 
@@ -901,28 +652,16 @@ def ask_ai(
     try:
 
         if not GROQ_API_KEY:
-
-            return (
-                "GROQ_API_KEY সেট করা নেই।"
-            )
+            return "GROQ_API_KEY is not set."
 
         final_question = (
-
-            str(
-                user_question
-            ).strip()
-
+            str(user_question).strip()
             if user_question
-
             else ""
-
         )
 
         if not final_question:
-
-            return (
-                "Please enter a message."
-            )
+            return "Please enter a message."
 
         # ====================================================
         # WEB SEARCH
@@ -930,42 +669,22 @@ def ask_ai(
 
         web_context = ""
 
-        should_search = (
-            needs_web_search(
-                final_question
-            )
-        )
+        should_search = needs_web_search(final_question)
 
         if should_search:
 
-            print(
-                "WEB SEARCH:",
-                final_question
-            )
+            print("WEB SEARCH:", final_question)
 
-            search_data = (
-                google_search(
-                    final_question
-                )
-            )
+            search_data = google_search(final_question)
 
             if search_data:
 
-                web_context = (
-                    format_search_results(
-                        search_data
-                    )
-                )
-
-                print(
-                    "WEB SEARCH SUCCESS"
-                )
+                web_context = format_search_results(search_data)
+                print("WEB SEARCH SUCCESS")
 
             else:
 
-                print(
-                    "WEB SEARCH FAILED"
-                )
+                print("WEB SEARCH FAILED")
 
         # ====================================================
         # SYSTEM
@@ -974,14 +693,8 @@ def ask_ai(
         messages = [
 
             {
-
                 "role": "system",
-
-                "content":
-                    build_system_prompt(
-                        web_context
-                    )
-
+                "content": build_system_prompt(web_context)
             }
 
         ]
@@ -992,50 +705,25 @@ def ask_ai(
 
         if chat_history:
 
-            recent_history = (
-
-                chat_history[
-                    -MAX_HISTORY_MESSAGES:
-                ]
-
-            )
+            recent_history = chat_history[-MAX_HISTORY_MESSAGES:]
 
             for message in recent_history:
 
-                if not isinstance(
-                    message,
-                    dict
-                ):
-
+                if not isinstance(message, dict):
                     continue
 
-                role = message.get(
-                    "role"
-                )
+                role = message.get("role")
+                content = message.get("content")
 
-                content = message.get(
-                    "content"
-                )
-
-                if role not in [
-                    "user",
-                    "assistant"
-                ]:
-
+                if role not in ["user", "assistant"]:
                     continue
 
                 if not content:
-
                     continue
 
                 messages.append({
-
                     "role": role,
-
-                    "content": str(
-                        content
-                    )
-
+                    "content": str(content)
                 })
 
         # ====================================================
@@ -1061,38 +749,28 @@ User's request:
         # ====================================================
 
         messages.append({
-
             "role": "user",
-
-            "content":
-                final_question
-
+            "content": final_question
         })
 
         # ====================================================
         # GROQ
         # ====================================================
 
-        answer, error = _ask_groq(
-            messages
-        )
+        answer, error = _ask_groq(messages)
 
         if error:
-
             return (
-                "Tuto AI উত্তর দিতে পারেনি। "
-                f"সমস্যা: {error}"
+                "Zenthor could not respond. "
+                f"Error: {error}"
             )
 
-        return clean_response(
-            answer
-        )
+        return clean_response(answer)
 
     except Exception as e:
 
         return (
-            f"Tuto AI-তে একটি সমস্যা হয়েছে: "
-            f"{str(e)}"
+            f"An error occurred in Zenthor: {str(e)}"
         )
 
 
@@ -1100,48 +778,31 @@ User's request:
 # PDF TEXT EXTRACTION
 # ============================================================
 
-def extract_text_from_pdf(
-    pdf_file
-):
+def extract_text_from_pdf(pdf_file):
 
     try:
 
         import pypdf
 
-        reader = pypdf.PdfReader(
-            pdf_file
-        )
-
+        reader = pypdf.PdfReader(pdf_file)
         text_parts = []
 
         for page in reader.pages:
 
             try:
 
-                extracted = (
-                    page.extract_text()
-                )
-
+                extracted = page.extract_text()
                 if extracted:
-
-                    text_parts.append(
-                        extracted
-                    )
+                    text_parts.append(extracted)
 
             except Exception:
-
                 continue
 
-        return "\n\n".join(
-            text_parts
-        ).strip()
+        return "\n\n".join(text_parts).strip()
 
     except Exception as e:
 
-        return (
-            f"PDF পড়তে সমস্যা হয়েছে: "
-            f"{str(e)}"
-        )
+        return f"PDF read error: {str(e)}"
 
 
 # ============================================================
@@ -1159,45 +820,22 @@ def ask_ai_tutor(
 
     extra_context = ""
 
-    # IMPORTANT:
-    # Grade/subject are optional context only.
-    # They do NOT control the AI's answer style.
-
     if grade:
-
-        extra_context += (
-            f"\nUser level/context: {grade}"
-        )
-
+        extra_context += f"\nUser level/context: {grade}"
     if subject:
-
-        extra_context += (
-            f"\nSubject/context: {subject}"
-        )
-
+        extra_context += f"\nSubject/context: {subject}"
     if context_text:
-
-        extra_context += (
-            "\n\nDocument context:\n"
-            f"{context_text}"
-        )
+        extra_context += "\n\nDocument context:\n" + context_text
 
     return ask_ai(
 
-        user_question=
-            user_question,
-
-        chat_history=
-            chat_history,
+        user_question=user_question,
+        chat_history=chat_history,
 
         context_text=(
-
             extra_context.strip()
-
             if extra_context
-
             else None
-
         ),
 
     )
@@ -1210,7 +848,5 @@ def ask_ai_tutor(
 def refresh_models():
 
     global _available_models
-
     _available_models = None
-
     return get_available_models()
