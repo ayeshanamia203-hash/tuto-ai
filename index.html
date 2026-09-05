@@ -502,7 +502,7 @@ pre {
     }
 }
 /* ============================================================
-   SEND BUTTON (Always arrow, never wave)
+   SEND BUTTON
 ============================================================ */
 .send-btn {
     width:46px;
@@ -635,7 +635,7 @@ pre {
             </button>
             <h5 class="m-0 fw-bold">
                 <i class="fa-solid fa-sparkles me-2 text-warning"></i>
-                Tuto AI
+                Zenthor
             </h5>
         </div>
         <button
@@ -710,7 +710,7 @@ pre {
                         title="Voice to text">
                         <i class="fa-solid fa-microphone"></i>
                     </button>
-                    <!-- SEND BUTTON (Always arrow, no wave) -->
+                    <!-- SEND BUTTON -->
                     <button
                         type="button"
                         class="send-btn"
@@ -846,14 +846,14 @@ const micBtn =
 /* ============================================================
    DATABASE
 ============================================================ */
-const DB_NAME = "TutoAI_DB";
+const DB_NAME = "Zenthor_DB";
 const DB_VERSION = 1;
 const STORE_NAME = "sessions";
 let db = null;
 let allSessions = {};
 let currentSessionId =
     localStorage.getItem(
-        "tuto_current_session_id"
+        "zenthor_current_session_id"
     ) || null;
 /* ============================================================
    OPEN DATABASE
@@ -1034,7 +1034,7 @@ const DEFAULT_WELCOME = `
 function initTheme(){
     const savedTheme =
         localStorage.getItem(
-            "tuto_theme"
+            "zenthor_theme"
         ) || "dark";
     setTheme(savedTheme);
 }
@@ -1055,7 +1055,7 @@ function setTheme(theme){
         theme
     );
     localStorage.setItem(
-        "tuto_theme",
+        "zenthor_theme",
         theme
     );
     const icon =
@@ -1364,7 +1364,7 @@ function startNewChat(
             Date.now()
     };
     localStorage.setItem(
-        "tuto_current_session_id",
+        "zenthor_current_session_id",
         currentSessionId
     );
     saveSession(
@@ -1392,7 +1392,7 @@ function loadSession(id){
     currentSessionId =
         id;
     localStorage.setItem(
-        "tuto_current_session_id",
+        "zenthor_current_session_id",
         currentSessionId
     );
     chatBox.innerHTML =
@@ -1460,7 +1460,7 @@ async function deleteSession(
     }
     if(currentSessionId){
         localStorage.setItem(
-            "tuto_current_session_id",
+            "zenthor_current_session_id",
             currentSessionId
         );
     }
@@ -2101,7 +2101,7 @@ async function transcribeAudio(blob){
     }
 }
 /* ============================================================
-   HANDLE SEND (No voice assistant, just plain send)
+   HANDLE SEND
 ============================================================ */
 function handleSend(){
     const text =
@@ -2310,7 +2310,7 @@ document
                         );
                         bubble.innerHTML = `
                             <div class="d-flex justify-content-between align-items-center mb-1">
-                                <strong>Tuto AI</strong>
+                                <strong>Zenthor</strong>
                             </div>
                             <div>${content}</div>
                         `;
